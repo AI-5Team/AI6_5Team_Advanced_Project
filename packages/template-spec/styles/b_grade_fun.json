@@ -1,0 +1,34 @@
+{
+  "styleId": "b_grade_fun",
+  "textTone": "exaggerated",
+  "colorPreset": "fluorescent_pop",
+  "motionPreset": "retro_bounce",
+  "captionLength": "very_short",
+  "palette": {
+    "background": "#111827",
+    "surface": "#fef08a",
+    "accent": "#f472b6",
+    "textPrimary": "#fef08a",
+    "textOnSurface": "#111827"
+  },
+  "typography": {
+    "headlineSize": 80,
+    "bodySize": 44,
+    "ctaSize": 48,
+    "fontFamily": "Malgun Gothic"
+  },
+  "supportedQuickActions": ["shorterCopy", "styleOverride", "templateId"],
+  "allowedEffects": [
+    "flash_text",
+    "shake_pop",
+    "quick_zoom",
+    "cta_sting",
+    "quote_pop"
+  ],
+  "forbiddenEffects": [],
+  "rules": {
+    "maxTextPerScene": 16,
+    "preferUpperContrast": true,
+    "keepReadable": true
+  }
+}

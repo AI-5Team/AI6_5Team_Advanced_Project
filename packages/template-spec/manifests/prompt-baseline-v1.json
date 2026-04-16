@@ -1,0 +1,1559 @@
+{
+  "baselineId": "PB-001",
+  "status": "active_draft",
+  "scope": "prompt_generation",
+  "selectedScenario": {
+    "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo",
+    "purpose": "promotion",
+    "templateId": "T02",
+    "styleId": "b_grade_fun",
+    "regionName": "성수동",
+    "detailLocation": "서울숲 근처",
+    "quickOptions": {
+      "highlightPrice": true,
+      "shorterCopy": true,
+      "emphasizeRegion": false
+    }
+  },
+  "sourceEvidence": {
+    "comparisonExperimentId": "EXP-108",
+    "repeatabilityExperimentId": "EXP-109",
+    "evaluationPatchExperimentId": "EXP-110"
+  },
+  "selectedModel": {
+    "provider": "google",
+    "modelName": "models/gemma-4-31b-it",
+    "role": "main_baseline"
+  },
+  "secondaryModel": {
+    "provider": "openai",
+    "modelName": "gpt-5-mini",
+    "role": "tone_reference_only"
+  },
+  "promptPreset": {
+    "presetId": "strict_anchor_benefit_budget_v1",
+    "summary": [
+      "reference hook guidance를 유지합니다.",
+      "hook primaryText는 14자 안팎으로 유지합니다.",
+      "benefit primaryText는 12~14자, 14자 초과 금지입니다.",
+      "urgency/cta primaryText는 각각 10자/8자 안팎으로 유지합니다.",
+      "cta와 ctaText는 방문, 저장, 확인, 예약 중 하나의 행동 단어로 시작합니다.",
+      "지역명은 hookText와 scene primaryText에 넣지 않습니다.",
+      "captions 3개 중 정확히 1개 caption에만 '성수동' exact string을 1회 넣습니다.",
+      "지역 hashtag는 정확히 1개만 허용하고, 그 hashtag는 '성수동' exact string을 그대로 포함해야 합니다.",
+      "서울숲 근처, 서울숲 인근, 성수역 같은 nearby landmark 우회 표현은 금지합니다."
+    ]
+  },
+  "evaluationPolicy": {
+    "locationPolicyId": "strict_all_surfaces",
+    "requiredScore": 100.0,
+    "requiredDetailLocationLeakCount": 0,
+    "requiredFailedChecks": [],
+    "allowOverLimitSceneCount": 0
+  },
+  "transferChecks": [
+    {
+      "experimentId": "EXP-128",
+      "targetScenarioId": "scenario-restaurant-review-b-grade-real-photo",
+      "targetTemplateId": "T04",
+      "result": "single_run_pass_repeatability_timeout_risk",
+      "notes": [
+        "직접 이식과 review 번역 variant 모두 single run에서는 100.0을 통과했습니다.",
+        "repeatability에서는 두 variant 모두 품질 붕괴가 아니라 Gemma 4 timeout으로 1/3 success만 기록했습니다."
+      ]
+    },
+    {
+      "experimentId": "EXP-129",
+      "targetScenarioId": "scenario-restaurant-review-b-grade-real-photo",
+      "targetTemplateId": "T04",
+      "result": "selected_model_pass_secondary_model_not_accepted",
+      "notes": [
+        "Gemma 4는 review-translated baseline prompt에서 single run과 repeatability 모두 100.0을 유지했습니다.",
+        "gpt-5-mini는 nearby-location leakage가 반복돼 strict review fallback model로는 아직 부적합합니다."
+      ]
+    },
+    {
+      "experimentId": "EXP-130",
+      "targetScenarioId": "scenario-restaurant-review-b-grade-real-photo",
+      "targetTemplateId": "T04",
+      "result": "accessible_fallback_still_not_found",
+      "notes": [
+        "Gemma 4는 strict review baseline에서 다시 100.0을 유지했습니다.",
+        "gpt-5-mini는 여전히 nearby-location leakage로 93.3에 머물렀습니다.",
+        "gpt-4.1-mini는 request shape 호환성 패치 후에도 현재 project access가 없어 fallback 후보군에 넣을 수 없었습니다."
+      ]
+    },
+    {
+      "experimentId": "EXP-131",
+      "targetScenarioId": "scenario-restaurant-review-b-grade-real-photo",
+      "targetTemplateId": "T04",
+      "result": "secondary_model_rescued_with_surface_lock",
+      "notes": [
+        "gpt-5-mini 기본 review-translated prompt는 93.3으로 nearby-location leakage가 남았습니다.",
+        "surface-locked exact region anchor variant는 single run 100.0, repeatability 3/3 pass를 기록했습니다."
+      ]
+    },
+    {
+      "experimentId": "EXP-135",
+      "targetScenarioId": "scenario-cafe-new-menu-fixed",
+      "targetTemplateId": "T01",
+      "result": "gpt5mini_selected_for_new_menu_coverage_gemma_timeout_risk_recurred",
+      "notes": [
+        "T01 new_menu / friendly / emphasizeRegion=true에서 strict region anchor prompt를 고정한 single run은 Gemma 4와 gpt-5-mini 모두 100.0을 통과했습니다.",
+        "repeatability에서는 gpt-5-mini가 3/3 pass, avg_score 100.0을 유지했습니다.",
+        "같은 repeatability에서 Gemma 4는 3회 모두 60초 transport timeout으로 실패해, T01 coverage 후보는 현재 gpt-5-mini 쪽이 더 실용적입니다."
+      ]
+    }
+  ],
+  "operationalChecks": [
+    {
+      "experimentId": "EXP-134",
+      "targetScenarioId": "scenario-restaurant-review-b-grade-real-photo",
+      "targetTemplateId": "T04",
+      "selectedModel": {
+        "provider": "google",
+        "modelName": "models/gemma-4-31b-it",
+        "role": "main_baseline_transport_check"
+      },
+      "result": "timeout_risk_not_reproduced_retry_guard_helps_sporadically",
+      "transportRecommendation": {
+        "mode": "retry_guard_available",
+        "defaultProfileId": "default_60s_no_retry",
+        "fallbackProfileId": "timeout_90s_retry1",
+        "trigger": "repeat_timeout"
+      },
+      "notes": [
+        "2026-04-13 spot check에서는 `promotion_baseline_principles_translated_to_review` variant 기준 기본 60초 프로필도 3/3 pass를 기록했습니다.",
+        "다만 `90초 / retry 1회` profile은 평균 attempt 1.33으로 내부 retry가 실제 한 번 동작했습니다.",
+        "즉 Gemma 4 timeout risk는 현재 세션에서 상시 재현되지는 않았고, transport retry는 간헐적 보호장치로 해석하는 편이 맞습니다."
+      ]
+    },
+      {
+        "experimentId": "EXP-145",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+        "provider": "google",
+        "modelName": "models/gemma-4-31b-it",
+        "role": "coverage_candidate_transport_check"
+      },
+      "result": "60s_timeout_recurred_90s_retry1_cleared_transport_risk_but_prompt_guard_still_needed",
+      "transportRecommendation": {
+        "mode": "transport_profile_required",
+        "defaultProfileId": "default_60s_no_retry",
+        "fallbackProfileId": "timeout_90s_retry1",
+        "trigger": "use_when_profile_recommended"
+      },
+      "notes": [
+        "2026-04-13 spot check에서는 `scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off` 기준 기본 60초 profile이 2/3 success에 머물렀습니다.",
+          "`90초 / retry 1회`와 `120초 / retry 1회`는 모두 3/3 success를 기록했고, 품질 평균도 97.8로 회복됐습니다.",
+          "즉 이 option profile 계열에서는 Gemma 4를 계속 볼 수 있지만, transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-148",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "default_60s_timeout_seen_in_prior_repeatability_90s_retry1_validated_for_highlight_price_off_profile",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-143` repeatability에서는 같은 highlightPrice=false scenario 기준 기본 60초 profile이 3/3 timeout으로 막혔습니다.",
+          "`EXP-148`에서는 `90초 / retry 1회` 조건으로 baseline/candidate 모두 3/3 success를 기록했고, candidate는 3/3 all pass로 snapshot 승격 근거를 만들었습니다.",
+          "즉 이 option profile 계열도 Gemma 4 transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-152",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-shorter-copy-off",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "90s_retry1_validated_for_combined_highlight_price_off_and_shorter_copy_off_profile",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-143`에서는 highlightPrice=false 축 기본 60초 profile이 3/3 timeout으로 막혔고, `EXP-145`에서는 shorterCopy=false 축 기본 60초 profile이 2/3 success에 머물렀습니다.",
+          "`EXP-152`에서는 combined scenario를 `90초 / retry 1회`로 실행했을 때 baseline/candidate 모두 3/3 success를 기록했고, candidate도 3/3 all pass를 유지했습니다.",
+          "즉 이 combined option profile 계열도 Gemma 4 transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-158",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-shorter-copy-off-region-emphasis",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "90s_retry1_validated_for_combined_region_anchor_profile",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-152`로 고정된 combined no-price + shorterCopy=false prompt family를 region emphasis scenario로 확장했습니다.",
+          "`EXP-158`에서는 `90초 / retry 1회` 조건으로 baseline/candidate 모두 3/3 success를 기록했고, candidate도 3/3 all pass를 유지했습니다.",
+          "즉 이 combined region-anchor profile 계열도 Gemma 4 transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-201",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-region-emphasis",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "90s_retry1_validated_for_highlight_price_off_region_anchor_profile",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-201`에서는 highlightPrice=false no-price surface-lock family를 region emphasis scenario로 확장했습니다.",
+          "`90초 / retry 1회` 조건으로 baseline/candidate single run이 모두 통과했고, repeatability도 둘 다 3/3 all pass를 기록했습니다.",
+          "즉 이 no-price region-anchor profile 계열도 Gemma 4 transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-205",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off-region-emphasis",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "90s_retry1_validated_for_shorter_copy_off_region_anchor_profile",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-205`에서는 shorterCopy=false surface-lock family를 region emphasis scenario로 확장했습니다.",
+          "`90초 / retry 1회` 조건으로 baseline/candidate single run이 모두 통과했고, repeatability도 둘 다 3/3 all pass를 기록했습니다.",
+          "즉 이 shorterCopy=false region-anchor profile 계열도 Gemma 4 transport 기본값은 60초보다 `90초 / retry 1회` 쪽이 더 실용적입니다."
+        ]
+      },
+      {
+        "experimentId": "EXP-209",
+        "targetScenarioId": "scenario-restaurant-promotion-b-grade-real-photo-region-emphasis",
+        "targetTemplateId": "T02",
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate_transport_check"
+        },
+        "result": "region_anchor_profile_needs_retry_guard_and_120s_spot_check_cleared_timeout",
+        "transportRecommendation": {
+          "mode": "transport_profile_required",
+          "defaultProfileId": "default_60s_no_retry",
+          "fallbackProfileId": "timeout_90s_retry1",
+          "trigger": "use_when_profile_recommended"
+        },
+        "notes": [
+          "`EXP-209` 첫 실행에서는 `90초 / retry 1회` 후보가 한 번 timeout을 보였지만, 같은 candidate를 `120초 / retry 1회`로 다시 실행했을 때 baseline/candidate 모두 100점으로 통과했습니다.",
+          "`120초 / retry 1회` repeatability에서는 baseline/candidate 모두 3/3 all pass를 기록했습니다.",
+          "현재 runtime transport profile은 `timeout_90s_retry1`만 존재하므로 우선 이 retry guard를 추천하되, default promotion region-anchor 계열은 120초 transport spot-check 근거도 함께 문서화해 둡니다."
+        ]
+      }
+    ],
+  "baselineOptions": [
+    {
+      "profileId": "review_strict_fallback_surface_lock",
+      "label": "review_strict_fallback_surface_lock",
+      "status": "candidate",
+      "sourceType": "prompt_experiment",
+      "sourceExperimentId": "EXP-131",
+      "promptVariantId": "review_surface_locked_exact_region_anchor",
+      "selectedScenario": {
+        "scenarioId": "scenario-restaurant-review-b-grade-real-photo",
+        "purpose": "review",
+        "templateId": "T04",
+        "styleId": "b_grade_fun",
+        "regionName": "성수동",
+        "detailLocation": "서울숲 근처",
+        "quickOptions": {
+          "highlightPrice": false,
+          "shorterCopy": true,
+          "emphasizeRegion": false
+        }
+      },
+      "selectedModel": {
+        "provider": "openai",
+        "modelName": "gpt-5-mini",
+        "role": "strict_fallback_candidate"
+      },
+      "promptPreset": {
+        "presetId": "review_surface_locked_exact_region_anchor_v1",
+        "summary": [
+          "review-translated strict baseline prompt를 유지합니다.",
+          "성수동 exact string은 정확히 1개 caption에만 허용합니다.",
+          "지역 hashtag는 #성수동 1개만 허용합니다.",
+          "서울숲, 성수역, 근처, 인근, 동네, 핫플, 앞 같은 nearby/detail-location 표현은 모든 surface에서 금지합니다.",
+          "product_name, review_quote, subText에는 위치 단서 대신 맛과 재방문 이유만 남깁니다."
+        ]
+      },
+      "sourceEvidence": {
+        "experimentId": "EXP-131",
+        "repeatabilityArtifactId": "exp-131-variant-repeatability"
+      },
+      "evaluationPolicy": {
+        "locationPolicyId": "strict_all_surfaces",
+        "requiredScore": 100.0,
+        "requiredDetailLocationLeakCount": 0,
+        "requiredFailedChecks": [],
+        "allowOverLimitSceneCount": 0
+      },
+      "snapshotExperimentId": "EXP-132",
+      "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Snapshot",
+      "snapshotArtifactName": "exp-132-review-strict-fallback-surface-lock-snapshot.json",
+      "usageGuidance": [
+        "이 profile은 T04 review strict fallback candidate 전용입니다.",
+        "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini surface-lock prompt와 함께 사용합니다.",
+        "promotion/new_menu/location_push에는 그대로 일반화하지 않습니다."
+      ]
+    },
+    {
+      "profileId": "review_strict_fallback_surface_lock_shorter_copy_off",
+      "label": "review_strict_fallback_surface_lock_shorter_copy_off",
+      "status": "candidate",
+      "sourceType": "prompt_experiment",
+      "sourceExperimentId": "EXP-173",
+      "promptVariantId": "review_surface_locked_exact_region_anchor_shorter_copy_off",
+      "selectedScenario": {
+        "scenarioId": "scenario-restaurant-review-b-grade-real-photo-shorter-copy-off",
+        "purpose": "review",
+        "templateId": "T04",
+        "styleId": "b_grade_fun",
+        "regionName": "성수동",
+        "detailLocation": "서울숲 근처",
+        "quickOptions": {
+          "highlightPrice": false,
+          "shorterCopy": false,
+          "emphasizeRegion": false
+        }
+      },
+      "selectedModel": {
+        "provider": "openai",
+        "modelName": "gpt-5-mini",
+        "role": "strict_fallback_candidate"
+      },
+      "promptPreset": {
+        "presetId": "review_surface_locked_exact_region_anchor_shorter_copy_off_v1",
+        "summary": [
+          "review surface-lock fallback prompt를 유지합니다.",
+          "성수동 exact string은 정확히 1개 caption에만 허용합니다.",
+          "지역 hashtag는 #성수동 1개만 허용합니다.",
+          "서울숲, 성수역, 근처, 인근, 동네, 핫플, 앞 같은 nearby/detail-location 표현은 모든 surface에서 금지합니다.",
+          "shorterCopy=false이므로 설명 한 줄은 더 허용하되, 그 설명은 맛, 식감, 재방문 이유에만 씁니다."
+        ]
+      },
+      "sourceEvidence": {
+        "experimentId": "EXP-173",
+        "repeatabilityArtifactId": "exp-173-variant-repeatability"
+      },
+      "evaluationPolicy": {
+        "locationPolicyId": "strict_all_surfaces",
+        "requiredScore": 100.0,
+        "requiredDetailLocationLeakCount": 0,
+        "requiredFailedChecks": [],
+        "allowOverLimitSceneCount": 0
+      },
+        "snapshotExperimentId": "EXP-174",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Shorter Copy Off Snapshot",
+        "snapshotArtifactName": "exp-174-review-strict-fallback-surface-lock-shorter-copy-off-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / shorterCopy=false strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini surface-lock prompt와 함께 사용합니다.",
+          "설명 여유는 위치가 아니라 맛, 식감, 재방문 이유를 더 또렷하게 쓰는 데만 사용합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_highlight_price_shorter_copy_off",
+        "label": "review_strict_fallback_surface_lock_highlight_price_shorter_copy_off",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-177",
+        "promptVariantId": "review_surface_locked_highlight_price_shorter_copy_off",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-highlight-price-shorter-copy-off",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": false,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_surface_locked_highlight_price_shorter_copy_off_v1",
+          "summary": [
+            "review shorterCopy=false surface-lock fallback prompt를 유지합니다.",
+            "성수동 exact string은 정확히 1개 caption에만 허용합니다.",
+            "지역 hashtag는 #성수동 1개만 허용합니다.",
+            "서울숲, 성수역, 근처, 인근, 동네, 핫플, 앞 같은 nearby/detail-location 표현은 모든 surface에서 금지합니다.",
+            "shorterCopy=false이므로 설명 한 줄은 더 허용하되, 그 설명은 맛, 식감, 재방문 이유에만 씁니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 세일 문구는 만들지 않고 한 끼 만족감과 다시 갈 이유를 먼저 읽히게 정리합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-177",
+          "repeatabilityArtifactId": "exp-177-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-178",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Highlight Price Shorter Copy Off Snapshot",
+        "snapshotArtifactName": "exp-178-review-strict-fallback-surface-lock-highlight-price-shorter-copy-off-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=true / shorterCopy=false strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini surface-lock prompt와 함께 사용합니다.",
+          "highlightPrice=true는 가격 숫자 강조가 아니라 한 끼 만족감과 다시 갈 이유를 더 먼저 읽히게 만드는 용도로만 해석합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_highlight_price",
+        "label": "review_strict_fallback_surface_lock_highlight_price",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-181",
+        "promptVariantId": "review_surface_locked_highlight_price",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-highlight-price",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": true,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_surface_locked_highlight_price_v1",
+          "summary": [
+            "review surface-lock fallback prompt를 유지합니다.",
+            "성수동 exact string은 정확히 1개 caption에만 허용합니다.",
+            "지역 hashtag는 #성수동 1개만 허용합니다.",
+            "서울숲, 성수역, 근처, 인근, 동네, 핫플, 앞 같은 nearby/detail-location 표현은 모든 surface에서 금지합니다.",
+            "shorterCopy=true이므로 각 surface는 한 가지 정보만 짧게 남깁니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 세일 문구는 만들지 않고 한 끼 만족감과 다시 갈 이유를 짧게 먼저 읽히게 정리합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-181",
+          "repeatabilityArtifactId": "exp-181-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-182",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Highlight Price Snapshot",
+        "snapshotArtifactName": "exp-182-review-strict-fallback-surface-lock-highlight-price-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=true / shorterCopy=true strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini surface-lock prompt와 함께 사용합니다.",
+          "highlightPrice=true는 가격 숫자 강조가 아니라 짧은 만족감 근거를 앞세우는 용도로만 해석합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_region_anchor",
+        "label": "review_strict_fallback_surface_lock_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-213",
+        "promptVariantId": "review_surface_locked_region_anchor",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-region-emphasis",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_strict_fallback_surface_lock_region_anchor_v1",
+          "summary": [
+            "T04 review / b_grade_fun / highlightPrice=false / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag 1개에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "nearby/detail-location 표현은 모든 surface에서 금지하고, product_name, review_quote, subText는 맛, 식감, 재방문 이유만 남깁니다.",
+            "shorterCopy=true이므로 각 scene/caption은 한 가지 메시지만 짧게 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-213",
+          "repeatabilityArtifactId": "exp-213-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-214",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-214-review-strict-fallback-surface-lock-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=false / shorterCopy=true / emphasizeRegion=true strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini region-anchor surface-lock prompt와 함께 사용합니다.",
+          "지역 강조는 첫 훅과 '#성수동' 1개에만 쓰고, 후기 본문은 맛과 재방문 이유를 foreground로 유지해야 합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_shorter_copy_off_region_anchor",
+        "label": "review_strict_fallback_surface_lock_shorter_copy_off_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-215",
+        "promptVariantId": "review_surface_locked_shorter_copy_off_region_anchor",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-shorter-copy-off-region-emphasis",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": false,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_strict_fallback_surface_lock_shorter_copy_off_region_anchor_v1",
+          "summary": [
+            "T04 review / b_grade_fun / highlightPrice=false / shorterCopy=false / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag 1개에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "nearby/detail-location 표현은 모든 surface에서 금지하고, review_quote, product_name, subText는 맛, 식감, 재방문 이유만 남깁니다.",
+            "shorterCopy=false이므로 설명 한 줄은 더 허용하되, 위치 설명 대신 후기 맥락과 만족 이유에만 씁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-215",
+          "repeatabilityArtifactId": "exp-215-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-216",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Shorter Copy Off Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-216-review-strict-fallback-surface-lock-shorter-copy-off-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=false / shorterCopy=false / emphasizeRegion=true strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini region-anchor surface-lock prompt와 함께 사용합니다.",
+          "설명 여유는 지역 설명이 아니라 맛, 식감, 재방문 이유를 더 또렷하게 쓰는 데만 사용합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_highlight_price_shorter_copy_off_region_anchor",
+        "label": "review_strict_fallback_surface_lock_highlight_price_shorter_copy_off_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-217",
+        "promptVariantId": "review_surface_locked_highlight_price_shorter_copy_off_region_anchor",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-highlight-price-shorter-copy-off-region-emphasis",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": false,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_strict_fallback_surface_lock_highlight_price_shorter_copy_off_region_anchor_v1",
+          "summary": [
+            "T04 review / b_grade_fun / highlightPrice=true / shorterCopy=false / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag 1개에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "nearby/detail-location 표현은 모든 surface에서 금지하고, review_quote, product_name, subText는 맛, 식감, 재방문 이유만 남깁니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 세일 문구는 만들지 않고 value foreground만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-217",
+          "repeatabilityArtifactId": "exp-217-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-218",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Highlight Price Shorter Copy Off Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-218-review-strict-fallback-surface-lock-highlight-price-shorter-copy-off-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=true / shorterCopy=false / emphasizeRegion=true strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini region-anchor surface-lock prompt와 함께 사용합니다.",
+          "highlightPrice=true는 가격 숫자 강조가 아니라 한 끼 만족감과 다시 갈 이유를 더 먼저 읽히게 만드는 용도로만 해석합니다."
+        ]
+      },
+      {
+        "profileId": "review_strict_fallback_surface_lock_highlight_price_region_anchor",
+        "label": "review_strict_fallback_surface_lock_highlight_price_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-219",
+        "promptVariantId": "review_surface_locked_highlight_price_region_anchor",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-review-b-grade-real-photo-highlight-price-region-emphasis",
+          "purpose": "review",
+          "templateId": "T04",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "strict_fallback_candidate"
+        },
+        "promptPreset": {
+          "presetId": "review_strict_fallback_surface_lock_highlight_price_region_anchor_v1",
+          "summary": [
+            "T04 review / b_grade_fun / highlightPrice=true / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag 1개에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "nearby/detail-location 표현은 모든 surface에서 금지하고, review_quote, product_name, subText는 맛, 식감, 재방문 이유만 남깁니다.",
+            "shorterCopy=true이므로 각 surface는 한 가지 정보만 짧게 남기고, highlightPrice=true는 value foreground만 유지합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-219",
+          "repeatabilityArtifactId": "exp-219-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-220",
+        "snapshotExperimentTitle": "Review Strict Fallback Surface Lock Highlight Price Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-220-review-strict-fallback-surface-lock-highlight-price-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T04 review / highlightPrice=true / shorterCopy=true / emphasizeRegion=true strict fallback candidate 전용입니다.",
+          "Gemma 4가 timeout 등으로 흔들릴 때만 gpt-5-mini region-anchor surface-lock prompt와 함께 사용합니다.",
+          "짧은 지역 훅 뒤에는 가격 숫자가 아니라 만족감과 재방문 이유를 한 줄로 압축해 유지해야 합니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_minimal_region_anchor",
+        "label": "new_menu_friendly_minimal_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-185",
+        "promptVariantId": "new_menu_friendly_minimal_region_anchor_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-region-off",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": false,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_minimal_region_anchor_v1",
+          "summary": [
+            "T01 new_menu / friendly / emphasizeRegion=false 전용 profile입니다.",
+            "region slot 최소치는 caption 1개와 '#성수동' hashtag 1개로만 맞추고, hook에는 지역명을 넣지 않습니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "difference와 subText는 위치 설명 대신 메뉴 특징, 질감, 재료 조합, 오늘 시켜볼 이유만 남깁니다.",
+            "hashtags는 총 5~8개를 유지하되 '#성수동' 외의 나머지는 menu/category 중심 non-region hashtag로 채웁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-185",
+          "repeatabilityArtifactId": "exp-185-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-186",
+        "snapshotExperimentTitle": "New Menu Friendly Minimal Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-186-new-menu-friendly-minimal-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=false / shorterCopy=false / emphasizeRegion=false 조건에서만 추천합니다.",
+          "region을 완전히 제거하는 profile이 아니라, copy-rule의 최소 region slot을 caption 1개와 '#성수동' 1개로만 남기는 minimal anchor profile입니다.",
+          "지역을 hook이나 body foreground로 다시 끌어올리지 않고 메뉴 첫인상과 조합 설명을 먼저 읽히게 만드는 것이 핵심입니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_minimal_region_anchor_shorter_copy",
+        "label": "new_menu_friendly_minimal_region_anchor_shorter_copy",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-189",
+        "promptVariantId": "new_menu_friendly_minimal_region_anchor_shorter_copy_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-region-off-shorter-copy",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": true,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_minimal_region_anchor_shorter_copy_v1",
+          "summary": [
+            "T01 new_menu / friendly / shorterCopy=true / emphasizeRegion=false 전용 profile입니다.",
+            "region slot 최소치는 caption 1개와 '#성수동' hashtag 1개로만 맞추고, hook에는 지역명을 넣지 않습니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "shorterCopy=true이므로 각 scene/caption은 메뉴 기준 한 가지 포인트만 짧고 또렷하게 남깁니다.",
+            "hashtags는 총 5~8개를 유지하되 '#성수동' 외의 나머지는 menu/category 중심 non-region hashtag로 채웁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-189",
+          "repeatabilityArtifactId": "exp-189-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-190",
+        "snapshotExperimentTitle": "New Menu Friendly Minimal Region Anchor Shorter Copy Profile Snapshot",
+        "snapshotArtifactName": "exp-190-new-menu-friendly-minimal-region-anchor-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=false / shorterCopy=true / emphasizeRegion=false 조건에서만 추천합니다.",
+          "region을 완전히 제거하는 profile이 아니라, copy-rule의 최소 region slot을 caption 1개와 '#성수동' 1개로만 남기는 minimal anchor shorter-copy profile입니다.",
+          "짧아지는 것은 지역 기준면이 아니라 메뉴 설명이며, 각 surface는 한 포인트씩만 남겨야 합니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_minimal_region_anchor_highlight_price",
+        "label": "new_menu_friendly_minimal_region_anchor_highlight_price",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-193",
+        "promptVariantId": "new_menu_friendly_minimal_region_anchor_highlight_price_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-region-off-highlight-price",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": false,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_minimal_region_anchor_highlight_price_v1",
+          "summary": [
+            "T01 new_menu / friendly / highlightPrice=true / emphasizeRegion=false 전용 profile입니다.",
+            "region slot 최소치는 caption 1개와 '#성수동' hashtag 1개로만 맞추고, hook에는 지역명을 넣지 않습니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 특가 문구는 만들지 않습니다.",
+            "difference와 subText는 지역 설명 대신 메뉴 구성, 질감, 조합, 함께 주문할 이유 같은 가치 포인트를 더 선명하게 정리합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-193",
+          "repeatabilityArtifactId": "exp-193-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-194",
+        "snapshotExperimentTitle": "New Menu Friendly Minimal Region Anchor Highlight Price Profile Snapshot",
+        "snapshotArtifactName": "exp-194-new-menu-friendly-minimal-region-anchor-highlight-price-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=true / shorterCopy=false / emphasizeRegion=false 조건에서만 추천합니다.",
+          "region을 완전히 제거하는 profile이 아니라, copy-rule의 최소 region slot을 caption 1개와 '#성수동' 1개로만 남기는 minimal anchor highlight-price profile입니다.",
+          "가격 숫자를 지어내지 않고도 메뉴 가치 포인트를 더 앞세우는 것이 핵심입니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_minimal_region_anchor_highlight_price_shorter_copy",
+        "label": "new_menu_friendly_minimal_region_anchor_highlight_price_shorter_copy",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-197",
+        "promptVariantId": "new_menu_friendly_minimal_region_anchor_highlight_price_shorter_copy_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-region-off-highlight-price-shorter-copy",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": true,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_minimal_region_anchor_highlight_price_shorter_copy_v1",
+          "summary": [
+            "T01 new_menu / friendly / highlightPrice=true / shorterCopy=true / emphasizeRegion=false 전용 profile입니다.",
+            "region slot 최소치는 caption 1개와 '#성수동' hashtag 1개로만 맞추고, hook에는 지역명을 넣지 않습니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "shorterCopy=true이므로 각 scene/caption은 메뉴 기준 한 가지 포인트만 짧게 남기고, highlightPrice=true는 숫자 가격 대신 가치 포인트 foreground로만 해석합니다.",
+            "hashtags는 총 5~8개를 유지하되 '#성수동' 외의 나머지는 menu/category 중심 non-region hashtag로 채웁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-197",
+          "repeatabilityArtifactId": "exp-197-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-198",
+        "snapshotExperimentTitle": "New Menu Friendly Minimal Region Anchor Highlight Price Shorter Copy Profile Snapshot",
+        "snapshotArtifactName": "exp-198-new-menu-friendly-minimal-region-anchor-highlight-price-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=true / shorterCopy=true / emphasizeRegion=false 조건에서만 추천합니다.",
+          "region을 완전히 제거하는 profile이 아니라, copy-rule의 최소 region slot을 caption 1개와 '#성수동' 1개로만 남기는 minimal anchor combined profile입니다.",
+          "짧게 쓰되 가격 숫자를 지어내지 않고, 메뉴 가치 포인트 한 줄만 먼저 읽히게 만드는 것이 핵심입니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_strict_region_anchor",
+        "label": "new_menu_friendly_strict_region_anchor",
+      "status": "candidate",
+      "sourceType": "model_comparison",
+      "sourceExperimentId": "EXP-135",
+      "selectedScenario": {
+        "scenarioId": "scenario-cafe-new-menu-fixed",
+        "purpose": "new_menu",
+        "templateId": "T01",
+        "styleId": "friendly",
+        "regionName": "성수동",
+        "detailLocation": "서울숲 근처",
+        "quickOptions": {
+          "highlightPrice": false,
+          "shorterCopy": false,
+          "emphasizeRegion": true
+        }
+      },
+      "selectedModel": {
+        "provider": "openai",
+        "modelName": "gpt-5-mini",
+        "role": "coverage_candidate"
+      },
+      "promptPreset": {
+        "presetId": "new_menu_friendly_strict_region_anchor_v1",
+        "summary": [
+          "T01 new_menu / friendly / emphasizeRegion=true 전용 profile입니다.",
+          "hookText, caption 1개, hashtag 1개만 region anchor surface로 허용합니다.",
+          "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+          "difference는 위치 설명 대신 메뉴 특징, 맛, 조합만 남깁니다.",
+          "cta는 확인, 주문, 저장, 방문 중 하나의 행동 단어로 짧게 시작합니다."
+        ]
+      },
+      "sourceEvidence": {
+        "experimentId": "EXP-135",
+        "repeatabilityArtifactId": "exp-135-repeatability"
+      },
+      "evaluationPolicy": {
+        "locationPolicyId": "strict_all_surfaces",
+        "requiredScore": 100.0,
+        "requiredDetailLocationLeakCount": 0,
+        "requiredFailedChecks": [],
+        "allowOverLimitSceneCount": 0
+      },
+      "snapshotExperimentId": "EXP-136",
+      "snapshotExperimentTitle": "New Menu Friendly Strict Region Profile Snapshot",
+      "snapshotArtifactName": "exp-136-new-menu-friendly-strict-region-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, T01 coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "review/promotion/location_push나 다른 quick option 조합에는 그대로 일반화하지 않습니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_region_anchor_shorter_copy",
+        "label": "new_menu_friendly_region_anchor_shorter_copy",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-156",
+        "promptVariantId": "new_menu_friendly_region_anchor_shorter_copy_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-shorter-copy",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_region_anchor_shorter_copy_v1",
+          "summary": [
+            "T01 new_menu / friendly / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "hookText, caption 1개, hashtag 1개만 region anchor surface로 허용합니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "difference는 위치 설명 대신 메뉴 특징, 맛, 조합만 남깁니다.",
+            "shorterCopy=true이므로 각 장면은 한 가지 정보만 짧고 또렷하게 남기고, 긴 부연 설명은 줄입니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-156",
+          "repeatabilityArtifactId": "exp-156-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-162",
+        "snapshotExperimentTitle": "New Menu Friendly Region Anchor Shorter Copy Profile Snapshot",
+        "snapshotArtifactName": "exp-162-new-menu-friendly-region-anchor-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=false / shorterCopy=true / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, T01 shorterCopy coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "현재 근거는 `gpt-5-mini` repeatability 3/3 pass 기준입니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_region_anchor_highlight_price",
+        "label": "new_menu_friendly_region_anchor_highlight_price",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-165",
+        "promptVariantId": "new_menu_friendly_region_anchor_highlight_price_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-highlight-price",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": false,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_region_anchor_highlight_price_v1",
+          "summary": [
+            "T01 new_menu / friendly / highlightPrice=true / emphasizeRegion=true 전용 profile입니다.",
+            "hookText, caption 1개, hashtag 1개만 region anchor surface로 허용합니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 특가 문구는 만들지 않습니다.",
+            "difference와 subText는 숫자 가격 대신 메뉴 구성, 조합, 함께 주문할 이유 같은 가치 포인트를 더 선명하게 정리합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-165",
+          "repeatabilityArtifactId": "exp-165-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-166",
+        "snapshotExperimentTitle": "New Menu Friendly Region Anchor Highlight Price Profile Snapshot",
+        "snapshotArtifactName": "exp-166-new-menu-friendly-region-anchor-highlight-price-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=true / shorterCopy=false / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, T01 highlightPrice coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "숫자 가격 입력이 없는 카페 신메뉴에서도 가격 환각 없이 가치 포인트를 더 선명하게 보이는 것이 핵심입니다."
+        ]
+      },
+      {
+        "profileId": "new_menu_friendly_region_anchor_highlight_price_shorter_copy",
+        "label": "new_menu_friendly_region_anchor_highlight_price_shorter_copy",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-169",
+        "promptVariantId": "new_menu_friendly_region_anchor_highlight_price_shorter_copy_gpt5mini",
+        "selectedScenario": {
+          "scenarioId": "scenario-cafe-new-menu-fixed-highlight-price-shorter-copy",
+          "purpose": "new_menu",
+          "templateId": "T01",
+          "styleId": "friendly",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "openai",
+          "modelName": "gpt-5-mini",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "new_menu_friendly_region_anchor_highlight_price_shorter_copy_v1",
+          "summary": [
+            "T01 new_menu / friendly / highlightPrice=true / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "hookText, caption 1개, hashtag 1개만 region anchor surface로 허용합니다.",
+            "상세 위치와 nearby landmark 표현은 모든 surface에서 금지합니다.",
+            "shorterCopy=true이므로 각 장면은 한 가지 정보만 짧고 또렷하게 남깁니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 세일 문구는 만들지 않고 메뉴 조합이나 함께 주문할 이유 같은 가치 포인트 한 가지를 먼저 보이게 정리합니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-169",
+          "repeatabilityArtifactId": "exp-169-variant-repeatability"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-170",
+        "snapshotExperimentTitle": "New Menu Friendly Region Anchor Highlight Price Shorter Copy Profile Snapshot",
+        "snapshotArtifactName": "exp-170-new-menu-friendly-region-anchor-highlight-price-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T01 new_menu / friendly / highlightPrice=true / shorterCopy=true / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, T01 combined quick option coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "짧게 쓰기와 가치 포인트 강조를 동시에 요구할 때, 숫자 가격 환각 없이 한 줄 근거만 남기는 것이 핵심입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_shorter_copy_off",
+        "label": "promotion_surface_lock_shorter_copy_off",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+      "sourceExperimentId": "EXP-146",
+      "promptVariantId": "promotion_surface_locked_nearby_leakage_suppression_gemma",
+      "selectedScenario": {
+        "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off",
+        "purpose": "promotion",
+        "templateId": "T02",
+        "styleId": "b_grade_fun",
+        "regionName": "성수동",
+        "detailLocation": "서울숲 근처",
+        "quickOptions": {
+          "highlightPrice": true,
+          "shorterCopy": false,
+          "emphasizeRegion": false
+        }
+      },
+      "selectedModel": {
+        "provider": "google",
+        "modelName": "models/gemma-4-31b-it",
+        "role": "coverage_candidate"
+      },
+      "promptPreset": {
+        "presetId": "promotion_surface_lock_shorter_copy_off_v1",
+        "summary": [
+          "T02 promotion / b_grade_fun / shorterCopy=false 전용 profile입니다.",
+          "captions 중 정확히 1개에만 '성수동' exact string을 1회 허용합니다.",
+          "region hashtag는 정확히 '#성수동' 1개만 허용하고, '#성수동맛집' 같은 확장형 지역 hashtag는 금지합니다.",
+          "서울숲, 성수역, 근처, 인근, 동네, 앞, 옆, 골목, 핫플 같은 nearby/detail-location 표현은 모든 surface에서 금지합니다.",
+          "subText는 위치 설명 대신 메뉴 강점, 세트 구성, 할인 이유, 퇴근 후 보상감만 남깁니다."
+        ]
+      },
+      "sourceEvidence": {
+        "experimentId": "EXP-146",
+        "repeatabilityArtifactId": "exp-146-variant-repeatability-google-transport"
+      },
+      "evaluationPolicy": {
+        "locationPolicyId": "strict_all_surfaces",
+        "requiredScore": 100.0,
+        "requiredDetailLocationLeakCount": 0,
+        "requiredFailedChecks": [],
+        "allowOverLimitSceneCount": 0
+      },
+      "snapshotExperimentId": "EXP-147",
+      "snapshotExperimentTitle": "Promotion Surface Lock Shorter Copy Profile Snapshot",
+      "snapshotArtifactName": "exp-147-promotion-surface-lock-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=true / shorterCopy=false / emphasizeRegion=false 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, shorterCopy=false coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 `90초 / retry 1회` transport recommendation을 함께 보는 편이 맞습니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_highlight_price_off",
+        "label": "promotion_surface_lock_highlight_price_off",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-148",
+        "promptVariantId": "promotion_surface_locked_highlight_price_off_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": true,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_highlight_price_off_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=false 전용 profile입니다.",
+            "captions 중 정확히 1개에만 '성수동' exact string을 1회 허용합니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "가격 숫자, 할인폭, 특가, 할인, 가성비를 hook/benefit/urgency/caption/hashtag 중심 훅으로 쓰지 않습니다.",
+            "subText는 위치 설명 대신 메뉴 강점, 식감, 방문 이유, 맥주 페어링만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-148",
+          "repeatabilityArtifactId": "exp-148-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-149",
+        "snapshotExperimentTitle": "Promotion Surface Lock Highlight Price Profile Snapshot",
+        "snapshotArtifactName": "exp-149-promotion-surface-lock-highlight-price-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=true / emphasizeRegion=false 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, highlightPrice=false coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `90초 / retry 1회` 실행 기준입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_highlight_price_off_shorter_copy_off",
+        "label": "promotion_surface_lock_highlight_price_off_shorter_copy_off",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-152",
+        "promptVariantId": "promotion_surface_locked_highlight_price_off_shorter_copy_off_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-shorter-copy-off",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": false,
+            "emphasizeRegion": false
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_highlight_price_off_shorter_copy_off_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=false 전용 profile입니다.",
+            "captions 중 정확히 1개에만 '성수동' exact string을 1회 허용합니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "shorterCopy=false이므로 설명은 허용하지만, 가격 숫자나 할인폭을 hook/benefit/urgency/hashtag 중심 훅으로 쓰지 않습니다.",
+            "subText는 위치 설명 대신 메뉴 강점, 식감, 세트 구성, 방문 이유, 맥주 페어링만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-152",
+          "repeatabilityArtifactId": "exp-152-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-153",
+        "snapshotExperimentTitle": "Promotion Surface Lock Highlight Price Off Shorter Copy Profile Snapshot",
+        "snapshotArtifactName": "exp-153-promotion-surface-lock-highlight-price-off-shorter-copy-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=false / emphasizeRegion=false 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, combined quick option coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `90초 / retry 1회` 실행 기준입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_highlight_price_off_shorter_copy_off_region_anchor",
+        "label": "promotion_surface_lock_highlight_price_off_shorter_copy_off_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-158",
+        "promptVariantId": "promotion_surface_locked_highlight_price_off_shorter_copy_off_region_anchor_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-shorter-copy-off-region-emphasis",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": false,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_highlight_price_off_shorter_copy_off_region_anchor_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=false / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "shorterCopy=false이므로 설명은 허용하지만, 가격 숫자나 할인폭을 hook/benefit/urgency/hashtag 중심 훅으로 쓰지 않습니다.",
+            "subText는 위치 설명 대신 메뉴 강점, 식감, 세트 구성, 방문 이유, 맥주 페어링만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-158",
+          "repeatabilityArtifactId": "exp-158-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-159",
+        "snapshotExperimentTitle": "Promotion Surface Lock Highlight Price Off Shorter Copy Region Anchor Snapshot",
+        "snapshotArtifactName": "exp-159-promotion-surface-lock-highlight-price-off-shorter-copy-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=false / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, region emphasis가 포함된 combined quick option coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `90초 / retry 1회` 실행 기준입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_highlight_price_off_region_anchor",
+        "label": "promotion_surface_lock_highlight_price_off_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-201",
+        "promptVariantId": "promotion_surface_locked_highlight_price_off_region_anchor_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-region-emphasis",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": false,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_highlight_price_off_region_anchor_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "shorterCopy=true이므로 각 scene/caption은 한 가지 메시지만 짧게 남기고, 가격 숫자나 할인폭을 중심 훅으로 쓰지 않습니다.",
+            "subText는 위치 설명 대신 메뉴 강점, 식감, 방문 이유, 맥주 페어링만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-201",
+          "repeatabilityArtifactId": "exp-201-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-202",
+        "snapshotExperimentTitle": "Promotion Surface Lock Highlight Price Off Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-202-promotion-surface-lock-highlight-price-off-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=false / shorterCopy=true / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, region emphasis가 포함된 no-price quick option coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `90초 / retry 1회` 실행 기준입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_shorter_copy_off_region_anchor",
+        "label": "promotion_surface_lock_shorter_copy_off_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-205",
+        "promptVariantId": "promotion_surface_locked_shorter_copy_off_region_anchor_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off-region-emphasis",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": false,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_shorter_copy_off_region_anchor_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=true / shorterCopy=false / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "shorterCopy=false이므로 설명은 허용하지만, 상세 위치 대신 메뉴 강점, 세트감, 방문 이유만 남깁니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 특가 문구는 만들지 않고 value foreground만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-205",
+          "repeatabilityArtifactId": "exp-205-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-206",
+        "snapshotExperimentTitle": "Promotion Surface Lock Shorter Copy Off Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-206-promotion-surface-lock-shorter-copy-off-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=true / shorterCopy=false / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, region emphasis가 포함된 shorterCopy=false coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `90초 / retry 1회` 실행 기준입니다."
+        ]
+      },
+      {
+        "profileId": "promotion_surface_lock_region_anchor",
+        "label": "promotion_surface_lock_region_anchor",
+        "status": "candidate",
+        "sourceType": "prompt_experiment",
+        "sourceExperimentId": "EXP-209",
+        "promptVariantId": "promotion_surface_locked_region_anchor_gemma",
+        "selectedScenario": {
+          "scenarioId": "scenario-restaurant-promotion-b-grade-real-photo-region-emphasis",
+          "purpose": "promotion",
+          "templateId": "T02",
+          "styleId": "b_grade_fun",
+          "regionName": "성수동",
+          "detailLocation": "서울숲 근처",
+          "quickOptions": {
+            "highlightPrice": true,
+            "shorterCopy": true,
+            "emphasizeRegion": true
+          }
+        },
+        "selectedModel": {
+          "provider": "google",
+          "modelName": "models/gemma-4-31b-it",
+          "role": "coverage_candidate"
+        },
+        "promptPreset": {
+          "presetId": "promotion_surface_lock_region_anchor_v1",
+          "summary": [
+            "T02 promotion / b_grade_fun / highlightPrice=true / shorterCopy=true / emphasizeRegion=true 전용 profile입니다.",
+            "regionName은 hookText 첫 훅과 '#성수동' hashtag에만 고정하고, captions에는 지역명을 넣지 않습니다.",
+            "region hashtag는 정확히 '#성수동' 1개만 허용하고 nearby/location 확장 hashtag는 금지합니다.",
+            "shorterCopy=true이므로 각 scene/caption은 한 가지 메시지만 짧게 남기고, 메뉴 가치 포인트를 한 줄 foreground로 압축합니다.",
+            "highlightPrice=true라도 입력에 없는 가격 숫자, 할인율, 특가 문구는 만들지 않고 value foreground만 남깁니다."
+          ]
+        },
+        "sourceEvidence": {
+          "experimentId": "EXP-209",
+          "repeatabilityArtifactId": "exp-209-variant-repeatability-google-transport"
+        },
+        "evaluationPolicy": {
+          "locationPolicyId": "strict_all_surfaces",
+          "requiredScore": 100.0,
+          "requiredDetailLocationLeakCount": 0,
+          "requiredFailedChecks": [],
+          "allowOverLimitSceneCount": 0
+        },
+        "snapshotExperimentId": "EXP-210",
+        "snapshotExperimentTitle": "Promotion Surface Lock Region Anchor Profile Snapshot",
+        "snapshotArtifactName": "exp-210-promotion-surface-lock-region-anchor-profile-snapshot.json",
+        "usageGuidance": [
+          "이 profile은 T02 promotion / b_grade_fun / highlightPrice=true / shorterCopy=true / emphasizeRegion=true 조건에서만 추천합니다.",
+          "main baseline을 대체하지 않고, region emphasis가 포함된 default promotion coverage gap을 메우는 조건부 profile로만 사용합니다.",
+          "Gemma 4 사용 시 현재 근거는 `120초 / retry 1회` repeatability와 `90초 / retry 1회` 기본 실행을 함께 확인한 결과입니다."
+        ]
+      }
+    ],
+  "usageGuidance": [
+    "현재 manifest는 T02 promotion / b_grade_fun 기준 prompt baseline입니다.",
+    "전체 서비스 공통 baseline으로 일반화하지 말고, prompt 연구선의 production-near 기준으로만 사용합니다.",
+    "creative reinterpretation 영상 연구선에는 그대로 가져가지 않습니다."
+  ]
+}

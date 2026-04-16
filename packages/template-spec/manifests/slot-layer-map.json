@@ -1,0 +1,219 @@
+{
+  "version": "draft-v1",
+  "status": "proposal",
+  "nonBreaking": true,
+  "goal": "Map current scene slots and text roles into hook/body/cta layers without changing existing template runtime.",
+  "layerDefinitions": [
+    {
+      "slotGroup": "hook",
+      "description": "첫 1~2초 안에 주목을 끄는 한 줄 또는 인상적인 첫 문장"
+    },
+    {
+      "slotGroup": "body",
+      "description": "상품, 혜택, 차별점, 방문 이유처럼 설득을 담당하는 중간 정보 블록"
+    },
+    {
+      "slotGroup": "cta",
+      "description": "행동 유도와 마무리를 담당하는 마지막 블록"
+    }
+  ],
+  "textRoleToLayer": {
+    "hook": {
+      "slotGroup": "hook",
+      "bodySubtype": null,
+      "uiLabel": "후킹 문장"
+    },
+    "region_hook": {
+      "slotGroup": "hook",
+      "bodySubtype": null,
+      "uiLabel": "지역 후킹 문장"
+    },
+    "review_quote": {
+      "slotGroup": "hook",
+      "bodySubtype": null,
+      "uiLabel": "후기 후킹 문장"
+    },
+    "product_name": {
+      "slotGroup": "body",
+      "bodySubtype": "product",
+      "uiLabel": "상품 소개"
+    },
+    "difference": {
+      "slotGroup": "body",
+      "bodySubtype": "difference",
+      "uiLabel": "차별점"
+    },
+    "benefit": {
+      "slotGroup": "body",
+      "bodySubtype": "benefit",
+      "uiLabel": "혜택"
+    },
+    "urgency": {
+      "slotGroup": "body",
+      "bodySubtype": "urgency",
+      "uiLabel": "긴급성"
+    },
+    "visit_reason": {
+      "slotGroup": "body",
+      "bodySubtype": "reason",
+      "uiLabel": "방문 이유"
+    },
+    "cta": {
+      "slotGroup": "cta",
+      "bodySubtype": null,
+      "uiLabel": "행동 유도"
+    }
+  },
+  "templates": [
+    {
+      "templateId": "T01",
+      "title": "신메뉴 티저형",
+      "slotGroups": {
+        "hook": {
+          "sceneIds": ["s1"],
+          "textRoles": ["hook"],
+          "recommendedPrimaryField": "hookText",
+          "recommendedSupportField": "captions[0]"
+        },
+        "body": {
+          "sceneIds": ["s2", "s3"],
+          "textRoles": ["product_name", "difference"],
+          "bodyBlocks": [
+            {
+              "blockId": "body_product",
+              "textRole": "product_name",
+              "uiLabel": "메뉴 소개"
+            },
+            {
+              "blockId": "body_difference",
+              "textRole": "difference",
+              "uiLabel": "차별점"
+            }
+          ]
+        },
+        "cta": {
+          "sceneIds": ["s4"],
+          "textRoles": ["cta"],
+          "recommendedPrimaryField": "ctaText"
+        }
+      }
+    },
+    {
+      "templateId": "T02",
+      "title": "오늘만 할인형",
+      "slotGroups": {
+        "hook": {
+          "sceneIds": ["s1"],
+          "textRoles": ["hook"],
+          "recommendedPrimaryField": "hookText",
+          "recommendedSupportField": "captions[0]"
+        },
+        "body": {
+          "sceneIds": ["s2", "s3"],
+          "textRoles": ["benefit", "urgency"],
+          "bodyBlocks": [
+            {
+              "blockId": "body_benefit",
+              "textRole": "benefit",
+              "uiLabel": "혜택"
+            },
+            {
+              "blockId": "body_urgency",
+              "textRole": "urgency",
+              "uiLabel": "기간/긴급성"
+            }
+          ]
+        },
+        "cta": {
+          "sceneIds": ["s4"],
+          "textRoles": ["cta"],
+          "recommendedPrimaryField": "ctaText"
+        }
+      }
+    },
+    {
+      "templateId": "T03",
+      "title": "동네 방문 유도형",
+      "slotGroups": {
+        "hook": {
+          "sceneIds": ["s1"],
+          "textRoles": ["region_hook"],
+          "recommendedPrimaryField": "hookText",
+          "recommendedSupportField": "captions[0]"
+        },
+        "body": {
+          "sceneIds": ["s2", "s3"],
+          "textRoles": ["visit_reason", "product_name"],
+          "bodyBlocks": [
+            {
+              "blockId": "body_reason",
+              "textRole": "visit_reason",
+              "uiLabel": "방문 이유"
+            },
+            {
+              "blockId": "body_product",
+              "textRole": "product_name",
+              "uiLabel": "대표 메뉴"
+            }
+          ]
+        },
+        "cta": {
+          "sceneIds": ["s4"],
+          "textRoles": ["cta"],
+          "recommendedPrimaryField": "ctaText"
+        }
+      }
+    },
+    {
+      "templateId": "T04",
+      "title": "한줄 후기형",
+      "slotGroups": {
+        "hook": {
+          "sceneIds": ["s1"],
+          "textRoles": ["review_quote"],
+          "recommendedPrimaryField": "hookText",
+          "recommendedSupportField": "captions[0]"
+        },
+        "body": {
+          "sceneIds": ["s2"],
+          "textRoles": ["product_name"],
+          "bodyBlocks": [
+            {
+              "blockId": "body_product",
+              "textRole": "product_name",
+              "uiLabel": "후기 대상 메뉴"
+            }
+          ]
+        },
+        "cta": {
+          "sceneIds": ["s3"],
+          "textRoles": ["cta"],
+          "recommendedPrimaryField": "ctaText"
+        }
+      }
+    }
+  ],
+  "futureCopyPayloadDraft": {
+    "copyDeck": {
+      "hook": {
+        "primaryLineField": "hookText",
+        "supportLineField": "captions[0]"
+      },
+      "body": {
+        "blocksField": "bodyBlocks",
+        "draftShape": [
+          {
+            "blockId": "body_product",
+            "textRole": "product_name",
+            "primaryLine": "",
+            "supportLine": ""
+          }
+        ]
+      },
+      "cta": {
+        "primaryLineField": "ctaText",
+        "supportLineField": null
+      }
+    }
+  }
+}

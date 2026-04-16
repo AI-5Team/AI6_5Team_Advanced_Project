@@ -1,0 +1,28 @@
+{
+  "purpose": "promotion",
+  "structure": ["hook", "benefit", "urgency", "cta"],
+  "regionPolicy": {
+    "minSlots": 2,
+    "maxRepeat": 3
+  },
+  "locationPolicy": {
+    "policyId": "strict_all_surfaces",
+    "forbiddenDetailLocationSurfaces": ["hookText", "ctaText", "captions", "hashtags", "sceneText", "subText"]
+  },
+  "templateIds": ["T02"],
+  "supportedQuickActions": [
+    "highlightPrice",
+    "shorterCopy",
+    "styleOverride",
+    "templateId"
+  ],
+  "captionRules": {
+    "minOptions": 3,
+    "maxLength": 75
+  },
+  "sampleHooks": [
+    "오늘만 할인",
+    "지금 안 오면 아쉬운 혜택",
+    "퇴근길에 바로 들를 이유"
+  ]
+}

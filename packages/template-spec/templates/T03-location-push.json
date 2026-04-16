@@ -1,0 +1,59 @@
+{
+  "templateId": "T03",
+  "title": "동네 방문 유도형",
+  "supportedBusinessTypes": ["cafe", "restaurant"],
+  "supportedPurposes": ["location_push"],
+  "supportedStyles": ["default", "friendly"],
+  "description": "지역명과 방문 동기를 함께 강조하는 템플릿",
+  "sceneSpecVersion": "v1",
+  "durationSec": 5.8,
+  "outputRatio": "9:16",
+  "safeArea": {
+    "top": 120,
+    "right": 72,
+    "bottom": 160,
+    "left": 72
+  },
+  "ctaPolicy": "final_scene_fixed",
+  "copyRulePurpose": "location_push",
+  "changeSetCompatibility": {
+    "highlightPrice": false,
+    "shorterCopy": true,
+    "emphasizeRegion": true,
+    "styleOverride": ["default", "friendly"]
+  },
+  "scenes": [
+    {
+      "sceneId": "s1",
+      "durationSec": 1.3,
+      "slot": "region_hook",
+      "textRole": "region_hook",
+      "mediaRole": "hero",
+      "effects": ["slide_in"]
+    },
+    {
+      "sceneId": "s2",
+      "durationSec": 1.8,
+      "slot": "visit_reason",
+      "textRole": "visit_reason",
+      "mediaRole": "detail",
+      "effects": ["light_zoom_in"]
+    },
+    {
+      "sceneId": "s3",
+      "durationSec": 1.5,
+      "slot": "product",
+      "textRole": "product_name",
+      "mediaRole": "detail",
+      "effects": ["fade_in"]
+    },
+    {
+      "sceneId": "s4",
+      "durationSec": 1.2,
+      "slot": "cta",
+      "textRole": "cta",
+      "mediaRole": "hero",
+      "effects": ["fade_out"]
+    }
+  ]
+}

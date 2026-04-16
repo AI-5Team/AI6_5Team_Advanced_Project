@@ -1,0 +1,46 @@
+# Local environment
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+!.env.example
+
+# Runtime / local databases
+.runtime/
+.tmp*/
+*.db
+*.sqlite3
+
+# Node / Python build outputs
+node_modules/
+.next/
+dist/
+coverage/
+.venv/
+*.tsbuildinfo
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+
+# Local logs
+*.log
+*.err.log
+.web-dev*.log
+
+# Generated artifacts
+artifacts/
+docs/experiments/artifacts/
+
+# Local tooling / editors
+.claude/
+.vscode/
+.idea/
+.DS_Store
+docs/.bkit-memory.json
+docs/.pdca-status.json
+
+# Local comparison materials, not part of trunk
+고급프로젝트가이드/
+팀원들 구현/

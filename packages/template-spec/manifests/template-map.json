@@ -1,0 +1,133 @@
+{
+  "version": "v1",
+  "phase": "P1",
+  "quickActionKeys": [
+    "highlightPrice",
+    "shorterCopy",
+    "emphasizeRegion",
+    "styleOverride",
+    "templateId"
+  ],
+  "templates": [
+    {
+      "templateId": "T01",
+      "file": "templates/T01-new-menu.json",
+      "businessTypes": ["cafe", "restaurant"],
+      "purposes": ["new_menu"],
+      "styles": ["default", "friendly"],
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride"
+      ]
+    },
+    {
+      "templateId": "T02",
+      "file": "templates/T02-promotion.json",
+      "businessTypes": ["cafe", "restaurant"],
+      "purposes": ["promotion"],
+      "styles": ["default", "friendly", "b_grade_fun"],
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride"
+      ]
+    },
+    {
+      "templateId": "T03",
+      "file": "templates/T03-location-push.json",
+      "businessTypes": ["cafe", "restaurant"],
+      "purposes": ["location_push"],
+      "styles": ["default", "friendly"],
+      "supportedQuickActions": [
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride"
+      ]
+    },
+    {
+      "templateId": "T04",
+      "file": "templates/T04-review.json",
+      "businessTypes": ["cafe", "restaurant"],
+      "purposes": ["review"],
+      "styles": ["friendly", "b_grade_fun"],
+      "supportedQuickActions": ["shorterCopy", "styleOverride"]
+    }
+  ],
+  "styles": [
+    {
+      "styleId": "default",
+      "file": "styles/default.json",
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "emphasizeRegion",
+        "templateId"
+      ]
+    },
+    {
+      "styleId": "friendly",
+      "file": "styles/friendly.json",
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride",
+        "templateId"
+      ]
+    },
+    {
+      "styleId": "b_grade_fun",
+      "file": "styles/b_grade_fun.json",
+      "supportedQuickActions": [
+        "shorterCopy",
+        "styleOverride",
+        "templateId"
+      ]
+    }
+  ],
+  "copyRules": [
+    {
+      "purpose": "new_menu",
+      "file": "copy-rules/new_menu.json",
+      "templateIds": ["T01"],
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride",
+        "templateId"
+      ]
+    },
+    {
+      "purpose": "promotion",
+      "file": "copy-rules/promotion.json",
+      "templateIds": ["T02"],
+      "supportedQuickActions": [
+        "highlightPrice",
+        "shorterCopy",
+        "styleOverride",
+        "templateId"
+      ]
+    },
+    {
+      "purpose": "review",
+      "file": "copy-rules/review.json",
+      "templateIds": ["T04"],
+      "supportedQuickActions": ["shorterCopy", "styleOverride", "templateId"]
+    },
+    {
+      "purpose": "location_push",
+      "file": "copy-rules/location_push.json",
+      "templateIds": ["T03"],
+      "supportedQuickActions": [
+        "shorterCopy",
+        "emphasizeRegion",
+        "styleOverride",
+        "templateId"
+      ]
+    }
+  ]
+}

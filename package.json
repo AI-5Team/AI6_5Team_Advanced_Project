@@ -1,0 +1,16 @@
+{
+  "name": "ai6-5team-advanced-project",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "build:web": "npm --workspace apps/web run build",
+    "dev:web": "npm --workspace apps/web run dev",
+    "lint:web": "npm --workspace apps/web run lint",
+    "api:test": "uv run --project services/api pytest services/api/tests",
+    "worker:test": "uv run --project services/worker pytest services/worker/tests",
+    "check": "npm run api:test && npm run worker:test && npm run lint:web && npm run build:web"
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "version": "draft-v1",
+  "status": "proposal",
+  "nonBreaking": true,
+  "goal": "Collect reference-derived hook candidates that can be mapped onto the current hook slot of T01-T04 without changing runtime behavior.",
+  "patterns": [
+    {
+      "patternId": "curiosity_question",
+      "description": "궁금증을 먼저 유발하는 질문형"
+    },
+    {
+      "patternId": "absurd_situation",
+      "description": "조금 과장된 상황을 먼저 던지는 B급 문제 제기형"
+    },
+    {
+      "patternId": "info_surprise",
+      "description": "정보성 놀라움을 먼저 던지는 짧은 사실형"
+    },
+    {
+      "patternId": "review_quote",
+      "description": "한 줄 반응이나 후기 인용으로 시작하는 형식"
+    }
+  ],
+  "hooks": [
+    {
+      "hookId": "hk01",
+      "patternId": "curiosity_question",
+      "supportedPurposes": ["new_menu", "promotion"],
+      "supportedTemplates": ["T01", "T02"],
+      "supportedStyles": ["default", "friendly", "b_grade_fun"],
+      "requiredTokens": ["region"],
+      "primaryLine": "{region}에서 이거 보셨나요?",
+      "shortLine": "이거 보셨나요?",
+      "exampleFilled": "성수동에서 이거 보셨나요?",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "새 메뉴나 프로모션의 첫 장면에 무난하게 얹기 좋고, 자극은 약하지만 범용성이 높습니다."
+    },
+    {
+      "hookId": "hk02",
+      "patternId": "absurd_situation",
+      "supportedPurposes": ["promotion"],
+      "supportedTemplates": ["T02"],
+      "supportedStyles": ["b_grade_fun"],
+      "requiredTokens": [],
+      "primaryLine": "오늘 안 오면 손해인가요?",
+      "shortLine": "안 오면 손해?",
+      "exampleFilled": "안 오면 손해?",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "혜택형 프로모션의 hook으로 쓰기 좋고, B급 톤을 과하지 않게 올릴 수 있습니다."
+    },
+    {
+      "hookId": "hk03",
+      "patternId": "info_surprise",
+      "supportedPurposes": ["new_menu"],
+      "supportedTemplates": ["T01"],
+      "supportedStyles": ["default", "friendly", "b_grade_fun"],
+      "requiredTokens": ["product_name"],
+      "primaryLine": "{product_name}, 진짜 나왔습니다",
+      "shortLine": "진짜 나왔습니다",
+      "exampleFilled": "딸기 말차 라떼, 진짜 나왔습니다",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "신메뉴 첫 공개 감각을 짧게 주는 데 적합합니다."
+    },
+    {
+      "hookId": "hk04",
+      "patternId": "curiosity_question",
+      "supportedPurposes": ["location_push"],
+      "supportedTemplates": ["T03"],
+      "supportedStyles": ["default", "friendly"],
+      "requiredTokens": ["region"],
+      "primaryLine": "퇴근길에 왜 {region}로 오죠?",
+      "shortLine": "왜 여기로 오죠?",
+      "exampleFilled": "퇴근길에 왜 성수동으로 오죠?",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "지역 방문 유도형에서 동선/방문 이유로 자연스럽게 연결됩니다."
+    },
+    {
+      "hookId": "hk05",
+      "patternId": "review_quote",
+      "supportedPurposes": ["review"],
+      "supportedTemplates": ["T04"],
+      "supportedStyles": ["friendly", "b_grade_fun"],
+      "requiredTokens": [],
+      "primaryLine": "\"한 번 먹고 기억나요\"",
+      "shortLine": "\"기억나요\"",
+      "exampleFilled": "\"한 번 먹고 기억나요\"",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "리뷰형 템플릿과 가장 직접적으로 맞물리는 시작 문장입니다."
+    },
+    {
+      "hookId": "hk06",
+      "patternId": "curiosity_question",
+      "supportedPurposes": ["promotion"],
+      "supportedTemplates": ["T02"],
+      "supportedStyles": ["default", "friendly", "b_grade_fun"],
+      "requiredTokens": ["benefit"],
+      "primaryLine": "{benefit}, 오늘만 맞나요?",
+      "shortLine": "오늘만 맞나요?",
+      "exampleFilled": "1+1 혜택, 오늘만 맞나요?",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "혜택의 구체성이 높을수록 잘 작동합니다."
+    },
+    {
+      "hookId": "hk07",
+      "patternId": "info_surprise",
+      "supportedPurposes": ["new_menu", "location_push"],
+      "supportedTemplates": ["T01", "T03"],
+      "supportedStyles": ["default", "friendly"],
+      "requiredTokens": ["region"],
+      "primaryLine": "{region}에서 요즘 이게 뜹니다",
+      "shortLine": "요즘 이게 뜹니다",
+      "exampleFilled": "성수동에서 요즘 이게 뜹니다",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "트렌드/지역감 결합형으로 신메뉴나 방문 유도형에 모두 쓸 수 있습니다."
+    },
+    {
+      "hookId": "hk08",
+      "patternId": "absurd_situation",
+      "supportedPurposes": ["promotion", "review"],
+      "supportedTemplates": ["T02", "T04"],
+      "supportedStyles": ["b_grade_fun"],
+      "requiredTokens": [],
+      "primaryLine": "다들 왜 이걸 또 찾죠?",
+      "shortLine": "왜 또 찾죠?",
+      "exampleFilled": "왜 또 찾죠?",
+      "templateFitClass": "partial_borrow",
+      "notes": "강한 B급 톤에는 맞지만 업종/브랜드에 따라 과해질 수 있습니다."
+    },
+    {
+      "hookId": "hk09",
+      "patternId": "review_quote",
+      "supportedPurposes": ["review", "location_push"],
+      "supportedTemplates": ["T03", "T04"],
+      "supportedStyles": ["friendly", "b_grade_fun"],
+      "requiredTokens": ["region"],
+      "primaryLine": "\"{region} 오면 여기부터 가요\"",
+      "shortLine": "\"여기부터 가요\"",
+      "exampleFilled": "\"성수동 오면 여기부터 가요\"",
+      "templateFitClass": "template_fit_candidate",
+      "notes": "후기와 지역 방문 유도를 같이 잡을 수 있는 문장입니다."
+    },
+    {
+      "hookId": "hk10",
+      "patternId": "info_surprise",
+      "supportedPurposes": ["new_menu", "promotion", "review"],
+      "supportedTemplates": ["T01", "T02", "T04"],
+      "supportedStyles": ["default", "friendly", "b_grade_fun"],
+      "requiredTokens": ["product_name"],
+      "primaryLine": "{product_name}, 생각보다 더 셉니다",
+      "shortLine": "생각보다 셉니다",
+      "exampleFilled": "흑임자 크림 라떼, 생각보다 더 셉니다",
+      "templateFitClass": "partial_borrow",
+      "notes": "카피는 강하지만 해석이 조금 추상적이라 body 블록이 잘 받쳐줘야 합니다."
+    }
+  ],
+  "selectionGuidelines": {
+    "default": [
+      "curiosity_question",
+      "info_surprise"
+    ],
+    "friendly": [
+      "curiosity_question",
+      "review_quote"
+    ],
+    "b_grade_fun": [
+      "absurd_situation",
+      "curiosity_question",
+      "review_quote"
+    ]
+  }
+}

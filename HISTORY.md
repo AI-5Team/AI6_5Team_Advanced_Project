@@ -1,0 +1,2870 @@
+# HISTORY
+
+이 파일은 저장소 전체의 누적 작업 히스토리를 한눈에 보는 용도입니다.  
+세부 로그는 `docs/daily/`, `docs/testing/`, `docs/experiments/`, `docs/adr/`에 남기고, 여기에는 "무엇을 바꿨는지 / 무엇을 검증했는지 / 무엇이 남았는지"만 짧게 요약합니다.
+
+## 운영 규칙
+
+1. 모든 작업 세션은 종료 전에 반드시 `HISTORY.md`를 갱신합니다.
+2. 각 항목에는 최소한 다음 4가지를 남깁니다.
+   - 날짜
+   - 핵심 변경
+   - 검증 여부
+   - 남은 리스크 또는 다음 액션
+3. 세부 구현 내용은 `docs/daily/`, 테스트는 `docs/testing/`, 실험은 `docs/experiments/`, 기준선 변경은 `docs/adr/`에 남기고 여기서는 링크만 요약합니다.
+4. 실험 세션을 시작할 때는 먼저 최근 `HISTORY.md` 항목을 읽고, 그 기준선을 바탕으로 실험 범위를 고정합니다.
+5. 이 규칙 변경은 `docs/adr/ADR-004-history-log-policy.md`를 기준으로 유지합니다.
+
+## 2026-04-16
+
+- 같은 날 후속으로 `2026-04-16 중간 팀 토의 브리핑` 문서를 추가했습니다.
+- 목적:
+  - `2026-04-09 팀 회의 브리핑` 이후 달라진 점을 잇고,
+  - 최근 방향 재판정과 본선 E2E 검증 결과를 회의용 언어로 다시 묶는 것입니다.
+- 핵심 내용:
+  - 현재 팀이 공식적으로 무엇을 본선 제품으로 부를지
+  - 영상 연구선을 본선과 어떻게 분리할지
+  - 다음 1주 우선순위를 사용자 테스트/게시 연동/모델 실험 중 어디에 둘지
+  를 회의 안건 기준으로 정리했습니다.
+- 관련 문서:
+  - `docs/daily/2026-04-16-team-meeting-brief.md`
+
+- 본선 `template/hybrid + upload assist` 경로에 대해 실제 end-to-end 검증을 추가로 진행했습니다.
+- 검증 내용:
+  - `apps/web/.env.local` 기준 웹이 `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`을 바라보는 것을 다시 확인했습니다.
+  - FastAPI `8000`은 처음에는 내려가 있었고, 첫 기동 시도는 `PYTHONPATH` 누락으로 실패했지만 이를 보정해 정상 기동시켰습니다.
+  - 이후 샘플 이미지 `docs/sample/음식사진샘플(맥주).jpg`로 `POST /api/projects -> /assets -> /generate -> /status -> /result`를 실제 호출해 `video.mp4`, `post.png`가 모두 `200`으로 내려오는 것을 확인했습니다.
+  - 이어서 브라우저 자동화 스펙 `artifacts/e2e-browser-generation.spec.ts`를 추가해 `http://127.0.0.1:3010`에서 실제로 파일 업로드와 `콘텐츠 만들기`를 누른 뒤, 결과 화면의 `영상 원본 열기`, `게시글 원본 열기`가 둘 다 `8000`번 FastAPI media 경로를 가리키고 각 응답도 `200`임을 확인했습니다.
+- 판정:
+  - 현재 본선은 적어도 `web -> api -> worker -> media -> web preview` 기준으로는 실제 동작합니다.
+  - 다만 이 검증은 어디까지나 현재 기준선인 `template/hybrid(static_concat)` 경로에 대한 것이고, frontier video generation 품질 검증을 의미하지는 않습니다.
+- 검증:
+  - FastAPI 기동/요청 로그: `artifacts/api-start-20260416-110220.err.txt`, `artifacts/api-start-20260416-110220.out.txt`
+  - 브라우저 E2E: `npx playwright test artifacts/e2e-browser-generation.spec.ts --reporter=line`
+- 남은 리스크 / 다음 액션:
+  - 본선 경로는 닫혔지만, 실제 사용자 테스트 기준으로는 `upload assist` 사용성 검증과 게시 연동 phase 분리가 아직 남아 있습니다.
+  - 다음 우선순위는 본선 회귀 방지와 사용자 테스트 시나리오 고정입니다.
+
+- 메인 웹 화면을 다시 줄였습니다. 이번에는 `Seedance / Dreamina / Topview` 류의 sparse landing 구조를 참고해, 첫 화면에서 설명과 장식을 걷어내고 `큰 문장 + 대표 이미지 + 하나의 실행 블록`만 남기도록 메인 구조를 다시 짰습니다.
+- 변경 내용:
+  - 전역 톤을 흑백 기준으로 다시 맞추고, 녹색/주황 강조색과 박스형 장식 배지를 제거했습니다.
+  - 상단 네비는 브랜드와 3개 진입점만 남기고 보조 설명을 제거했습니다.
+  - 메인 화면은 기존의 `좌측 비주얼 / 우측 입력 레일` 구성을 버리고, `전체 폭 히어로 + 하단 실행 블록` 구조로 다시 구성했습니다.
+  - 실행 블록은 `사진 / 목적 / 가게 / 시작` 4개 그룹만 남기고, 첫 화면에서 다음 액션이 살짝 보이도록 히어로 높이도 다시 조정했습니다.
+  - 샘플 SVG도 모두 흑백 시안으로 바꿨습니다.
+  - 같은 날 second pass로 `history / accounts`까지 메인과 같은 톤으로 다시 눌렀고, 남아 있던 warm tint와 상태색을 전역에서 제거했습니다.
+  - `workspace overview / rail / main / list row / kpi`를 카드보다는 섹션과 구분선 중심으로 다시 정리했습니다.
+  - 메인 히어로 카피와 실행 블록 라벨도 한 단계 더 줄여 첫 화면 문장량을 낮췄습니다.
+  - 같은 날 third pass로 흑백 시안을 다시 걷어내고, `Seedance / Dreamina / Topview` 레퍼런스의 공통 톤을 기준으로 `cyan accent + coral secondary` 팔레트를 다시 넣었습니다.
+  - 라이트/다크 모드를 전역 theme variable로 묶고, 상단 네비에 토글을 추가했습니다.
+  - 샘플 SVG, 결과 미리보기, 업로드 준비 패널도 새 theme를 따라가도록 수정했습니다.
+  - 후속 fourth pass로 `결과 확인` placeholder 이미지에 남아 있던 grayscale filter 잔재를 제거하고, 결과 섹션도 theme 기반 컬러 필터로 다시 맞췄습니다.
+  - local preview가 무스타일처럼 보이던 문제는 코드 회귀가 아니라 stale `next start` 프로세스가 이전 build manifest를 계속 서빙하던 운영 이슈였고, `3010` 포트 프로세스를 재기동해 최신 static asset hash로 복구했습니다.
+  - 같은 날 후속 contrast pass로 light/dark 모드의 보조 문구와 입력 라벨 대비를 다시 조정했습니다. 입력/섹션/최근 작업 라벨은 `theme-muted`로 통일하고, 어두운 히어로/결과 placeholder footer 위 문구는 `theme-hero-meta`로 분리해 가독성을 복구했습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - production preview `http://localhost:3010`
+  - Playwright 캡처:
+    - `artifacts/home-ui-reference-rebuild-v5.png`
+    - `artifacts/home-ui-reference-rebuild-v5-mobile.png`
+    - `artifacts/history-ui-reference-rebuild-v4.png`
+    - `artifacts/accounts-ui-reference-rebuild-v4.png`
+    - `artifacts/home-ui-color-light-v1.png`
+    - `artifacts/home-ui-color-dark-v1.png`
+    - `artifacts/home-result-placeholder-color-light-v1.png`
+    - `artifacts/home-result-placeholder-color-dark-v1.png`
+    - `artifacts/home-ui-color-mobile-light-v1.png`
+    - `artifacts/home-ui-recovery-check-light-v1.png`
+    - `artifacts/home-ui-recovery-check-dark-v1.png`
+    - `artifacts/home-ui-contrast-fix-light-v1.png`
+    - `artifacts/home-ui-contrast-fix-dark-v1.png`
+    - `artifacts/accounts-ui-color-dark-v1.png`
+- 남은 리스크 / 다음 액션:
+  - 메인 첫 화면은 이전보다 레퍼런스 구조와 색감에 가까워졌지만, 실행 블록 정보량과 라이트/다크 선호도는 실제 사용자 테스트에서 한 번 더 봐야 합니다.
+  - 다음 우선순위는 실제 사용자 테스트와 이력/채널 화면 밀도 추가 정리입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-16-codex.md`
+
+## 2026-04-14
+
+- `EXP-263`으로 `Wan 2.1` 720p-first feasibility를 실제 실행했습니다.
+- 결과:
+  - `Wan 2.1 VACE 1.3B`: 720 기준 `17 frames / 8 steps`에서도 1시간 내 완료 실패
+  - `Wan 2.1 T2V 1.3B`: 720 기준 `576x1024 / 17 frames / 8 steps` 완료 (`193.48s`) but preserve 붕괴
+  - `Wan 2.1 I2V 14B 720P + group offloading`: 720 기준 `576x1024 / 9 frames / 6 steps` 완료 (`3216.43s`) with strong early-frame preserve but very slow runtime and late-frame instability
+- 판정:
+  - `16GB라서 Wan 계열 전부 불가`는 아님
+  - 다만 현 장비 기준 로컬 본선 후보는 `I2V 14B offload`만 제한적으로 남고, 그것도 reference lane 수준으로 보는 것이 맞습니다
+- 관련 문서:
+  - `docs/experiments/EXP-263-wan21-720p-first-feasibility.md`
+- `docs/planning/09_EXECUTION_PRIORITY_AND_MODEL_CANDIDATES.md`를 추가해 현재 자원 기준 실행 우선순위와 차후 frontier 후보를 분리했습니다.
+- 현재 자원 기준으로는 `template/hybrid` 본선을 유지하면서, 로컬 후보는 `Wan 2.1 VACE 1.3B -> Wan 2.1 T2V 1.3B -> Wan 2.1 I2V 14B offload(조건부)` 순으로만 짧게 검증하도록 정리했습니다.
+- `Wan 2.2`는 현재 16GB 환경 기준 후보에서 내렸고, frontier 후보는 `Seedance 2.0`, `Veo 3.1`을 future candidate track으로 올렸습니다.
+- 해상도 원칙도 수정했습니다. `480p`는 smoke check까지만 허용하고, 광고 품질 판단용 benchmark는 `720p-first`로 고정했습니다.
+- 추가 원칙:
+  - `Sora`는 새 control signal이 생길 때만 제한적으로 재개
+  - `LTX 추가 OVAT`, `Sora single-photo prompt/crop/edit 반복`은 계속 중단
+- 관련 문서:
+  - `docs/planning/09_EXECUTION_PRIORITY_AND_MODEL_CANDIDATES.md`
+- `EXP-261` 병렬 에이전트 4종 전방위 감사를 추가로 진행했습니다 (기획 정렬도·실험 드리프트·제품 코드·모델 전략을 각 서브에이전트가 독립 분석 후 종합).
+- 핵심 판정: `완전 자동 숏폼 영상 생성` 비전은 현재 자원(OpenAI key 중심)으로 출시가 어렵고, `하이브리드 패키징 + LLM 카피 + 업로드 보조` 축소 비전이 더 현실적이라는 점을 다시 확인했습니다.
+- 즉시 중단 후보: LTX OVAT 추가 실험, Sora motion prompt 추가 OVAT, coverage audit 추가 사이클.
+- 즉시 검토 후보: LLM 카피 생성 코드 연결, 제품 정의 재선언, 사용자 검증 착수.
+- 주의: `EXP-261`의 외부 모델 일정/세부 비용 일부는 공식 재검증 전 가설로 보류했습니다. 이 정리 문서는 `EXP-262`에 남겼습니다.
+- 관련 문서:
+  - `docs/experiments/EXP-261-parallel-agent-comprehensive-audit.md`
+  - `docs/experiments/EXP-262-reconciled-audit-after-extra-agent-feedback.md`
+
+## 2026-04-15
+
+- 참고 글의 구조를 기준으로 메인 디자인을 한 번 더 다시 짰습니다.
+- 변경 내용:
+  - 브런치 글 `AI로 내가 원하는 GUI 디자인하는 프롬프트 비결`의 6단계 구조를 참고해, 메인 화면을 `광고 숏폼 스튜디오`라는 단일 주제로 다시 묶었습니다.
+  - 메인 화면은 `카피 스택 + 대표 비주얼 + 얇은 입력 레일` 구조로 다시 정리했고, 상단 네비도 박스형 메뉴에서 더 단정한 작업용 상단으로 바꿨습니다.
+  - 대표 이미지는 메인 비주얼에서 `cover` 기준으로 채워지게 조정했습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - dev 서버 `http://localhost:3005`
+  - Playwright 캡처로 `home/history/accounts` 재확인
+- 남은 리스크 / 다음 액션:
+  - 메인은 방향이 크게 바뀌었지만, `history`, `accounts`는 아직 메인만큼 강하게 새 언어로 맞춘 상태는 아닙니다.
+  - 다음 우선순위는 보조 화면 정렬과 모바일 캡처 재확인, 실제 사용자 테스트입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- 공용 네비와 보조 화면까지 다시 정리했습니다.
+- 변경 내용:
+  - 상단 네비를 `브랜드 블록 + 3개 작업 진입점(콘텐츠 만들기 / 지난 작업 / 채널 연결)` 구조로 바꿔, 메인과 보조 화면의 첫인상을 통일했습니다.
+  - `history`, `accounts` 화면은 큰 소개 박스형 화면에서 벗어나 `상단 개요 + 목록/상태 + 작업 영역` 구조로 다시 짰습니다.
+  - `업로드 준비물`, `결과 미리보기` 톤도 함께 정리해, 보조 화면 안에서 오래된 카드 스타일이 튀지 않게 맞췄습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - dev 서버 `http://localhost:3004`
+  - Playwright 캡처로 `home/history/accounts` 재확인
+- 남은 리스크 / 다음 액션:
+  - 데스크톱 기준 톤은 많이 정리됐지만, 모바일 폭 기준으로 상단 네비와 보조 화면 비율은 한 번 더 확인해야 합니다.
+  - 다음 우선순위는 모바일 캡처 확인과 실제 사용자 3명 테스트입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- 메인 웹 디자인을 사실상 처음부터 다시 짰습니다.
+- 변경 내용:
+  - 기존의 `소개 + 여러 패널` 구조를 버리고, `미디어 스테이지 + 입력 레일 + 하단 결과/업로드/지난 작업` 구조로 재구성했습니다.
+  - 메인 화면은 이제 왼쪽에서 대표 장면과 보조 장면을 먼저 보여 주고, 오른쪽에는 사진/목적/업종/지역 입력만 얇게 남기도록 바꿨습니다.
+  - 메인 샘플 미리보기는 `api/sample-assets` 대신 `public/sample-assets` 정적 파일을 쓰도록 바꿔, dev 재컴파일 시 샘플 이미지가 검게 보이던 문제를 우회했습니다.
+- 검증:
+  - `npm run lint:web && npm run build:web`
+  - dev 서버 `http://localhost:3002`
+  - Playwright 캡처로 `home/history/accounts` 실화면 확인
+- 남은 리스크 / 다음 액션:
+  - 메인 화면은 다시 짰지만, `history`, `accounts`는 같은 강도로 재디자인한 상태는 아닙니다.
+  - 다음 우선순위는 모바일 폭 캡처 검증과 실제 사용자 3명 테스트입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- 사용자 테스트용 웹을 한 번 더 실제 화면 기준으로 정리했습니다.
+- 변경 내용:
+  - 메인 화면 상단을 이미지 중심 구조로 다시 잡고, `사진 넣기 -> 결과 확인 -> 업로드 준비` 흐름이 첫 화면에서 바로 읽히도록 정리했습니다.
+  - 끊겨 있던 버튼 클래스와 옛 CSS 변수 호환을 정리해, 버튼과 설명 박스가 브라우저 기본 스타일처럼 보이던 문제를 수정했습니다.
+  - 사진 목록은 썸네일 카드로 바꾸고, 결과 대기 상태도 빈 박스 대신 실제 결과 위치를 예상할 수 있는 미리보기 영역으로 바꿨습니다.
+  - `업로드 보조 패키지` 표현은 `업로드 준비물`로 바꿔 더 직관적으로 읽히게 수정했습니다.
+- 검증:
+  - `npm run lint:web && npm run build:web`
+  - 개발 서버 clean restart 후 `Invoke-WebRequest http://localhost:3001`
+  - Playwright 화면 캡처로 `home/history/accounts` 실화면 확인
+- 남은 리스크 / 다음 액션:
+  - 메인 화면은 정리됐지만, 실제 중장년층 테스트에서는 여전히 `업로드 준비`, `지난 작업` 문구를 더 줄여야 할 수 있습니다.
+  - 다음 우선순위는 모바일 캡처 확인과 실제 사용자 3명 관찰 테스트입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- `history`, `accounts` 보조 화면도 다시 정리했습니다.
+- 변경 내용:
+  - `history` 화면에서 운영자용 상세 블록을 걷어내고, `최근 작업 목록 -> 결과 다시 보기 -> 업로드 준비 -> 이어서 열기`만 남기도록 단순화했습니다.
+  - `accounts` 화면은 `인스타그램 연결 상태 확인` 중심 설명으로 다시 쓰고, `연결이 안 되어도 업로드 준비물로 계속 진행 가능` 메시지를 전면에 올렸습니다.
+  - 전역 스타일 radius/그림자도 낮춰 전체 화면이 데모 카드 모음처럼 보이지 않게 정리했습니다.
+  - 사용자 테스트 진행용 문서 `docs/testing/test-scenario-185-user-test-script-simple-flow.md`를 추가했습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - 개발 서버 clean restart 후 `Invoke-WebRequest http://127.0.0.1:3001`
+  - `Invoke-WebRequest http://127.0.0.1:3001/history`
+  - `Invoke-WebRequest http://127.0.0.1:3001/accounts`
+- 남은 리스크 / 다음 액션:
+  - 이제 실제 3명 정도의 1차 사용자 테스트를 바로 진행해 막히는 문구와 버튼 구간을 기록하는 것이 다음 순서입니다.
+  - 사용자 테스트에서 `업로드 준비` 버튼 의미를 여전히 헷갈리면 해당 영역을 한 번 더 줄여야 합니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+  - `docs/testing/test-scenario-185-user-test-script-simple-flow.md`
+
+- 메인 웹 진입 화면을 다시 짰습니다.
+- 변경 내용:
+  - 새 사용자 테스트용 `SimpleWorkbench`를 추가하고, 메인 진입을 이 단순 플로우 화면으로 교체했습니다.
+  - 첫 화면을 `사진 넣기 -> 목적 고르기 -> 결과 만들기 -> 결과 확인 -> 업로드 준비` 흐름으로 재구성했습니다.
+  - 이전 워크벤치형 화면에서 많던 내부 용어와 복잡한 선택지를 메인에서 걷어내고, 큰 버튼과 짧은 설명 중심으로 정리했습니다.
+  - 업로드 준비 단계는 `캡션 / 해시태그 / 썸네일 문구` 수정과 `업로드 완료 표시`만 남기도록 단순화했습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - `Invoke-WebRequest http://127.0.0.1:3001`
+  - `Invoke-WebRequest http://127.0.0.1:3001/history`
+- 남은 리스크 / 다음 액션:
+  - 메인 화면은 사용자 테스트용 수준까지 정리됐지만, `history`, `accounts` 등 보조 화면 문구는 아직 운영자 관점 표현이 일부 남아 있습니다.
+  - 다음 우선순위는 `사용자 테스트 스크립트 문서화`와 `모바일 폭 기준 최종 문구/버튼 배치 점검`입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- 사용자 테스트용 웹 정리 작업을 추가로 진행했습니다.
+- 변경 내용:
+  - 메인 웹을 `사진 업로드 -> 결과 확인 -> 문구 다듬기 -> 업로드 준비` 순서로 다시 정리했습니다.
+  - 전면의 `즉시 업로드` 버튼은 내리고, `업로드용 패키지 만들기`를 본선 흐름으로 올렸습니다.
+  - 업로드 전용 `캡션 / 해시태그 / 썸네일 문구` 편집 영역을 결과 화면에 추가했습니다.
+  - approved hybrid inventory, copy policy, prompt baseline, scene plan 같은 내부 검토 정보는 접는 영역으로 내려 사용자 테스트 화면의 복잡도를 줄였습니다.
+  - 상단 네비게이션과 메타데이터도 `데모`, `Phase 1`, `MVP` 중심 표현에서 사용자 테스트용 표현으로 바꿨습니다.
+- 검증:
+  - `npm run lint:web`
+  - `npm run build:web`
+  - `Invoke-WebRequest http://127.0.0.1:3001`
+  - `Invoke-WebRequest http://127.0.0.1:3001/history`
+- 남은 리스크 / 다음 액션:
+  - 현재 웹은 사용자 테스트에 바로 쓸 수 있지만, 이력/계정/씬랩 같은 내부 화면 문구는 아직 한 번 더 정리 여지가 있습니다.
+  - 다음 우선순위는 `사용자 테스트 시나리오 정리`와 `관찰 포인트 정의`입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- 본선 복귀 작업으로 `template/hybrid + upload assist` 경로의 빈 부분이던 카피 생성 production 연결을 보강했습니다.
+- 변경 내용:
+  - `services/worker/pipelines/generation.py`에 `WORKER_COPY_PROVIDER=openai|auto` 기반 OpenAI 카피 생성 브리지를 추가했습니다.
+  - 기본 동작은 계속 `deterministic_rule`이며, OpenAI 호출 실패/정책 위반 시 즉시 deterministic fallback 하도록 유지했습니다.
+  - result API는 이제 `copyGeneration.sourceMode/provider/model/fallbackReason`를 함께 반환합니다.
+- 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py services/api/app/services/runtime.py services/api/app/schemas/api.py services/worker/tests/test_generation_pipeline.py services/api/tests/test_api_smoke.py`
+  - `pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `pytest services/api/tests/test_api_smoke.py -q`
+  - `pytest services/worker/tests/test_generation_pipeline.py services/api/tests/test_api_smoke.py -q`
+- 남은 리스크 / 다음 액션:
+  - 현재 OpenAI 카피 브리지는 본선 연결 1차 버전이라, 실제 광고 품질 평가는 소수 샘플 human review가 추가로 필요합니다.
+  - 다음 우선순위는 `copyGeneration` 상태를 web/result/upload assist에 실제로 노출하거나, `deterministic_rule` vs `openai_live` 기본값을 운영 기준으로 결정하는 일입니다.
+- 관련 문서:
+  - `docs/daily/2026-04-15-codex.md`
+
+- `EXP-267`로 `EXP-266`의 `1-step` / `2-step` micro-LoRA를 held-out 샘플에 비교 적용하려는 delta check를 시도했습니다.
+- 실행 내용:
+  - `scripts/run_wan21_i2v_micro_lora_holdout_eval.py`를 추가해 `base / step001 / step002` 비교 runner를 만들었습니다.
+  - 먼저 `규카츠`, `장어덮밥` 2샘플에 `13 frames / 8 steps` 기준 compare를 시도했습니다.
+  - 너무 무거워 `규카츠` 1샘플, `9 frames / 4 steps` smoke compare로 한 번 더 축소 재시도했습니다.
+- 결과:
+  - 두 경우 모두 process는 살아 있고 GPU는 계속 바쁘게 돌았지만, 세션 안에 `wan21_output.mp4`까지 닫히지 않았습니다.
+  - artifact는 `prepared_input.png`와 실행 로그까지만 남았고, final video/summary compare는 생성되지 않았습니다.
+- 판정:
+  - `EXP-266`이 보여준 "학습이 너무 느리다"에 더해, `EXP-267`은 "held-out compare inference도 현재 장비에서 비실용적"이라는 점을 추가로 확인했습니다.
+  - 따라서 로컬 `Wan 2.1 I2V-14B` LoRA 라인은 현재 장비 기준으로 train/eval 모두 본선 우선순위에서 내리는 것이 맞습니다.
+- 관련 문서:
+  - `docs/experiments/EXP-267-wan21-i2v-micro-lora-holdout-delta-check.md`
+  - `docs/experiments/artifacts/exp-267-wan21-i2v-micro-lora-holdout-delta-check/run.stdout.log`
+  - `docs/experiments/artifacts/exp-267-wan21-i2v-micro-lora-holdout-delta-check/run.stderr.log`
+
+- `EXP-266`으로 `Wan 2.1 I2V-14B preserve-first micro-LoRA kill test`의 실제 dry run을 로컬 16GB 환경에서 실행했습니다.
+- 실행 내용:
+  - `scripts/export_exp265_to_finetrainers_dataset.py`를 추가해 `EXP-265` manifest를 finetrainers video dataset 형식으로 export했습니다.
+  - `scripts/run_wan21_i2v_micro_lora_dryrun.py`, `scripts/wan21_i2v_micro_lora_train_entry.py`를 추가해 Windows 로컬 실행 경로를 만들었습니다.
+  - `train 18 pair / eval 2 sample` dataset으로 `1 step(grad_acc=8)`과 `2 step(grad_acc=1)` dry run을 실제 완료했습니다.
+- 결과:
+  - `Wan 2.1 I2V-14B micro-LoRA`는 현재 `RTX 4080 SUPER 16GB`에서도 **실행 자체는 가능**했습니다.
+  - 다만 `1 step` 전체 종료는 약 `25분 59초`, `2 step` 전체 종료는 약 `1시간 11분 25초`가 걸렸습니다.
+  - 따라서 `EXP-264` Gate 1의 기준이던 `20 training steps / 2시간 이내`는 현재 장비에서 통과 불가로 판정했습니다.
+- 판정:
+  - 이번 LoRA 라인은 `OOM으로 즉시 종료`가 아니라 `시간 초과로 fail-fast gate 실패`입니다.
+  - 즉 로컬 16GB에서 계속 미는 본선 후보는 아니며, dataset/entrypoint를 보존한 채 `cloud GPU` 또는 `24GB+ VRAM` 확보 시에만 재개하는 것이 맞습니다.
+- 관련 문서:
+  - `docs/experiments/EXP-266-wan21-i2v-micro-lora-dry-run.md`
+  - `docs/experiments/artifacts/exp-266-wan21-i2v-micro-lora-dry-run/export_summary.json`
+
+- `EXP-265`로 `EXP-264`의 Step 1(dataset manifest)을 실제 artifact까지 포함해 고정했습니다.
+- 실행 내용:
+  - `scripts/prepare_wan21_i2v_lora_micro_dataset.py`를 추가해 `docs/sample` 기반 synthetic preserve clip 16개를 생성했습니다.
+  - approved hybrid inventory에서 현재 쓸 수 있는 reference clip 2개(`맥주`)를 train pair에 추가했습니다.
+  - held-out eval sample은 `규카츠`, `장어덮밥` 2개로 고정했습니다.
+  - 결과적으로 micro-LoRA 후보 manifest는 `train 18 pair(16 synthetic + 2 approved reference) / eval 2 sample`로 정리됐습니다.
+- preflight 결과:
+  - `torch`, `diffusers`, `transformers`, `accelerate`, `ffmpeg`는 현재 환경에서 사용 가능
+  - `finetrainers`, `bitsandbytes`는 아직 설치되어 있지 않음
+  - 따라서 Step 1은 완료했지만, `20-step dry run`은 training toolchain 미준비 상태라 아직 시작하지 않았습니다.
+- 관련 문서:
+  - `docs/experiments/EXP-265-wan21-i2v-micro-lora-dataset-prep.md`
+  - `docs/experiments/artifacts/exp-265-wan21-i2v-micro-lora-dataset-prep/manifest.json`
+
+- `EXP-264`로 현재 장비/자원 기준에서 해볼 만한 단 하나의 LoRA/fine-tuning 실험 설계를 문서화했습니다.
+- 결론:
+  - broad finetuning이 아니라 `Wan 2.1 I2V-14B preserve-first micro-LoRA kill test` 1회만 검토하는 것이 맞습니다.
+  - 이유는 `원본 보존` 질문에 직접 닿으면서도, 실패 시 바로 LoRA 라인을 닫을 수 있는 정보량이 가장 크기 때문입니다.
+  - 반대로 `Wan 2.1 T2V-1.3B`는 장비 친화적이더라도 preserve 질문에 직접 답하지 못하고, `Wan 2.2`와 full finetuning은 현재 장비 기준 범위를 벗어납니다.
+- 현재 자원 기준 핵심 제약도 명시했습니다.
+  - `RTX 4080 SUPER 16GB`
+  - 승인된 high-quality hybrid inventory는 `EXP-255` 기준 총 `3건`
+  - 따라서 대규모 일반화 학습이 아니라 `micro-LoRA kill test`로만 접근해야 합니다.
+- 관련 문서:
+  - `docs/experiments/EXP-264-single-priority-lora-feasibility-design.md`
+
+- `EXP-263`의 후속 검증으로 `Wan 2.1 I2V 14B 720P + group offloading`을 `맥주` 샘플에 같은 조건으로 다시 실행했습니다.
+- 결과:
+  - `prepared_input.png` 생성과 모델 로드는 완료
+  - stderr progress는 `0/6`까지만 찍히고 실제 step 전진 없이 장시간 체류
+  - 약 `95분` 관찰 후에도 final video/frame artifact가 생성되지 않아 수동 중단
+- 판정:
+  - `Wan 2.1 I2V 14B offload`는 “아주 느리지만 도는 후보”가 아니라, **샘플 의존적으로 stall할 수 있는 reference-only 후보**로 더 낮춰야 합니다.
+  - 따라서 현재 로컬 영상선은 추가 반복보다 `본선 제품 정리`를 우선하는 것이 맞습니다.
+- 관련 문서:
+  - `docs/experiments/EXP-263-wan21-720p-first-feasibility.md`
+  - `docs/planning/09_EXECUTION_PRIORITY_AND_MODEL_CANDIDATES.md`
+
+- `EXP-260` 전방위 에이전트 심층 감사 및 방향 재평가를 병렬 처리 형식으로 진행했습니다.
+- 결론적으로 '사진만으로 완전 자동 영상 생성 및 변환' 목표는 현재 자원(OpenAI 중심) 및 현재 SOTA 기술이 가진 불가피한 보존/모션 상충 한계(Morphing 문제 등)로 인해 이 비전 그대로의 런칭은 불가능(불가)함을 명확히 판정했습니다.
+- 기획 방향을 '하이브리드 패키징 템플릿 기반 광고 보조 앱'으로 명확하고 공식적으로 축소할 것을 강력히 권고하며, 무의미해진 단일 이미지-투-비디오 모션 추가 실험의 전면 중단(Stop)을 지시했습니다.
+- 향후 리소스는 영상 모델 깎기가 아니라, 템플릿과 정적/줌팬 구조 위에서의 빠른 응답성(Quick Action)과 다채널 업로드 보조(Assist) UX를 강화하는 쪽에 집중해야 합니다.
+
+- `EXP-259`로 저장소 전체 방향을 다시 심판하는 감사 문서를 남겼습니다.
+- 결론은 분명합니다. 현재 저장소는 `광고 숏폼 생성 서비스`의 원형 비전보다 `template/hybrid 광고 패키징 + 업로드 보조` 쪽에 더 강하게 수렴했습니다.
+- 즉 현재 자원(OpenAI key 중심, Veo/Seedance 미연결) 기준으로는 `사진 몇 장 -> 광고용 숏폼 영상 자동 생성` 비전은 사실상 어렵고, `approved hybrid source + template overlay + upload assist` 축소 비전만 현실적이라고 판정했습니다.
+- 검증:
+  - planning / ADR / experiments / daily / worker / api / web 전수 재검토
+  - `uv run --project services/worker pytest services/worker/tests -q`
+  - `uv run --project services/api pytest services/api/tests -q`
+  - `npm run build:web`
+  - OpenAI / Google / BytePlus 공식 문서로 Sora / Veo / Seedance 접근성·가격·쿼터 재확인
+- 관련 문서:
+  - `docs/experiments/EXP-259-launch-direction-reassessment.md`
+- 남은 리스크 / 다음 액션:
+  - 제품 정의를 `완전 자동 숏폼 생성`으로 유지할지, `hybrid 광고 패키징 도구`로 공식 축소할지 먼저 닫아야 합니다.
+  - 전자를 유지하려면 상위 모델 접근 전략과 예산/쿼터 확보가 선행돼야 합니다.
+  - 후자를 선택하면 실험/진단 surface를 줄이고 launch surface 정리로 바로 복귀해야 합니다.
+- `EXP-230`에서 검증한 `product_control_motion` uplift를 실제 worker renderer 경로로 옮겼습니다.
+- `services/worker/renderers/media.py`의 `render_video()`를 확장해 static concat과 `ffmpeg zoompan` deterministic motion을 같은 API에서 처리하게 했습니다.
+- `services/worker/pipelines/generation.py`에는 `b_grade_fun` 전용 motion preset selector를 추가했고, `render-meta.json`에 `rendererMotionMode`, `rendererMotionPresets`를 기록하도록 바꿨습니다.
+- `services/worker/tests/test_media_renderer.py`를 새로 추가했고, 기존 generation pipeline 테스트에도 static/motion baseline 판정을 붙였습니다.
+- 검증:
+  - `python -m py_compile services/worker/renderers/media.py services/worker/pipelines/generation.py services/worker/tests/test_generation_pipeline.py services/worker/tests/test_media_renderer.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py -q`
+  - 실제 `T02 / promotion / b_grade_fun` sample generation을 실행했고 `rendererMotionMode=zoompan_control` artifact를 `docs/experiments/artifacts/exp-231-b-grade-renderer-motion-bridge/`에 남겼습니다.
+- 관련 문서:
+  - `docs/daily/2026-04-14-codex.md`
+  - `docs/experiments/EXP-231-b-grade-renderer-motion-bridge.md`
+- 남은 리스크 / 다음 액션:
+  - 이어서 `EXP-232`로 generic motion만 있던 상태를 넘어서, shot-aware prepare/motion policy를 `b_grade_fun` 본선 renderer에 연결했습니다.
+  - `services/worker/renderers/framing.py`를 추가해 shot classifier와 prepare-mode policy를 pure-PIL로 옮겼고, `generation.py`에서는 `rendererFramingMode`, `rendererScenePolicies`까지 기록하도록 확장했습니다.
+  - 실제 `규카츠`, `맥주`, `커피`, `라멘` 샘플 audit 결과, `drink/tray lane`은 기대한 분기가 살아났고 `preserve_shot`의 `contain_blur`만 후속 검토 포인트로 남았습니다.
+  - 추가 검증:
+    - `python -m py_compile services/worker/renderers/framing.py services/worker/pipelines/generation.py services/worker/tests/test_generation_pipeline.py services/worker/tests/test_media_renderer.py`
+    - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py -q`
+    - 실제 `T02 / promotion / b_grade_fun`으로 `규카츠`, `맥주`, `커피`, `라멘` sample generation을 실행했고 artifact를 `docs/experiments/artifacts/exp-232-shot-aware-bgrade-renderer-policy-audit/`에 남겼습니다.
+  - 추가 문서:
+    - `docs/experiments/EXP-232-shot-aware-bgrade-renderer-policy-audit.md`
+  - 이어서 `EXP-233`으로 `preserve_shot`만 따로 `contain_blur vs cover_center` OVAAT를 수행했고, `cover_center`가 전반적으로 cleaner하다는 결론을 얻었습니다.
+  - 이 결론을 바로 `generation.py` 정책에 반영해, 현재 preserve lane은 `cover_center` 기본 + `period scene`만 `cover_top`으로 정리했습니다.
+  - 이후 `EXP-234` rollout check에서 `라멘`, `순두부짬뽕`, `장어덮밥`, `귤모찌` 샘플을 실제 생성했고, blur backdrop 위화감이 사라진 cleaner 결과를 확인했습니다.
+  - 추가 검증:
+    - `python -m py_compile services/worker/pipelines/generation.py services/worker/tests/test_generation_pipeline.py`
+    - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py -q`
+    - 실제 preserve sample generation artifact를 `docs/experiments/artifacts/exp-234-preserve-shot-cover-center-rollout-check/`에 남겼습니다.
+  - 추가 문서:
+    - `docs/experiments/EXP-233-preserve-shot-framing-policy-ovaat.md`
+    - `docs/experiments/EXP-234-preserve-shot-cover-center-rollout-check.md`
+  - 이어서 `EXP-235`로 `T04 / review / b_grade_fun`에도 동일 shot-aware 정책을 실제 샘플(`규카츠`, `맥주`, `커피`, `라멘`)에 적용해 확인했고, 별도 보정 없이 유지 가능하다는 판단을 얻었습니다.
+  - 관련 문서:
+    - `docs/experiments/EXP-235-review-template-shot-aware-policy-check.md`
+  - 추가로 `EXP-236`에서 helper-level parity와 canonical sample pool regression까지 닫았습니다.
+  - `services/worker/renderers/framing.py`의 `choose_prepare_mode()` preserve 기본값을 `cover_center`로 정렬했고, `scripts/shot_aware_renderer_baseline_matrix.py`를 추가해 `T02/T04 x 8샘플 = 16 run` 매트릭스를 실제 worker generation pipeline으로 재현 가능하게 만들었습니다.
+  - 결과 요약 기준으로 `T02`, `T04` 모두 first scene classifier parity가 `8/8`였고, `tray/drink/preserve` 세 lane 모두 예상한 prepare/motion sequence를 유지했습니다.
+  - 추가 검증:
+    - `python -m py_compile services/worker/renderers/framing.py services/worker/tests/test_generation_pipeline.py scripts/shot_aware_renderer_baseline_matrix.py`
+    - `python scripts/shot_aware_renderer_baseline_matrix.py`
+    - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-236-shot-aware-renderer-baseline-matrix.md`
+  - 현재 단계에서 `b_grade_fun` renderer baseline은 freeze 가능한 수준까지 올라왔고, 다음 우선순위는 새 모델 추가보다 `결과 확인 UX / template-result package 흐름`과 다시 맞물려 보는 쪽입니다.
+  - 다만 곧바로 `real video lane`도 다시 열어 봤고, `EXP-237`에서 `맥주` 1샘플 기준 `product_control_motion / veo31 / sora2_current_best / manual_veo` live benchmark를 재실행했습니다.
+  - 결과는 `product_control_motion`과 `manual_veo`만 유효했고, live provider는 다시 `veo31=429 quota`, `sora2_current_best=401 invalid_api_key`로 막혔습니다.
+  - 즉 현재 실제 영상 생성 실험의 병목은 prompt 미세조정이 아니라 provider access입니다.
+  - 추가 검증:
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-237-real-video-lane-reopen-beer-check --providers product_control_motion veo31 sora2_current_best manual_veo --images "docs\\sample\\음식사진샘플(맥주).jpg" --output-dir docs/experiments/artifacts/exp-237-real-video-lane-reopen-beer-check`
+  - 추가 문서:
+    - `docs/experiments/EXP-237-real-video-lane-reopen-beer-check.md`
+  - 이후 사용자가 `OPENAI_API_KEY`를 새로 교체했다고 알려 주었고, `Gemini/Veo`는 일단 보류하기로 했습니다.
+  - 이에 따라 `EXP-238`에서 `맥주` 1샘플 기준 `product_control_motion / sora2_current_best / manual_veo` live benchmark를 다시 실행했고, 이번에는 `sora2_current_best`가 정상 완료돼 Sora live lane이 operational 상태로 복귀했음을 확인했습니다.
+  - 다만 `맥주` 기준 current best는 `avg_rgb_diff=7.91`로 `product_control_motion(7.43)`과 큰 차이가 없었고, 체감상 `고품질 still + 약한 drift`에 가까워 곧바로 production baseline으로 올리기 어려웠습니다.
+  - 이어서 `EXP-239`로 `맥주 + 규카츠` 2샘플 비교를 수행했고, `맥주`에서는 near-static, `규카츠`에서는 motion은 커졌지만 `사진 유지형 템플릿 광고`보다 `구도 재해석형 생성` 쪽으로 기우는 편차가 확인됐습니다.
+  - 즉 `sora2_current_best`는 현재 두 샘플에서 일관된 production baseline을 형성하지 못합니다.
+  - 마지막으로 `EXP-240`으로 기존 `EXP-91` motion prompt family를 새 키 기준으로 rerun했고, `micro_motion_locked=1.60`, `camera_orbit_beats=1.61`로 phrase-level tuning만으로는 `preserve + motion` trade-off를 풀지 못한다는 점을 재확인했습니다.
+  - 추가 검증:
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-238-sora2-lane-reopen-beer-check --providers product_control_motion sora2_current_best manual_veo --images "docs\\sample\\음식사진샘플(맥주).jpg" --output-dir docs/experiments/artifacts/exp-238-sora2-lane-reopen-beer-check`
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-239-sora2-current-best-vs-control-two-sample-check --providers product_control_motion sora2_current_best manual_veo --images "docs\\sample\\음식사진샘플(맥주).jpg" "docs\\sample\\음식사진샘플(규카츠).jpg" --output-dir docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check`
+    - `python scripts/sora2_motion_prompt_family_ovaat.py --output-dir docs/experiments/artifacts/exp-240-sora2-motion-prompt-family-rerun-after-key-restore`
+  - 추가 문서:
+    - `docs/experiments/EXP-238-sora2-lane-reopen-beer-check.md`
+    - `docs/experiments/EXP-239-sora2-current-best-vs-control-two-sample-check.md`
+    - `docs/experiments/EXP-240-sora2-motion-prompt-family-rerun-after-key-restore.md`
+  - 이어서 `EXP-241`로 tray/full-plate 대표 샘플인 `규카츠`에 대해 `baseline_auto / hero_medium_zoom / hero_tight_zoom` 입력 프레이밍 live OVAT를 수행했습니다.
+  - 첫 run만 보면 `baseline_auto(avg_rgb_diff=14.99)`가 가장 그럴듯했고, `hero_medium_zoom(6.47)`, `hero_tight_zoom(2.37)`로 갈수록 motion이 줄었습니다.
+  - 즉 tray lane에서도 tighter crop은 current best가 아니라, 오히려 motion을 더 죽이는 경향이 확인됐습니다.
+  - 그런데 더 큰 문제는 repeatability였습니다.
+  - 같은 prepared input으로 `hero_tight_zoom`를 다시 실행했을 때 `avg_rgb_diff=7.58`이 나왔고, `EXP-239`의 같은 `hero_tight_zoom=21.04`와도 큰 차이가 났습니다.
+  - `baseline_auto`도 repeat2에서 `avg_rgb_diff=4.20`으로 첫 run `14.99`에서 크게 흔들렸습니다.
+  - 즉 현재 tray lane Sora 병목은 `어떤 framing이 맞는가`보다 `같은 framing도 일관된 결과를 못 준다`는 repeatability 문제 쪽이 더 큽니다.
+  - 추가 검증:
+    - `python -m py_compile scripts/sora2_input_framing_live_ovaat.py scripts/hosted_video_sora2_first_try.py`
+    - `python scripts/sora2_input_framing_live_ovaat.py --image "docs\\sample\\음식사진샘플(규카츠).jpg" --output-dir "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat" --manual-summary "docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/manual_veo/규카츠/summary.json"`
+    - `python scripts/hosted_video_sora2_first_try.py --image "docs\\sample\\음식사진샘플(규카츠).jpg" --prepared-image "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/prepared_variants/hero_tight_zoom.png" --output-dir "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/hero_tight_zoom_repeat2" --prompt "Close-up tabletop food commercial shot of crispy gyukatsu set, crispy texture preserved, gentle steam rising, subtle natural motion only, static close-up, very small camera push-in, warm restaurant lighting, realistic appetizing food motion, no object morphing, no extra ingredients." --seconds 4 --model sora-2`
+    - `python scripts/hosted_video_sora2_first_try.py --image "docs\\sample\\음식사진샘플(규카츠).jpg" --prepared-image "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/prepared_variants/baseline_auto.png" --output-dir "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/baseline_auto_repeat2" --prompt "Close-up tabletop food commercial shot of crispy gyukatsu set, crispy texture preserved, gentle steam rising, subtle natural motion only, static close-up, very small camera push-in, warm restaurant lighting, realistic appetizing food motion, no object morphing, no extra ingredients." --seconds 4 --model sora-2`
+  - 추가 문서:
+    - `docs/experiments/EXP-241-sora2-gyukatsu-input-framing-live-ovaat.md`
+  - 이어서 `EXP-242`로 `EXP-241 baseline_auto`를 source로 한 tray lane `edit path`를 live로 검증했습니다.
+  - `same_shot_micro_motion`은 motion gain이 거의 없고 preserve loss만 커졌고, `same_shot_push_in_motion`은 motion이 source보다 오히려 낮아졌습니다.
+  - 즉 규카츠 기준 `edit path`는 active 다음 축으로 보기 어렵습니다.
+  - 반대로 `EXP-243`에서는 generated clip 위에 `HOOK / DETAIL / CTA` template overlay를 얹는 하이브리드 packaging proof를 만들었고, raw clip보다 서비스 적합성이 즉시 올라가는 방향을 확인했습니다.
+  - 이 결과는 `generation quality 문제`와 `광고 패키징 문제`를 분리해서 다뤄야 한다는 쪽을 더 강하게 지지합니다.
+  - 추가 검증:
+    - `python -m py_compile scripts/sora2_edit_live_ovaat.py scripts/hosted_video_sora2_first_try.py`
+    - `python scripts/sora2_edit_live_ovaat.py --source-summary "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/baseline_auto/규카츠/summary.json" --output-dir "docs/experiments/artifacts/exp-242-sora2-gyukatsu-edit-live-ovaat"`
+    - `python -m py_compile scripts/generated_video_hybrid_packaging_proof.py`
+    - `python scripts/generated_video_hybrid_packaging_proof.py --source-video "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/baseline_auto/규카츠/sora2_first_try.mp4" --output-dir "docs/experiments/artifacts/exp-243-generated-video-hybrid-packaging-proof"`
+  - 추가 문서:
+    - `docs/experiments/EXP-242-sora2-gyukatsu-edit-live-ovaat.md`
+    - `docs/experiments/EXP-243-generated-video-hybrid-packaging-proof.md`
+  - 이어서 `EXP-244`로 하이브리드 packaging을 `proof script` 수준에서 멈추지 않고, `services/worker/renderers/media.py`의 실제 renderer 유틸로 올렸습니다.
+  - `create_scene_overlay_image()`, `render_hybrid_video()`를 추가했고, generated mp4 위에 시간대별 overlay를 얹는 최소 bridge가 이제 서비스 코드 경로에 들어왔습니다.
+  - `scripts/generated_video_hybrid_packaging_proof.py`도 이 renderer 유틸을 직접 쓰도록 정리했습니다.
+  - `services/worker/tests/test_media_renderer.py`에는 hybrid overlay 렌더링 테스트를 추가했고, `pytest` 결과는 `2 passed`였습니다.
+  - renderer utility 기반으로 `exp-244-hybrid-renderer-bridge-spike` artifact를 다시 생성했고, raw generated clip보다 서비스 광고 문법이 더 빠르게 읽히는 하이브리드 결과를 재확인했습니다.
+  - 추가 검증:
+    - `python -m py_compile services/worker/renderers/media.py services/worker/tests/test_media_renderer.py scripts/generated_video_hybrid_packaging_proof.py`
+    - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py -q`
+    - `python scripts/generated_video_hybrid_packaging_proof.py --experiment-id EXP-244-hybrid-renderer-bridge-spike --source-video "docs/experiments/artifacts/exp-241-sora2-gyukatsu-input-framing-live-ovaat/baseline_auto/규카츠/sora2_first_try.mp4" --output-dir "docs/experiments/artifacts/exp-244-hybrid-renderer-bridge-spike"`
+  - 추가 문서:
+    - `docs/experiments/EXP-244-hybrid-renderer-bridge-spike.md`
+  - 현재 우선순위는 `새 프롬프트`나 `edit path`가 아니라, `generated source mp4`를 generation pipeline이 직접 받을 수 있는 최소 hybrid entry를 만드는 쪽입니다.
+
+## 2026-04-13
+
+- `new_menu / T01 / friendly / highlightPrice=true / shorterCopy=false / emphasizeRegion=true` 공백을 메우는 `EXP-165`를 추가했습니다.
+- `highlightPrice=true`를 숫자 가격 생성이 아니라 `difference/subText 가치 포인트 강조`로 해석하는 prompt variant를 `gpt-5-mini` 기준으로 고정했습니다.
+- `EXP-165` single run은 baseline/candidate 모두 `100.0`, repeatability도 둘 다 `3/3 pass`를 기록했습니다.
+- 이어서 `new_menu_friendly_region_anchor_highlight_price` profile을 manifest에 추가했고, `EXP-166` snapshot `accepted=true`, runtime `option_match`를 확인했습니다.
+- `EXP-167`, `EXP-168` 기준 coverage는 `option_match=8`, `coverage_gap=15`, `exact_match=9`, priority는 `P2=3`, `P3=7`, `P4=5`로 줄었습니다.
+- 즉 남은 최상위 `P2`는 `new_menu highlightPrice + shorterCopy combined` 1건과 `review` 단일 토글 2건입니다.
+- 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python scripts/run_prompt_experiment.py --experiment-id EXP-165`
+  - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-165 --repeat 3`
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id new_menu_friendly_region_anchor_highlight_price`
+  - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-167 --experiment-title "Prompt Baseline Coverage Audit After New Menu Highlight Price Profile" --artifact-name exp-167-prompt-baseline-coverage-audit-after-new-menu-highlight-price-profile.json`
+  - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-167-prompt-baseline-coverage-audit-after-new-menu-highlight-price-profile.json" --experiment-id EXP-168 --experiment-title "Prompt Baseline Quick Option Gap Priority After New Menu Highlight Price Profile" --artifact-name exp-168-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-profile.json`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+- 관련 문서:
+  - `docs/daily/2026-04-13-codex.md`
+  - `docs/experiments/EXP-165-gpt5mini-new-menu-highlight-price-region-anchor.md`
+  - `docs/experiments/EXP-166-new-menu-friendly-region-anchor-highlight-price-profile-snapshot.md`
+  - `docs/experiments/EXP-167-prompt-baseline-coverage-audit-after-new-menu-highlight-price-profile.md`
+  - `docs/experiments/EXP-168-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-profile.md`
+  - `docs/testing/test-scenario-166-gpt5mini-new-menu-highlight-price-region-anchor.md`
+  - `docs/testing/test-scenario-167-new-menu-friendly-region-anchor-highlight-price-profile-snapshot.md`
+  - `docs/testing/test-scenario-168-prompt-baseline-coverage-audit-after-new-menu-highlight-price-profile.md`
+  - `docs/testing/test-scenario-169-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-profile.md`
+- 남은 리스크 / 다음 액션:
+  - 이어서 `EXP-169`로 `new_menu / highlightPrice=true / shorterCopy=true / emphasizeRegion=true` combined profile도 추가했습니다.
+  - `EXP-169` single run은 baseline/candidate 모두 `100.0`, repeatability도 둘 다 `3/3 pass`를 기록했습니다.
+  - `EXP-170` snapshot `accepted=true`, runtime `option_match`까지 확인했고, `EXP-171`, `EXP-172` 기준 coverage는 `option_match=9`, `coverage_gap=14`, `exact_match=10`, priority는 `P2=2`, `P3=8`, `P4=4`가 됐습니다.
+  - 즉 `new_menu` 비지역 `P2`는 모두 정리됐고, 남은 최상위 `P2`는 `review / shorterCopy=false`, `review / highlightPrice=true` 2건입니다.
+  - 추가 검증:
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-169`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-169 --repeat 3`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id new_menu_friendly_region_anchor_highlight_price_shorter_copy`
+    - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-171 --experiment-title "Prompt Baseline Coverage Audit After New Menu Highlight Price Shorter Copy Profile" --artifact-name exp-171-prompt-baseline-coverage-audit-after-new-menu-highlight-price-shorter-copy-profile.json`
+    - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-171-prompt-baseline-coverage-audit-after-new-menu-highlight-price-shorter-copy-profile.json" --experiment-id EXP-172 --experiment-title "Prompt Baseline Quick Option Gap Priority After New Menu Highlight Price Shorter Copy Profile" --artifact-name exp-172-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-shorter-copy-profile.json`
+    - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-169-gpt5mini-new-menu-highlight-price-shorter-copy-region-anchor.md`
+    - `docs/experiments/EXP-170-new-menu-friendly-region-anchor-highlight-price-shorter-copy-profile-snapshot.md`
+    - `docs/experiments/EXP-171-prompt-baseline-coverage-audit-after-new-menu-highlight-price-shorter-copy-profile.md`
+    - `docs/experiments/EXP-172-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-shorter-copy-profile.md`
+    - `docs/testing/test-scenario-170-gpt5mini-new-menu-highlight-price-shorter-copy-region-anchor.md`
+    - `docs/testing/test-scenario-171-new-menu-friendly-region-anchor-highlight-price-shorter-copy-profile-snapshot.md`
+    - `docs/testing/test-scenario-172-prompt-baseline-coverage-audit-after-new-menu-highlight-price-shorter-copy-profile.md`
+    - `docs/testing/test-scenario-173-prompt-baseline-quick-option-gap-priority-after-new-menu-highlight-price-shorter-copy-profile.md`
+  - 이어서 `EXP-173`으로 `review / T04 / b_grade_fun / highlightPrice=false / shorterCopy=false / emphasizeRegion=false` 공백을 메웠습니다.
+  - `EXP-173` single run은 baseline/candidate 모두 `100.0`, repeatability도 둘 다 `3/3 pass`를 기록했습니다.
+  - candidate는 hook 길이를 늘리지 않고, `subText` 쪽에만 식감/풍미/재방문 이유 설명을 추가해 `shorterCopy=false` 의미를 더 정확히 반영했습니다.
+  - `review_strict_fallback_surface_lock_shorter_copy_off` profile을 manifest에 추가했고, `EXP-174` snapshot `accepted=true`, runtime `option_match`, worker `8 passed`, api `5 passed`를 확인했습니다.
+  - `EXP-175`, `EXP-176` 기준 coverage는 `option_match=10`, `coverage_gap=13`, `exact_match=11`, priority는 `P2=2`, `P3=9`, `P4=2`가 됐습니다.
+  - 즉 남은 최상위 `P2`는 이제 둘 다 `review highlightPrice=true` 축입니다.
+  - 추가 검증:
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-173`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-173 --repeat 3`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_shorter_copy_off`
+    - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-175 --experiment-title "Prompt Baseline Coverage Audit After Review Shorter Copy Off Profile" --artifact-name exp-175-prompt-baseline-coverage-audit-after-review-shorter-copy-off-profile.json`
+    - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-175-prompt-baseline-coverage-audit-after-review-shorter-copy-off-profile.json" --experiment-id EXP-176 --experiment-title "Prompt Baseline Quick Option Gap Priority After Review Shorter Copy Off Profile" --artifact-name exp-176-prompt-baseline-quick-option-gap-priority-after-review-shorter-copy-off-profile.json`
+    - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-173-gpt5mini-review-shorter-copy-off-surface-lock.md`
+    - `docs/experiments/EXP-174-review-strict-fallback-surface-lock-shorter-copy-off-profile-snapshot.md`
+    - `docs/experiments/EXP-175-prompt-baseline-coverage-audit-after-review-shorter-copy-off-profile.md`
+    - `docs/experiments/EXP-176-prompt-baseline-quick-option-gap-priority-after-review-shorter-copy-off-profile.md`
+    - `docs/testing/test-scenario-174-gpt5mini-review-shorter-copy-off-surface-lock.md`
+    - `docs/testing/test-scenario-175-review-strict-fallback-surface-lock-shorter-copy-off-profile-snapshot.md`
+    - `docs/testing/test-scenario-176-prompt-baseline-coverage-audit-after-review-shorter-copy-off-profile.md`
+    - `docs/testing/test-scenario-177-prompt-baseline-quick-option-gap-priority-after-review-shorter-copy-off-profile.md`
+  - 이어서 `EXP-177`으로 `review / highlightPrice=true / shorterCopy=false / emphasizeRegion=false` 공백을 메웠습니다.
+  - `EXP-177` single run은 baseline/candidate 모두 `100.0`, repeatability도 둘 다 `3/3 pass`를 기록했습니다.
+  - candidate는 가격 숫자나 할인 문구를 만들지 않고, `또 생각남`, `조합이 완벽` 같은 만족감 근거를 foreground하는 방식으로 `highlightPrice=true`를 해석했습니다.
+  - `review_strict_fallback_surface_lock_highlight_price_shorter_copy_off` profile을 manifest에 추가했고, `EXP-178` snapshot `accepted=true`, runtime `option_match`, worker `9 passed`, api `5 passed`를 확인했습니다.
+  - `EXP-179`, `EXP-180` 기준 coverage는 `option_match=11`, `coverage_gap=12`, `exact_match=12`, priority는 `P2=1`, `P3=10`, `P4=1`이 됐습니다.
+  - 마지막으로 `EXP-181`로 `review / highlightPrice=true / shorterCopy=true / emphasizeRegion=false` 공백도 메웠습니다.
+  - `EXP-181` single run은 baseline/candidate 모두 `100.0`, repeatability도 둘 다 `3/3 pass`를 기록했습니다.
+  - candidate는 `고소한 육즙`, `진한 국물 조합` 같은 짧은 만족감 근거를 앞세우면서도 `shorterCopy=true` 압축을 유지했습니다.
+  - `review_strict_fallback_surface_lock_highlight_price` profile을 manifest에 추가했고, `EXP-182` snapshot `accepted=true`, runtime `option_match`, worker `10 passed`, api `5 passed`를 확인했습니다.
+  - `EXP-183`, `EXP-184` 기준 coverage는 `option_match=12`, `coverage_gap=11`, `exact_match=13`, priority는 `P3=11`만 남았습니다.
+  - 즉 비지역 단일 quick option `P2`는 이번 세션에서 모두 정리됐고, 남은 gap은 전부 `emphasizeRegion`이 포함된 `P3` 축입니다.
+  - 추가 검증:
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-177`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-177 --repeat 3`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_highlight_price_shorter_copy_off`
+    - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-179 --experiment-title "Prompt Baseline Coverage Audit After Review Highlight Price Shorter Copy Off Profile" --artifact-name exp-179-prompt-baseline-coverage-audit-after-review-highlight-price-shorter-copy-off-profile.json`
+    - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-179-prompt-baseline-coverage-audit-after-review-highlight-price-shorter-copy-off-profile.json" --experiment-id EXP-180 --experiment-title "Prompt Baseline Quick Option Gap Priority After Review Highlight Price Shorter Copy Off Profile" --artifact-name exp-180-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-shorter-copy-off-profile.json`
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-181`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-181 --repeat 3`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_highlight_price`
+    - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-183 --experiment-title "Prompt Baseline Coverage Audit After Review Highlight Price Profile" --artifact-name exp-183-prompt-baseline-coverage-audit-after-review-highlight-price-profile.json`
+    - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-183-prompt-baseline-coverage-audit-after-review-highlight-price-profile.json" --experiment-id EXP-184 --experiment-title "Prompt Baseline Quick Option Gap Priority After Review Highlight Price Profile" --artifact-name exp-184-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-profile.json`
+    - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-177-gpt5mini-review-highlight-price-shorter-copy-off-surface-lock.md`
+    - `docs/experiments/EXP-178-review-strict-fallback-surface-lock-highlight-price-shorter-copy-off-profile-snapshot.md`
+    - `docs/experiments/EXP-179-prompt-baseline-coverage-audit-after-review-highlight-price-shorter-copy-off-profile.md`
+    - `docs/experiments/EXP-180-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-shorter-copy-off-profile.md`
+    - `docs/experiments/EXP-181-gpt5mini-review-highlight-price-surface-lock.md`
+    - `docs/experiments/EXP-182-review-strict-fallback-surface-lock-highlight-price-profile-snapshot.md`
+  - 이어서 남아 있던 `review / emphasizeRegion=true` 4건도 `EXP-213`, `EXP-215`, `EXP-217`, `EXP-219`로 모두 닫았습니다.
+  - 네 실험 모두 baseline/candidate single run `100.0`, repeatability `3/3 pass`를 기록했고, deterministic reference는 여전히 `region repeated more than allowed`로만 실패했습니다.
+  - 각 조합은 `review_strict_fallback_surface_lock_region_anchor`, `review_strict_fallback_surface_lock_shorter_copy_off_region_anchor`, `review_strict_fallback_surface_lock_highlight_price_shorter_copy_off_region_anchor`, `review_strict_fallback_surface_lock_highlight_price_region_anchor` profile로 manifest에 반영했습니다.
+  - `EXP-214`, `EXP-216`, `EXP-218`, `EXP-220` snapshot은 전부 `accepted=true`였고, runtime summary는 네 조건 모두 `option_match`를 반환했습니다.
+  - `EXP-221`, `EXP-222` 기준 coverage는 `option_match=23`, `default_match=1`, `exact_match=24`, `recommendedAction=none`, `totalQuickOptionGaps=0`까지 내려갔습니다.
+  - 즉 현재 prompt baseline quick-option catalog는 전부 exact match가 가능하고, 다음 질문은 baseline completion이 아니라 baseline 비교/재평가 쪽으로 넘어가야 합니다.
+  - 추가 검증:
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-213`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-213 --repeat 3`
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-215`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-215 --repeat 3`
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-217`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-217 --repeat 3`
+    - `python scripts/run_prompt_experiment.py --experiment-id EXP-219`
+    - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-219 --repeat 3`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_region_anchor`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_shorter_copy_off_region_anchor`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_highlight_price_shorter_copy_off_region_anchor`
+    - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock_highlight_price_region_anchor`
+    - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-221 --experiment-title "Prompt Baseline Coverage Audit After Review Region Anchor Profiles" --artifact-name exp-221-prompt-baseline-coverage-audit-after-review-region-anchor-profiles.json`
+    - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact "E:\\Codeit\\AI6_5Team_Advanced_Project\\docs\\experiments\\artifacts\\exp-221-prompt-baseline-coverage-audit-after-review-region-anchor-profiles.json" --experiment-id EXP-222 --experiment-title "Prompt Baseline Quick Option Gap Priority After Review Region Anchor Profiles" --artifact-name exp-222-prompt-baseline-quick-option-gap-priority-after-review-region-anchor-profiles.json`
+    - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py`
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-213-gpt5mini-review-region-anchor.md`
+    - `docs/experiments/EXP-214-review-strict-fallback-surface-lock-region-anchor-profile-snapshot.md`
+    - `docs/experiments/EXP-215-gpt5mini-review-shorter-copy-off-region-anchor.md`
+    - `docs/experiments/EXP-216-review-strict-fallback-surface-lock-shorter-copy-off-region-anchor-profile-snapshot.md`
+    - `docs/experiments/EXP-217-gpt5mini-review-highlight-price-shorter-copy-off-region-anchor.md`
+    - `docs/experiments/EXP-218-review-strict-fallback-surface-lock-highlight-price-shorter-copy-off-region-anchor-profile-snapshot.md`
+    - `docs/experiments/EXP-219-gpt5mini-review-highlight-price-region-anchor.md`
+    - `docs/experiments/EXP-220-review-strict-fallback-surface-lock-highlight-price-region-anchor-profile-snapshot.md`
+    - `docs/experiments/EXP-221-prompt-baseline-coverage-audit-after-review-region-anchor-profiles.md`
+    - `docs/experiments/EXP-222-prompt-baseline-quick-option-gap-priority-after-review-region-anchor-profiles.md`
+  - 이어서 `EXP-223`으로 현재 채택한 review surface-lock prompt를 고정한 채 `Gemma 4`와 `gpt-5-mini`를 다시 비교했습니다.
+  - single run에서는 두 모델이 모두 `100.0`을 기록해, 현재 review prompt는 더 이상 `gpt-5-mini만 통과하는 prompt`가 아니라는 점이 확인됐습니다.
+  - 하지만 같은 조건을 3회 반복한 `EXP-224`에서는 결과가 갈렸고, Gemma 4는 `0/3 timeout`, `gpt-5-mini`는 `3/3 pass`, 평균 latency 약 `5.2초`를 기록했습니다.
+  - 즉 review fallback 현재 분리는 `모델 품질 차이`보다 `기본 transport repeatability 차이`가 더 큰 이유라는 쪽으로 재정리됐습니다.
+  - 따라서 현재 review lane에서 `gpt-5-mini` 유지 판단은 여전히 타당하고, Gemma 4를 다시 후보에 올리려면 다음 실험은 새 prompt가 아니라 `timeout/retry transport` 운영성 검증이어야 합니다.
+  - 이어서 `EXP-225`로 카피 축을 현재 baseline에서 동결하고, 이후 실험 우선순위를 영상 baseline 재정렬로 옮긴다는 방향 전환 문서를 추가했습니다.
+  - 핵심은 `카피 미세조정 중단`, `영상 70~80% 우선`, `판정 기준은 보존성 / motion / repeatability 3축 고정`입니다.
+  - 특히 다음부터는 `single-photo + phrase 미세조정` 반복보다, 모델 baseline 재확인과 입력 방식 변화 실험을 먼저 하도록 기준을 정했습니다.
+  - 추가 검증:
+    - `python -m py_compile services/worker/experiments/prompt_harness.py`
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py -q`
+    - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-223`
+    - inline repeatability runner로 `EXP-223` 3회 반복 실행
+    - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - 추가 문서:
+    - `docs/experiments/EXP-223-review-surface-lock-current-baseline-model-comparison.md`
+    - `docs/experiments/EXP-224-review-surface-lock-current-baseline-model-comparison-repeatability.md`
+    - `docs/experiments/EXP-225-video-baseline-reset-after-copy-freeze.md`
+    - `docs/experiments/EXP-226-current-direction-review-before-video-baseline.md`
+    - `docs/experiments/EXP-183-prompt-baseline-coverage-audit-after-review-highlight-price-profile.md`
+    - `docs/experiments/EXP-184-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-profile.md`
+    - `docs/testing/test-scenario-178-gpt5mini-review-highlight-price-shorter-copy-off-surface-lock.md`
+    - `docs/testing/test-scenario-179-review-strict-fallback-surface-lock-highlight-price-shorter-copy-off-profile-snapshot.md`
+    - `docs/testing/test-scenario-180-prompt-baseline-coverage-audit-after-review-highlight-price-shorter-copy-off-profile.md`
+    - `docs/testing/test-scenario-181-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-shorter-copy-off-profile.md`
+    - `docs/testing/test-scenario-182-gpt5mini-review-highlight-price-surface-lock.md`
+    - `docs/testing/test-scenario-183-review-strict-fallback-surface-lock-highlight-price-profile-snapshot.md`
+    - `docs/testing/test-scenario-184-prompt-baseline-coverage-audit-after-review-highlight-price-profile.md`
+    - `docs/testing/test-scenario-185-prompt-baseline-quick-option-gap-priority-after-review-highlight-price-profile.md`
+  - 이어서 `EXP-226`으로 영상 baseline 전환이 서비스 기획과 맞는지 다시 감사했습니다.
+  - 결론은 `영상 baseline 전환은 맞지만 조건부`입니다.
+  - 다음 영상 작업은 생성형 영상 모델을 본선으로 가정하는 실험이 아니라, `본선 템플릿 숏폼 대비 생성형 영상이 보조 또는 대체 후보가 될 수 있는지` 판정하는 baseline이어야 합니다.
+  - 따라서 다음 비교에는 `local LTX`, `Sora 2`, `manual Veo reference`뿐 아니라 `template motion + compositor` 또는 현 deterministic renderer 산출물을 product control로 포함해야 합니다.
+  - `manual Veo`는 맥주 샘플의 품질 참고점으로는 강하지만, 규카츠 샘플에서 원본 보존 실패가 있었으므로 계속 `quality upper-bound reference only`로 유지합니다.
+  - 다음 액션은 새 모델 확장이 아니라 `product control 확정 -> 제한된 영상 baseline 비교 -> 결과에 따른 input modality 또는 compositor 분기`입니다.
+  - 이어서 `EXP-227`로 `의도된 B급`과 `실패한 생성`을 구분하는 품질 gate를 문서화했습니다.
+  - 기준은 `원본 보존성`, `광고 체감 품질`, `반복 안정성`, `서비스 적합성` 4개로 고정했고, QR/주변 오브젝트 재구성 같은 red flag는 즉시 탈락으로 정리했습니다.
+  - 같은 흐름으로 `scripts/video_upper_bound_benchmark.py`에 `product_control` provider와 `--benchmark-id`를 추가해, 본선 control을 기존 영상 benchmark에 포함할 수 있게 했습니다.
+  - `EXP-228`에서는 `규카츠`, `맥주` 샘플 기준으로 `product_control`, `local_ltx`, `manual_veo`를 다시 비교했습니다.
+  - 결과적으로 `product_control`은 motion 수치는 낮아도 컷 전환, 오버레이, CTA가 살아 있어 `광고 문법 control`로 유효했고, `local_ltx`는 보존성은 강하지만 여전히 near-static 성격이 강했습니다.
+  - `manual Veo`는 계속 품질 상한선 reference로는 의미 있었지만, 특히 규카츠의 QR/주변 오브젝트 재구성 문제 때문에 production 후보로 보긴 어렵다는 점이 다시 확인됐습니다.
+  - 따라서 다음 active 비교는 `product control`을 고정한 채 `Sora 2 current best`를 같은 scorecard로 붙이는 방향이 적절합니다.
+  - 추가 검증:
+    - `python -m py_compile scripts/video_upper_bound_benchmark.py`
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-228-product-control-video-baseline-bridge --providers product_control local_ltx manual_veo --output-dir docs/experiments/artifacts/exp-228-product-control-video-baseline-bridge`
+  - 추가 문서:
+    - `docs/experiments/EXP-227-bgrade-quality-gate-and-video-baseline-scorecard.md`
+    - `docs/experiments/EXP-228-product-control-video-baseline-bridge.md`
+  - 이어서 `EXP-229`로 `Sora 2 current best`를 `product_control` 기준선에 올리는 비교를 시도했습니다.
+  - `scripts/video_upper_bound_benchmark.py`에 `sora2_current_best` provider를 추가했고, 샘플별 `hero_tight_zoom` prepared input을 자동 생성하도록 보강했습니다.
+  - 이번 정의에서 `Sora 2 current best`는 `EXP-92`, `EXP-93` 기준으로 `hero_tight_zoom + baseline prompt`로 고정했습니다.
+  - 다만 실제 live 실행은 `규카츠`, `맥주` 모두 `401 invalid_api_key`로 즉시 실패했습니다.
+  - 즉 현재 병목은 `Sora prompt/입력 전략`보다 `OPENAI_API_KEY` 상태이며, benchmark 경로와 prepared input은 정상 생성됐습니다.
+  - 따라서 키만 복구되면 같은 커맨드로 `product_control / local_ltx / sora2_current_best / manual_veo` 비교를 즉시 재실행할 수 있습니다.
+  - 추가 검증:
+    - `python -m py_compile scripts/video_upper_bound_benchmark.py`
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-229-sora2-current-best-vs-product-control --providers product_control local_ltx sora2_current_best manual_veo --output-dir docs/experiments/artifacts/exp-229-sora2-current-best-vs-product-control`
+  - 추가 문서:
+    - `docs/experiments/EXP-229-sora2-current-best-vs-product-control.md`
+  - 이어서 `EXP-230`으로 외부 생성형이 아니라 `product_control` 자체를 더 광고형으로 만드는 deterministic motion OVAT를 진행했습니다.
+  - `scripts/video_upper_bound_benchmark.py`에 `product_control_motion` provider를 추가했고, `ffmpeg zoompan` 기반 scene 내부 push-in motion을 넣도록 확장했습니다.
+  - `규카츠`에서는 `product_control avg_rgb_diff=0.65 -> product_control_motion 12.33`, `mid-frame MSE 2360.96 -> 2677.87`로, preserve 손실을 크게 키우지 않고 motion uplift가 확인됐습니다.
+  - `맥주`에서는 `avg_rgb_diff 0.61 -> 7.43`, `mid-frame MSE 2490.45 -> 2514.74`로, preserve cost 거의 없이 motion uplift가 확인됐습니다.
+  - 즉 현재 본선 후보로는 `local_ltx`보다 `template motion + compositor uplift`가 더 서비스 정렬성이 높다는 신호가 나왔습니다.
+  - 따라서 다음 구현 우선순위는 `product_control_motion`을 benchmark 전용이 아니라 실제 renderer 후보로 옮길지 검토하는 쪽입니다.
+  - 추가 검증:
+    - `python -m py_compile scripts/video_upper_bound_benchmark.py`
+    - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-230-product-control-motion-ovaat --providers product_control product_control_motion local_ltx manual_veo --output-dir docs/experiments/artifacts/exp-230-product-control-motion-ovaat`
+  - 추가 문서:
+    - `docs/experiments/EXP-230-product-control-motion-ovaat.md`
+
+## 2026-04-09
+
+- 현재 진행방향을 서비스 기획 기준으로 재점검하는 감사 세션을 수행했습니다.
+- 이어서 다음 실험을 `새 video OVAT`가 아니라 `본선 결과 확인 UX 복구`로 진행했습니다.
+- 그 다음 단계로 `upload assist 행동 UX`도 바로 이어서 보강했습니다.
+- 이어서 `apps/web`의 로컬 contract 정의를 `packages/contracts` 기준으로 줄이는 정리도 진행했습니다.
+- 같은 흐름으로 `packages/template-spec` JSON을 web이 직접 읽도록 연결했습니다.
+- 이어서 생성 마법사 안의 로컬 템플릿 매핑 표도 제거했습니다.
+- 같은 흐름으로 generation request type도 package contract 기준으로 더 줄였습니다.
+- 팀 공유용 1장 요약 문서 `docs/daily/2026-04-09-team-update-summary.md`도 추가했습니다.
+- 회의용 전체 경과 정리 문서 `docs/daily/2026-04-09-meeting-full-trajectory-summary.md`도 추가했습니다.
+- 회의에서 바로 쓰는 발표용 브리핑 문서 `docs/daily/2026-04-09-team-meeting-brief.md`도 발표 순서/합의 포인트 중심으로 재구성했습니다.
+- 같은 브리핑 문서에서 개인 메모처럼 보이는 메타 문구를 제거하고 회의 자료 톤으로 다시 정리했습니다.
+- 이어서 `EXP-90` upper-bound video benchmark pilot도 추가했습니다.
+- 결론:
+  - 본선 서비스 루프(`생성 -> 결과 -> quick action -> publish/assist -> history`)는 꽤 살아 있습니다.
+  - 다만 최근 작업 비중은 다시 local LTX video baseline 연구 쪽으로 크게 기울었습니다.
+  - 따라서 다음 우선순위는 새 video OVAT 추가보다 `본선 구현/검증 복귀`가 더 적절합니다.
+- 이번 추가 실험 결과:
+  - `demo-workbench`, `history-board`가 실제 `result.video.url`, `result.post.url`를 직접 소비하도록 복구했습니다.
+  - result/history에서 텍스트 요약만 보이던 흐름을 실제 media preview 중심으로 한 단계 되돌렸습니다.
+  - upload assist 패키지에 `열기`, `다운로드`, `캡션/해시태그/전체 복사`, `썸네일 문구`, `완료 순서 안내`를 붙였습니다.
+  - same-origin 다운로드용 `api/media-proxy` 경로도 추가했습니다.
+  - `apps/web/src/lib/contracts.ts`는 이제 `@ai65/contracts`의 enum/API contract를 우선 re-export하고, web 전용 템플릿/프리셋/quick action만 로컬에 유지합니다.
+  - `GenerationStatusResponse`, `UploadJobResponse`는 현재 demo-store/UI 호환을 위해 얇은 web 레이어를 유지했습니다.
+  - `TEMPLATES`, `STYLE_PRESETS`, `COPY_RULES`도 이제 `packages/template-spec`의 canonical JSON을 직접 import합니다.
+  - 즉 web 쪽 기준선은 contracts와 template-spec 모두에서 하드코딩 중복을 줄인 상태입니다.
+  - `demo-workbench`의 purpose 기본 템플릿 선택, 템플릿 제목, template rotation도 로컬 표가 아니라 `TEMPLATES` 배열에서 직접 계산합니다.
+  - `QuickOptions`, `GenerateProjectRequest`, `GenerateProjectResponse`, `RegenerateChangeSet`도 package contract 기반으로 정리했습니다.
+  - `EXP-90`에서는 `local LTX`와 `Veo 3.1`을 같은 샘플/프롬프트로 비교하는 benchmark 스크립트를 추가했습니다.
+  - local LTX는 `규카츠`, `맥주` 둘 다 구조 보존은 됐지만, contact sheet 기준으로는 프레임 변화가 매우 작아 motion quality ceiling 문제가 다시 확인됐습니다.
+  - Veo 3.1은 현재 `GEMINI_API_KEY` 상태에서 `429 RESOURCE_EXHAUSTED`로 막혀 upper-bound 비교를 실제 완료하지 못했습니다.
+  - 이어서 `Sora 2`도 같은 benchmark에 추가했고, 실제 generation/download까지는 성공했습니다.
+  - 다만 `Sora 2`도 현재 prompt family와 single-photo 입력 조건에서는 결과가 여전히 near-static 성격을 보여, hosted 상위 모델이 자동으로 문제를 해결하진 않는다는 점을 확인했습니다.
+  - 사용자가 직접 생성한 Veo 결과를 넣어 비교할 수 있도록 manual input 폴더도 미리 만들었습니다.
+  - 사용자가 직접 넣은 manual Veo 결과도 확인했고, benchmark에 자동 편입되도록 정리했습니다.
+  - manual Veo는 `맥주`에서 품질 참고점으로 매우 유효했지만, `규카츠`에서는 QR 유입과 주변 오브젝트 재구성으로 원본 보존 요구를 만족하지 못했습니다.
+  - 따라서 manual Veo 결과는 현재 기준에서 `비교용 upper-bound reference`로만 써야 한다는 점을 명시했습니다.
+  - 이후 비교선은 다시 `local LTX`, `Sora 2`, `manual Veo reference`로 고정했고, `Seedance`는 크레딧 이슈로 이번 active scope에서 제외했습니다.
+  - `EXP-91`에서는 `맥주` 샘플 기준 Sora motion prompt family OVAT를 추가했습니다.
+  - `video_motion_metrics`를 새로 도입해 연속 프레임 차이를 숫자로 같이 기록하도록 확장했습니다.
+  - `micro_motion_locked`는 `mid-frame MSE 930.05`로 보존성은 크게 좋아졌지만, `avg_rgb_diff 1.53`으로 사실상 거의 정지 컷이 됐습니다.
+  - `camera_orbit_beats`도 `avg_rgb_diff 1.94`에 그쳐, orbit / push-in / motion beat를 더 직접적으로 적어도 motion이 살아나지 않았습니다.
+  - 즉 이번 조건에서는 `prompt를 더 자세히 쓰는 것`이 motion 품질 해결책이 아니라는 신호가 더 강해졌습니다.
+  - 이어서 `EXP-92`에서는 `맥주` 샘플 기준으로 Sora input framing OVAT도 추가했습니다.
+  - `hero_medium_zoom`, `hero_tight_zoom` 둘 다 baseline보다 `mid-frame MSE`는 좋아져 보존성은 올라갔습니다.
+  - 반대로 `avg_rgb_diff`는 `16.72 -> 3.27 / 3.67`로 크게 내려가, 프레이밍을 더 타이트하게 줄수록 motion은 더 줄었습니다.
+  - 즉 `prompt`뿐 아니라 `input framing`도 현재 조건에서는 같은 방향, 즉 `preserve still` 쪽으로 수렴한다는 점을 확인했습니다.
+- 맞게 가는 축:
+  - quick action visible delta
+  - result/history/scenePlan bridge
+  - publish assist fallback
+  - stale/cross-project variant guard
+- 방향이 샌 축:
+  - 최근 `EXP-73`~`EXP-86` 구간은 로컬 LTX baseline 정교화 비중이 높았고, production 기본 경로 반영까지는 아직 거리가 있습니다.
+  - web이 일부 계약/템플릿 정보를 별도 로컬 정의로 들고 있어 canonical spec 단일화가 덜 끝났습니다.
+  - planning KPI 상단의 사용자 인터뷰/문제 적합성 검증 근거는 아직 부족합니다.
+- 새 문서:
+  - `docs/experiments/EXP-87-current-direction-review-and-priority-reset.md`
+  - `docs/experiments/EXP-88-product-result-media-preview-reconnect.md`
+  - `docs/experiments/EXP-89-upload-assist-action-ux.md`
+  - `docs/experiments/EXP-90-upper-bound-video-benchmark-pilot.md`
+  - `docs/experiments/EXP-91-sora2-motion-prompt-family-ovaat.md`
+  - `docs/experiments/EXP-92-sora2-input-framing-ovaat.md`
+  - `docs/testing/test-scenario-90-product-result-media-preview-reconnect.md`
+  - `docs/testing/test-scenario-91-upload-assist-action-ux.md`
+  - `docs/testing/test-scenario-92-upper-bound-video-benchmark-pilot.md`
+  - `docs/testing/test-scenario-93-sora2-motion-prompt-family-ovaat.md`
+  - `docs/testing/test-scenario-94-sora2-input-framing-ovaat.md`
+- 검증:
+  - 필수 planning/ADR/HISTORY/daily 문서 재독
+  - worker/api/web/template-spec/contracts/scripts 구조 점검
+  - experiments/testing 누적 로그와 최근 LTX baseline 문서 비교 검토
+  - `npm run build:web`
+  - `python scripts/video_upper_bound_benchmark.py`
+  - `python scripts/sora2_motion_prompt_family_ovaat.py`
+  - `python scripts/sora2_input_framing_ovaat.py`
+- 남은 리스크 / 다음 액션:
+  - 1순위는 본선 구현/검증 복귀입니다.
+  - 그 안에서도 다음은 upload assist 패키지의 복사/다운로드/완료 가이드 UX를 붙이는 일입니다.
+  - upload assist UX는 붙였고, 다음 2순위는 worker/template-spec/contracts/web 사이 기준선 단일화를 더 진행하는 일입니다.
+  - 현재는 `apps/web/src/lib/contracts.ts`가 많이 얇아졌지만, `TemplateId`, `QuickOptions`, demo-store 호환용 일부 local type alias는 아직 web 내부에 남아 있습니다.
+  - 다음 남은 정리 후보는 demo-store 내부의 local alias와 `TemplateId`/`QuickOptions` 호환 레이어입니다.
+  - 특히 `demo-store`가 아직 `TemplateId`와 일부 snapshot type을 local union 기준으로 유지하고 있어, 다음 정리 포인트가 됩니다.
+  - LTX 연구선은 유지하되, 당분간은 `새 OVAT 확장`보다 `중간 정리와 보류 판단`이 맞습니다.
+  - upper-bound hosted 비교는 현재 quota/credential 이슈 때문에 아직 재현 가능한 benchmark가 아닙니다.
+  - 다만 `Sora 2`는 현재 키 상태에서 실제 생성이 가능하므로, 다음 비교축은 `모델 교체`보다 `prompt family`와 `입력 방식` 재설계가 됩니다.
+  - 다음 분기점은 Veo/Higgsfield 같은 hosted model을 실제로 1회라도 돌려서 `local ceiling`인지 `문제 자체 ceiling`인지 가르는 일입니다.
+
+## 2026-04-10
+
+- `EXP-93`에서 `single-photo -> sora image-to-video -> sora edit` 2단계 OVAT를 추가했습니다.
+- source는 `EXP-92 hero_tight_zoom` 결과로 고정했고, `same_shot_more_motion`, `same_shot_push_in_motion` 2개 edit variant를 비교했습니다.
+- 운영 중간에 스킬 번들 CLI의 `edit` 경로가 `/videos/edits` 응답을 SDK parsing하다가 깨지는 문제도 확인했습니다.
+- 이번 실험 러너는 공식 SDK low-level `client.post(..., cast_to=dict[str, object])` fallback으로 우회해 실제 `edit API` 자체는 검증했습니다.
+- 이번 실험 결과:
+  - `same_shot_more_motion`은 source 대비 `avg_rgb_diff 3.67 -> 4.19`로 motion이 소폭 증가했습니다.
+  - 대신 `mid-frame MSE 2369.92 -> 4394.26`으로 preserve loss가 크게 늘었습니다.
+  - `same_shot_push_in_motion`은 `avg_rgb_diff 7.58`까지 올라가 motion recovery는 더 컸습니다.
+  - 하지만 `mid-frame MSE`도 `6731.35`까지 올라가, 보존성 손실은 더 심했습니다.
+- 결론:
+  - `image-to-video -> edit` 2단계는 완전히 무의미하진 않습니다.
+  - 다만 지금 기준으로는 `motion을 일부 회복하는 대신 preserve를 더 깎는 연구선`에 가깝고, 본선 해답은 아닙니다.
+- `EXP-110`부터 `EXP-115`까지를 통해 nearby-location evaluator, surface policy matrix, copy-rule wiring, runtime preview, coverage 확장, `emphasizeRegion` 의미 재정렬을 한 흐름으로 정리했습니다.
+- 이번 추가 구현:
+  - `EXP-116`에서 worker `render-meta.json`과 `/api/projects/{projectId}/result` payload에 `copyPolicy` active state를 실었습니다.
+  - `copyPolicy`는 `detailLocationPolicyId`, `forbiddenDetailLocationSurfaces`, `guardActive`, `emphasizeRegionRequested`, `detailLocationPresent`를 포함합니다.
+  - `apps/web`의 `demo-store` fallback도 같은 shape를 생성하게 맞췄습니다.
+  - `CopyPolicySummary`는 이제 static template rule뿐 아니라 실제 `result.copyPolicy`를 받아 `guard active / inactive` 상태까지 같이 보여줍니다.
+  - `demo-workbench`, `history-board` 모두 결과 payload 기준 active policy state를 그대로 노출합니다.
+  - 이어서 `ScenePlanPreviewLinks`도 `result.copyPolicy`를 받아 preview 카드에서 같은 active policy state를 보여주도록 연결했습니다.
+  - 추가로 `scene-frame` 실제 화면도 project route 기준 상단 배너에서 `copyPolicy` active state를 다시 보여주도록 연결했습니다.
+  - 이어서 `scene-frame` frame 내부에도 compact policy overlay를 얹고, `?clean=1`로 숨길 수 있는 clean mode를 추가했습니다.
+  - `scenePlan` preview 카드에서는 opening / closing scene 각각에 `일반 보기`와 `clean mode` 진입 링크를 분리했습니다.
+  - 추가로 `result` payload 자체에 `copyDeck`를 넣어, `hook / body / cta` 구조를 결과/이력 화면에서 실제 payload 기준으로 읽을 수 있게 했습니다.
+  - 이어서 `sceneLayerSummary`도 넣어, 각 scene이 `hook/body/cta` 중 무엇을 담당하는지 preview/scene-frame에서 바로 읽을 수 있게 했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-93-sora2-edit-motion-recovery-ovaat.md`
+  - `docs/experiments/EXP-94-reference-first-video-direction-review.md`
+  - `docs/experiments/EXP-95-reference-teardown-pattern-matrix.md`
+  - `docs/experiments/EXP-96-reference-template-fit-scorecard.md`
+  - `docs/experiments/EXP-97-self-serve-ai-ad-platform-patterns.md`
+  - `docs/experiments/EXP-98-hook-body-cta-slot-layer-draft.md`
+  - `docs/experiments/EXP-99-reference-derived-hook-pack-draft.md`
+  - `docs/experiments/EXP-100-reference-hook-pack-prompt-guidance.md`
+  - `docs/experiments/EXP-101-reference-hook-pack-cross-provider-model-comparison.md`
+  - `docs/experiments/EXP-102-reference-hook-pack-repeatability-spot-check.md`
+  - `docs/experiments/EXP-106-gpt5mini-exact-region-caption-anchor.md`
+  - `docs/experiments/EXP-107-gemma4-benefit-14-char-cap.md`
+  - `docs/experiments/EXP-108-strict-anchor-benefit-budget-comparison.md`
+  - `docs/experiments/EXP-109-strict-anchor-benefit-budget-repeatability.md`
+  - `docs/experiments/EXP-110-nearby-location-leakage-evaluator-patch.md`
+  - `docs/experiments/EXP-111-nearby-location-surface-policy-matrix.md`
+  - `docs/experiments/EXP-112-location-policy-wired-to-copy-rules.md`
+  - `docs/experiments/EXP-113-location-policy-runtime-editor-preview.md`
+  - `docs/experiments/EXP-114-location-policy-coverage-expansion.md`
+  - `docs/experiments/EXP-115-emphasize-region-does-not-disable-location-policy.md`
+  - `docs/experiments/EXP-116-active-copy-policy-state-in-result-payload.md`
+  - `docs/experiments/EXP-117-scene-plan-preview-active-policy-visibility.md`
+  - `docs/experiments/EXP-118-scene-frame-active-policy-banner.md`
+  - `docs/experiments/EXP-119-scene-frame-in-frame-policy-overlay.md`
+  - `docs/experiments/EXP-120-scene-preview-clean-mode-entry.md`
+  - `docs/experiments/EXP-121-copy-deck-result-structure-visibility.md`
+  - `docs/experiments/EXP-122-scene-layer-summary-visibility.md`
+  - `docs/testing/test-scenario-95-sora2-edit-motion-recovery-ovaat.md`
+  - `docs/testing/test-scenario-96-reference-first-video-direction-review.md`
+  - `docs/testing/test-scenario-97-reference-teardown-pattern-matrix.md`
+  - `docs/testing/test-scenario-98-reference-template-fit-scorecard.md`
+  - `docs/testing/test-scenario-99-self-serve-ai-ad-platform-patterns.md`
+  - `docs/testing/test-scenario-100-hook-body-cta-slot-layer-draft.md`
+  - `docs/testing/test-scenario-101-reference-derived-hook-pack-draft.md`
+  - `docs/testing/test-scenario-102-reference-hook-pack-prompt-guidance.md`
+  - `docs/testing/test-scenario-103-reference-hook-pack-model-comparison.md`
+  - `docs/testing/test-scenario-104-reference-hook-pack-repeatability-spot-check.md`
+  - `docs/testing/test-scenario-113-nearby-location-surface-policy-matrix.md`
+  - `docs/testing/test-scenario-114-location-policy-wired-to-copy-rules.md`
+  - `docs/testing/test-scenario-115-location-policy-runtime-editor-preview.md`
+  - `docs/testing/test-scenario-116-location-policy-coverage-expansion.md`
+  - `docs/testing/test-scenario-117-emphasize-region-does-not-disable-location-policy.md`
+  - `docs/testing/test-scenario-118-active-copy-policy-state-in-result-payload.md`
+  - `docs/testing/test-scenario-119-scene-plan-preview-active-policy-visibility.md`
+  - `docs/testing/test-scenario-120-scene-frame-active-policy-banner.md`
+  - `docs/testing/test-scenario-121-scene-frame-in-frame-policy-overlay.md`
+  - `docs/testing/test-scenario-122-scene-preview-clean-mode-entry.md`
+  - `docs/testing/test-scenario-123-copy-deck-result-structure-visibility.md`
+  - `docs/testing/test-scenario-124-scene-layer-summary-visibility.md`
+- 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - `copyPolicy` active state는 이제 result/history/scene preview/scene-frame까지 이어졌습니다.
+  - scene-frame은 이제 상단 배너와 in-frame overlay를 함께 가지며, `?clean=1` clean mode로 overlay를 숨길 수 있습니다.
+  - scene preview 카드에서도 clean mode 진입이 명시적으로 드러나도록 연결했습니다.
+  - 본선 결과 구조 쪽으로는 `copyDeck`이 들어와 `hook / body / cta`를 실제 payload와 결과/이력 화면에서 읽을 수 있게 됐습니다.
+  - `sceneLayerSummary`까지 들어오면서 scene preview와 scene-frame도 `hook/body/cta` 기준으로 다시 읽을 수 있게 됐습니다.
+  - 다음 자연스러운 분기는 quick action이 어떤 `copyDeck / sceneLayerSummary` 층을 바꾸는지까지 UI에 드러낼지, 아니면 prompt baseline 정리 쪽으로 돌아갈지 판단하는 것입니다.
+  - 이후 템플릿별 예외 정책이 필요하면 evaluator 암묵 규칙이 아니라 `policyId` 전환으로 명시해야 합니다.
+- `EXP-123`에서 result payload에 `changeImpactSummary`를 추가했습니다.
+  - worker `render-meta.json`이 이제 `runType`, `impactLayers`, `activeActions[]`를 함께 저장합니다.
+  - API `/result` 응답과 demo fallback도 같은 shape를 그대로 내려줍니다.
+  - web 결과/이력 화면에는 `ChangeImpactSummary` 카드가 추가돼, quick action과 regenerate change set이 `hook/body/cta/visual/structure` 중 어디를 바꾸는지 바로 읽을 수 있습니다.
+- 새 문서:
+  - `docs/experiments/EXP-123-change-impact-summary-visibility.md`
+  - `docs/testing/test-scenario-125-change-impact-summary-visibility.md`
+- 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - 이제 `copyPolicy`, `copyDeck`, `sceneLayerSummary`, `changeImpactSummary`가 모두 payload에 모였으므로, 다음은 quick action UI나 scene preview에서 이 관계를 더 직접적으로 보여줄지 판단하면 됩니다.
+  - prompt baseline 실험으로 다시 돌아갈 때도, 이후에는 action 설명과 결과 구조를 같은 기준으로 비교할 수 있습니다.
+- `EXP-124`에서 scene preview 카드에도 `changeImpactSummary`를 연결했습니다.
+  - `ScenePlanPreviewLinks`가 이제 `재생성/초기 생성`, 영향 레이어, active quick action label을 함께 보여줍니다.
+  - `demo-workbench`, `history-board` 모두 같은 summary를 scene preview 진입점으로 넘기도록 맞췄습니다.
+- 새 문서:
+  - `docs/experiments/EXP-124-scene-preview-change-impact-visibility.md`
+  - `docs/testing/test-scenario-126-scene-preview-change-impact-visibility.md`
+- 검증:
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - scene preview까지는 `copyPolicy`, `sceneLayerSummary`, `changeImpactSummary`가 연결됐으므로, 다음은 quick action 버튼 자체에 영향 레이어를 미리 보여줄지 판단하면 됩니다.
+- `EXP-125`에서 quick action 버튼 자체에 영향 레이어 preview를 붙였습니다.
+  - `apps/web/src/lib/change-impact.ts` helper를 추가해 quick action preview와 demo fallback `changeImpactSummary`가 같은 기준을 쓰게 맞췄습니다.
+  - `demo-workbench` quick action 버튼은 이제 영향 레이어 chip과 설명을 함께 보여주는 정보형 카드가 됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-125-quick-action-impact-preview.md`
+  - `docs/testing/test-scenario-127-quick-action-impact-preview.md`
+- 검증:
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - quick action 단계까지 영향 설명이 들어왔으므로, 다음은 active result 기준 추천 action이나 expected delta를 더 직접 연결할지 판단하면 됩니다.
+- `EXP-126`에서 active result 기준 추천 quick action도 붙였습니다.
+  - `apps/web/src/lib/quick-action-recommendation.ts` helper를 추가해 결과 길이, purpose, detailLocation guard, template/style 상태를 기준으로 추천 후보를 계산합니다.
+  - 메인 결과 화면 quick action 카드는 이제 추천 badge, priority, 이유까지 함께 보여줍니다.
+- 새 문서:
+  - `docs/experiments/EXP-126-active-result-quick-action-recommendation.md`
+  - `docs/testing/test-scenario-128-active-result-quick-action-recommendation.md`
+- 검증:
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - 추천은 아직 heuristic이므로, 다음은 실제 regenerate 결과 delta나 클릭 로그와 연결해 조정할지 판단하면 됩니다.
+- `EXP-127`에서 현재 prompt/model 기준선을 manifest와 snapshot artifact로 고정했습니다.
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`에 `T02 promotion / b_grade_fun / strict_all_surfaces / Gemma 4` 조합을 baseline으로 기록했습니다.
+  - `scripts/run_prompt_baseline_snapshot.py`를 추가해 현재 baseline을 single snapshot으로 다시 실행 가능하게 만들었습니다.
+  - 실제 snapshot 결과는 `accepted=true`, `score=100.0`, `detail_location_leak_count=0`, `over_limit_scene_count=0`이었습니다.
+- 새 문서:
+  - `docs/experiments/EXP-127-prompt-baseline-freeze.md`
+  - `docs/testing/test-scenario-129-prompt-baseline-freeze.md`
+- 검증:
+  - `python -m py_compile scripts/run_prompt_baseline_snapshot.py`
+  - `python -c "import json, pathlib; json.loads(pathlib.Path('packages/template-spec/manifests/prompt-baseline-v1.json').read_text(encoding='utf-8')); print('ok')"`
+  - `python scripts/run_prompt_baseline_snapshot.py`
+- 남은 리스크 / 다음 액션:
+  - 현재 freeze는 `prompt_generation` 축의 `T02 promotion` baseline만 다룹니다.
+  - 다음은 이 baseline을 다른 purpose/template로 확장할지, 아니면 `T02 promotion` 안에서만 더 정교화할지 판단하면 됩니다.
+- 새 문서:
+  - `docs/experiments/EXP-93-sora2-edit-motion-recovery-ovaat.md`
+  - `docs/testing/test-scenario-95-sora2-edit-motion-recovery-ovaat.md`
+  - `docs/daily/2026-04-10-codex.md`
+- 검증:
+  - `uv run --with openai python scripts/sora2_edit_motion_recovery_ovaat.py`
+  - `python -m py_compile scripts/sora2_edit_motion_recovery_ovaat.py`
+- 남은 리스크 / 다음 액션:
+  - Sora 연구선은 이제 `prompt`, `crop`, `edit`까지 확인했고, 다음은 `입력 modality 자체 변경`이 맞습니다.
+  - 후보는 `multi-reference`, `first/last frame`, `hybrid compositor`입니다.
+  - 본선은 계속 `template motion + deterministic packaging`을 기준선으로 유지합니다.
+- `EXP-94`에서 외부 레퍼런스와 상위권 시스템 설명을 기준으로 `reference-first` 방향 정리를 추가했습니다.
+  - 유튜브 Shorts 3개와 `Genre.ai`, Veo/Higgsfield 공개 자료를 함께 봤을 때, 차이는 단순히 더 좋은 모델만으로 설명되지 않았습니다.
+  - 더 큰 차이는 `reference/control surface`, `creative workflow`, `short-form ad grammar` 조합에 있었습니다.
+  - 현재 내부 연구선의 핵심 문제인 `preserve-motion trade-off`는 `EXP-90`부터 `EXP-93`까지 일관되게 확인됐습니다.
+  - 따라서 다음은 `raw prompt digging` 확대보다 `reference teardown`, `objective split(strict preserve vs creative reinterpretation)`이 더 우선입니다.
+- 새 문서:
+  - `docs/experiments/EXP-94-reference-first-video-direction-review.md`
+  - `docs/testing/test-scenario-96-reference-first-video-direction-review.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-95`에서 reference teardown 결과를 실제 backlog 재정렬 문서로 한 단계 더 구체화했습니다.
+  - 외부 레퍼런스별로 `가져올 가치가 큰 것`, `지금 그대로 가져오기 어려운 것`, `현재 프로젝트와의 충돌`을 표로 정리했습니다.
+  - 현재 시점에서 바로 가져와야 할 것은 `hook/copy grammar`, `hero shot`, `micro detail motion`, `reference lock -> motion pass -> packaging pass` 흐름으로 정리했습니다.
+  - 반대로 지금 당장 못 가져오는 것은 `상위 모델 자체 품질`, `closed workflow preset`, `원본 preserve와 풍부한 motion을 동시에 만족하는 단일 pass`였습니다.
+  - 다음 우선순위는 `reference-derived hook pack`, `strict preserve vs creative reinterpretation 평가 기준 분리`, `input modality change` 순으로 재정렬했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-95-reference-teardown-pattern-matrix.md`
+  - `docs/testing/test-scenario-97-reference-teardown-pattern-matrix.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-96`에서 새 레퍼런스를 `템플릿 적합`, `부분 차용`, `상한선 참고`로 분류하는 `template-fit scorecard`를 추가했습니다.
+  - 평가 항목은 `hook`, `shot`, `motion`, `입력 자산 부담`, `원본 보존 정렬`, `업종 확장성`, `운영 단순성` 7개로 고정했습니다.
+  - 즉 앞으로는 레퍼런스를 `좋아 보이는가`가 아니라 `템플릿으로 환원 가능한가` 기준으로 먼저 걸러낼 수 있습니다.
+  - 현재 레퍼런스 예시도 함께 적어, `청년그로서리형 curiosity 숏츠`와 `manual Veo 맥주`는 `부분 차용`, `Genre.ai 스타일`은 `상한선 참고`로 시작점을 잡았습니다.
+- 새 문서:
+  - `docs/experiments/EXP-96-reference-template-fit-scorecard.md`
+  - `docs/testing/test-scenario-98-reference-template-fit-scorecard.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-97`에서 외부 AI ad platform을 `self-serve 제품 패턴` 관점으로 정리했습니다.
+  - `ShortVideo.ai`, `ShortBox`, `Quickads`, `CapCut`, `Genre.ai`를 보면 공통적으로 `입력 단순화`, `광고 슬롯화`, `수정 가능한 패키지`, `채널 최적화`, `variation 생성`을 제품 가치로 내세웁니다.
+  - 즉 외부 성공 사례는 `좋은 영상 한 편`보다 `반복 가능한 광고 제작 시스템`을 파는 쪽에 가깝습니다.
+  - 이 기준으로 보면 현재 프로젝트 본선도 `single-photo video quality`만 더 파기보다 `hook/body/CTA 구조`, `scene preview/storyboard`, `reference-derived hook pack` 쪽을 더 우선할 필요가 있습니다.
+- 새 문서:
+  - `docs/experiments/EXP-97-self-serve-ai-ad-platform-patterns.md`
+  - `docs/testing/test-scenario-99-self-serve-ai-ad-platform-patterns.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-98`에서 현재 template-spec을 깨지 않는 `hook/body/cta` 레이어 초안을 추가했습니다.
+  - `packages/template-spec/manifests/slot-layer-map.json`을 새로 만들어 `scene/textRole -> hook/body/cta` 매핑을 정의했습니다.
+  - `T01`~`T04`를 모두 `hook`, `body`, `cta` 그룹으로 재해석했고, 이후 `bodyBlocks[]`나 `scene preview label` 논의에 쓸 수 있는 draft를 함께 넣었습니다.
+  - 이 작업은 기존 runtime을 바꾸지 않는 비파괴 draft이며, source of truth는 여전히 `templates/*.json`입니다.
+- 새 문서:
+  - `docs/experiments/EXP-98-hook-body-cta-slot-layer-draft.md`
+  - `docs/testing/test-scenario-100-hook-body-cta-slot-layer-draft.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-99`에서 외부 레퍼런스 기반 `reference-derived hook pack` 10안을 데이터 초안으로 추가했습니다.
+  - `packages/template-spec/manifests/reference-hook-pack-v1.json`을 새로 만들어 각 hook의 `pattern`, `supportedPurposes`, `supportedTemplates`, `supportedStyles`, `requiredTokens`를 정의했습니다.
+  - `hk01`~`hk10`까지를 `template_fit_candidate`와 `partial_borrow`로 나눠, 현재 템플릿에 바로 시험할 수 있는 hook 후보군을 만들었습니다.
+  - 이 작업도 기존 `copy-rules/*.json`을 건드리지 않는 비파괴 draft이며, 추후 copy generation 또는 editor UI 실험에 연결할 수 있는 준비 단계입니다.
+- 새 문서:
+  - `docs/experiments/EXP-99-reference-derived-hook-pack-draft.md`
+  - `docs/testing/test-scenario-101-reference-derived-hook-pack-draft.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-100`에서 `reference hook pack guidance`를 실제 prompt lever로 붙여 `gpt-5-mini`에서 baseline과 비교했습니다.
+  - 둘 다 score는 `100`이었지만, hook pack guidance variant는 `오늘 안 오면 손해예요?` / `지금 방문`처럼 더 짧고 직접적인 결과를 냈습니다.
+  - baseline은 `s2`, `s3`가 over limit였지만, hook pack guidance variant는 over-limit scene이 0이었습니다.
+  - 즉 reference hook pack은 문서용 참고가 아니라 실제 prompt 제어 레버로도 의미가 있음을 확인했습니다.
+- `EXP-101`에서 같은 reference hook guidance를 고정하고 cross-provider 모델 비교를 진행했습니다.
+  - `Gemma 4`와 `gpt-5-mini`가 상위권으로 남았고, `gpt-5-nano`는 region repeat와 길이 측면에서 밀렸습니다.
+  - `Gemini 2.5 Flash`는 이번 세션에서 `503 UNAVAILABLE`이 나와 품질 이전에 availability 리스크가 드러났습니다.
+  - 단일 run 기준으로는 `gpt-5-mini`가 더 광고스럽고 직접적이었고, `Gemma 4`는 length/format 안정성이 더 좋았습니다.
+- 새 문서:
+  - `docs/experiments/EXP-100-reference-hook-pack-prompt-guidance.md`
+  - `docs/experiments/EXP-101-reference-hook-pack-cross-provider-model-comparison.md`
+  - `docs/testing/test-scenario-102-reference-hook-pack-prompt-guidance.md`
+  - `docs/testing/test-scenario-103-reference-hook-pack-model-comparison.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-102`에서 `Gemma 4`와 `gpt-5-mini`를 같은 hook guidance로 각 3회 반복 실행해 repeatability spot check를 진행했습니다.
+  - `Gemma 4`는 hook 구조는 더 일관됐지만 `urgency/cta`가 길어지는 경향이 남았고, 1회 timeout도 발생했습니다.
+  - `gpt-5-mini`는 호출 성공률과 CTA 직접성은 더 좋았지만, run-to-run variation이 더 컸고 1회는 region repeat가 다시 튀었습니다.
+  - 따라서 다음은 모델 교체보다 `모델별 약점을 직접 묶는 constraint tuning`이 더 우선입니다.
+- 새 문서:
+  - `docs/experiments/EXP-102-reference-hook-pack-repeatability-spot-check.md`
+  - `docs/testing/test-scenario-104-reference-hook-pack-repeatability-spot-check.md`
+  - `docs/daily/2026-04-10-codex.md`
+- `EXP-103`에서 `gpt-5-mini`에 `reference hook guidance + region/length constraint`를 추가했습니다.
+  - over-limit scene은 `2개 -> 0개`로 줄었지만, region budget을 너무 세게 묶어 `region appears in fewer than required areas`가 발생했습니다.
+  - 즉 `gpt-5-mini`는 길이 constraint는 잘 따르지만, region은 `budget`보다 `exact anchor` 방식이 더 맞다는 신호가 나왔습니다.
+- `EXP-104`에서 `Gemma 4`에 `reference hook guidance + urgency/cta cap`을 추가했습니다.
+  - CTA와 urgency는 짧아졌고 over-limit도 없어졌지만, 여기서도 region minimum slot이 남았습니다.
+  - 즉 Gemma 4도 길이 문제는 잡히지만, region은 별도 축으로 다시 다뤄야 한다는 점이 확인됐습니다.
+- `EXP-105`에서 `region anchor + length budget`을 함께 고정한 최종 비교 prompt로 `Gemma 4`와 `gpt-5-mini`를 다시 비교했습니다.
+  - `Gemma 4`는 region anchor를 실제로 지켜 `score 100`을 받았고, 현재는 benefit headline 한 줄만 조금 더 줄이면 되는 상태에 가깝습니다.
+  - `gpt-5-mini`는 길이는 잘 지켰지만 `성수동` 대신 `서울숲 근처`로 우회해 exact region string 조건을 놓쳤습니다.
+  - 현재 구분은 `Gemma 4 = region anchoring 강점`, `gpt-5-mini = length/CTA 직접성 강점`으로 더 선명해졌습니다.
+- 새 문서:
+  - `docs/experiments/EXP-103-gpt5mini-reference-hook-region-length-constraint.md`
+  - `docs/experiments/EXP-104-gemma4-reference-hook-urgency-cta-cap.md`
+  - `docs/experiments/EXP-105-reference-hook-region-anchor-budget-comparison.md`
+  - `docs/testing/test-scenario-105-gpt5mini-reference-hook-region-length-constraint.md`
+  - `docs/testing/test-scenario-106-gemma4-reference-hook-urgency-cta-cap.md`
+  - `docs/testing/test-scenario-107-reference-hook-region-anchor-budget-comparison.md`
+  - `docs/daily/2026-04-10-codex.md`
+
+## 2026-04-08
+
+- 누적 히스토리 파일 `HISTORY.md`를 새로 추가했습니다.
+- 앞으로 모든 세션 종료 전에 `HISTORY.md`를 갱신하는 규칙을 ADR로 고정했습니다.
+- 다음 단계 실험은 "프롬프트 레버를 한 번에 하나씩 바꾸는 방식"으로 진행하기로 방향을 정리했습니다.
+- prompt-related baseline을 다시 복원한 결과, production 카피 생성은 아직 deterministic `_build_copy_bundle()` 기준임을 재확인했습니다.
+- production을 바꾸지 않는 실험 경로로 `services/worker/experiments/prompt_harness.py`와 `scripts/run_prompt_experiment.py`를 추가했습니다.
+- `Gemma 4`(`models/gemma-4-31b-it`)를 고정 모델로 두고 첫 실험 `EXP-01`을 실행했습니다.
+  - 바꾼 레버: `slot guidance`
+  - 고정 조건: `cafe / new_menu / friendly / 성수동 / 샘플 자산 2장 / T01`
+- 첫 실험 결과:
+  - deterministic reference는 지역명 반복 초과(4회)로 기준선 규칙 위반이 확인됐습니다.
+  - Gemma 4 baseline prompt와 explicit slot guidance variant는 모두 자동 점수 `100`을 기록했습니다.
+  - explicit slot guidance variant가 hook의 지역성, `product_name`, `difference` 역할 구분에서 더 선명했습니다.
+- 두 번째 실험 `EXP-02`도 이어서 실행했습니다.
+  - 바꾼 레버: `audience/tone guidance`
+  - 고정 조건: `EXP-01`과 동일, 공통 baseline prompt 유지
+- 두 번째 실험 결과:
+  - audience/tone variant는 `산책`, `오후의 여유`, `함께` 같은 고객 상황 맥락을 더 많이 반영했습니다.
+  - audience cue count는 baseline prompt `2` -> variant `5`로 증가했습니다.
+  - 대신 CTA는 더 부드러워져 액션 강도가 낮아지는 trade-off가 확인됐습니다.
+- 방향 전환 기준선도 추가했습니다.
+  - `B급 감성`을 핵심 차별화 키워드로 명시
+  - 실험 우선순위를 카피 미세조정보다 영상 생성 연구로 전환
+  - 관련 ADR: `ADR-005-b-grade-video-first-experiment-priority`
+- 첫 영상 실험 `EXP-03`을 실행했습니다.
+  - 바꾼 레버: `overlay_layout`
+  - 고정 조건: `b_grade_fun / T02 / 고정 카피 / 샘플 자산 2장`
+  - baseline: current `card_panel`
+  - variant: experimental `flyer_poster`
+- 첫 영상 실험 결과:
+  - `flyer_poster`가 B급 인상은 확실히 강하게 만들었습니다.
+  - 대신 헤드라인이 커져 상품 가시성을 일부 해치는 trade-off가 확인됐습니다.
+  - 실험 중 bold 한글 폰트 fallback 버그를 발견해 함께 수정했습니다.
+- 사용자 제공 레퍼런스 `docs/sample/b급sample.png`도 기준에 반영했습니다.
+- 그 레퍼런스를 바탕으로 `EXP-04`를 추가 실행했습니다.
+  - 바꾼 레버: `product_visibility_protection`
+  - baseline: `bgrade_flyer_overlay`
+  - variant: `owner_made_safe_zone`
+- `EXP-04` 결과:
+  - `owner_made_safe_zone`은 B급 감성을 유지하면서 상품 가시성을 더 잘 살렸습니다.
+  - synthetic 중심 접근보다 reference-driven 접근이 더 유효하다는 점이 확인됐습니다.
+- 사용자 제공 실제 음식 사진과 손그림 스타일도 반영했습니다.
+- `EXP-05`를 추가 실행했습니다.
+  - 사용 자산: `타코야키`, `맥주` 실제 사진
+  - baseline: `owner_made_real_photo`
+  - variant: `hand_drawn_menu_board`
+- `EXP-05` 결과:
+  - 손그림 스타일은 실제 음식 사진에도 잘 붙었습니다.
+  - 다만 숏폼 메인 컷보다는 메뉴판/피드/포스터용 정적 비주얼에 더 적합해 보였습니다.
+  - 숏폼 main candidate는 여전히 `owner_made_real_photo`가 더 유리했습니다.
+- 기획 문서를 다시 읽고 실험 기준을 서비스 루프 중심으로 재정렬했습니다.
+  - 관련 ADR: `ADR-006-service-loop-aligned-b-grade-experiment-baseline.md`
+  - 실험 baseline도 `restaurant / promotion / b_grade_fun / T02 / instagram 관점`으로 다시 고정했습니다.
+- `EXP-06`을 추가 실행했습니다.
+  - 바꾼 레버: `opening_scene_priority`
+  - baseline: `owner_made_benefit_first`
+  - variant: `owner_made_menu_first`
+  - 사용 자산: `규카츠`, `맥주` 실제 사진
+- `EXP-06` 결과:
+  - `benefit_first`가 `promotion` 목적 전달에 더 잘 맞았습니다.
+  - `menu_first`는 메뉴 인지는 빨랐지만 할인/행사 메시지가 뒤로 밀렸습니다.
+  - 자동 평가 기준 `service_loop_fit_score`는 `88.8 -> 82.4`로 baseline이 더 높았습니다.
+- 실험 중 드러난 제약도 기록했습니다.
+  - `owner_made_safe` 오버레이는 긴 프로모션 헤드라인에서 우측 overflow 위험이 있습니다.
+  - 첫 실행 후 같은 의미의 더 짧은 카피로 재실행해 비교를 고정했습니다.
+- `EXP-06` 이후 방향도 다시 수정했습니다.
+  - 현재 렌더 품질은 OVAT를 계속할 수준이 아니라는 판단을 내렸습니다.
+  - 관련 ADR: `ADR-007-visual-baseline-rebuild-before-ovaat.md`
+  - 다음 단계는 레버 비교가 아니라 `renderer/layout baseline rebuild`입니다.
+- baseline rebuild 첫 작업으로 `EXP-07`을 추가 실행했습니다.
+  - baseline: `legacy_owner_made_safe`
+  - candidate: `structured_bgrade_v2`
+  - 성격: OVAT 아님, 시각 baseline 재구축
+- `EXP-07` 결과:
+  - `structured_bgrade_v2`는 기존 baseline보다 clipping과 텍스트 겹침이 크게 줄었습니다.
+  - `layout_integrity_score`는 `44.0 -> 94.0`, `service_loop_fit_score`는 `84.4 -> 90.6`으로 개선됐습니다.
+  - footer CTA strip 구조가 생기면서 마지막 장면 CTA 인지도도 더 좋아졌습니다.
+- 다만 남은 과제도 확인했습니다.
+  - 우측 note 문구와 CTA headline의 line break는 아직 polish가 더 필요합니다.
+  - 새 baseline은 아직 `experiments` 경로에만 있고 production 반영 전입니다.
+- 이어서 `EXP-08`도 추가 실행했습니다.
+  - 바꾼 것: `structured_bgrade_v2`의 word-first line break polish
+  - 검증 범위: 실제 음식 사진 5장 다건 검증
+- `EXP-08` 결과:
+  - 한국어 단어 줄바꿈이 이전보다 자연스러워졌습니다.
+  - `규카츠`, `라멘`, `순두부짬뽕`, `장어덮밥`, `타코야키` 사진에서도 구조가 크게 무너지지 않았습니다.
+  - 다만 사용자 피드백 기준으로는 여전히 제품 baseline으로 채택할 수준은 아니라는 점도 확인됐습니다.
+- 이후 방향도 다시 고정했습니다.
+  - 관련 ADR: `ADR-008-reject-handcrafted-pillow-visual-baseline.md`
+  - 현재 Pillow 기반 결과물은 기술적 참고물로만 남기고, 제품 baseline candidate로는 채택하지 않습니다.
+  - 다음 본선 방향은 `HTML/CSS 기반 compositor` 우선, `멀티모달 layout planner` 보조로 정리했습니다.
+- 그 방향으로 바로 `EXP-10`을 추가했습니다.
+  - `apps/web`에 `/scene-lab` HTML/CSS prototype 페이지 추가
+  - `/api/sample-assets/[sample]` 라우트 추가
+  - `씬 랩` 네비게이션 추가
+- `EXP-10` 결과:
+  - Pillow와 다른 render surface로 가는 실제 코드 경로가 생겼습니다.
+  - 억지 장식 문구를 빼고 실사 사진 + 혜택 + CTA 중심 장면 구성으로 전환했습니다.
+  - `npm run build:web`에서 `/scene-lab`과 `/api/sample-assets/[sample]`가 정상 포함됐습니다.
+- 이어서 `EXP-11`도 추가했습니다.
+  - `scene-lab`을 shared component로 정리
+  - `/scene-frame/[scene]` 독립 capture route 추가
+  - `scripts/capture_scene_lab_frames.mjs` 추가
+- `EXP-11` 결과:
+  - HTML/CSS scene가 실제 PNG artifact로 재현 가능하게 캡처됐습니다.
+  - artifact:
+    - `docs/experiments/artifacts/exp-11-html-css-scene-capture/scene-opening.png`
+    - `docs/experiments/artifacts/exp-11-html-css-scene-capture/scene-closing.png`
+    - `docs/experiments/artifacts/exp-11-html-css-scene-capture/summary.json`
+  - opening scene는 Pillow보다 훨씬 덜 조악한 방향으로 넘어가기 시작했습니다.
+  - closing scene는 여전히 typography polish가 더 필요합니다.
+- 이어서 `EXP-12`도 추가했습니다.
+  - `opening / review / closing` scene type 정의
+  - scene type별 `copy budget + type scale` 추가
+  - `review` scene 추가
+  - capture script를 `review`까지 확장
+  - 포트 자동 선택으로 stale server 재사용 문제 수정
+- `EXP-12` 결과:
+  - 문구 길이 때문에 frame이 무너지는 문제는 크게 줄었습니다.
+  - `closing` scene는 headline/cta 안정성이 좋아졌습니다.
+  - 대신 subcopy richness가 약해지는 trade-off가 확인됐습니다.
+- 이어서 `EXP-13`도 추가했습니다.
+  - `closing` bottom panel 비율 조정
+  - `closing` body/kicker hierarchy 재배치
+  - `review` proof block hierarchy 강화
+- `EXP-13` 결과:
+  - `closing`은 안전성을 유지한 채 설득력을 일부 복구했습니다.
+  - `review`는 proof 장면처럼 보이는 느낌이 더 강해졌습니다.
+- 방향 재검토도 함께 수행했습니다.
+  - 현재 HTML/CSS 작업은 필요한 `renderer spike`이지만, 오래 끌면 서비스 루프 검증에서 샐 수 있다는 점을 다시 확인했습니다.
+  - 관련 ADR: `ADR-009-bound-renderer-spike-and-resume-generation-experiments.md`
+  - 생성 실험은 중단한 것이 아니라 잠시 보류 상태이며, 최소 게이트 충족 후 재개하기로 정리했습니다.
+- 이어서 `EXP-14`도 추가했습니다.
+  - worker가 `scene-plan.json`을 생성하도록 bridge 추가
+  - result API가 `scenePlan` 링크를 함께 노출하도록 연결
+  - `T02`, `T04` 샘플 scene plan artifact export
+- `EXP-14` 결과:
+  - renderer spike와 실제 worker/template-spec 경로가 다시 연결됐습니다.
+  - artifact를 통해 현재 생성 품질 문제의 일부가 deterministic copy planning 쪽에도 있음을 더 분명히 확인했습니다.
+- 이어서 `EXP-15`도 추가했습니다.
+  - `T02 / promotion / b_grade_fun / 실제 음식 사진` 기준 prompt 실험 재개
+  - `scene-plan` 길이/중복 지표를 prompt harness에 추가
+  - `benefit`, `urgency` 슬롯이 빠져 있던 harness JSON shape 수정
+  - `예약`을 CTA action keyword로 인정하도록 heuristic 수정
+- `EXP-15` 결과:
+  - deterministic baseline은 `b_grade_fun` 텍스트 예산을 계속 초과했습니다.
+  - Gemma baseline prompt는 길이 초과는 없앴지만 지역 반복 초과는 남았습니다.
+  - `B급 tone guidance` variant는 `failed_checks` 없이 `100.0`을 기록해 현재 가장 유의미한 생성 레버 후보로 확인됐습니다.
+- 이어서 `EXP-16`, `EXP-17`도 추가했습니다.
+  - `T04 / review / b_grade_fun / 라멘 사진` 기준 일반화 검증
+  - `EXP-16`: `B급 review tone guidance`
+  - `EXP-17`: `review slot length cap`
+- `EXP-16`, `EXP-17` 결과:
+  - `B급 tone guidance`는 `T02 promotion`에는 강했지만 `T04 review`에는 그대로 일반화되지 않았습니다.
+  - `slot 길이 제한`은 `scene-plan` 과긴 문구를 줄였지만, 지역 반복과 CTA 표현은 다시 흔들렸습니다.
+  - 따라서 현재 `review` 템플릿의 다음 우선 레버는 `지역 반복 제약` 또는 `CTA 강도`로 보입니다.
+- 이어서 `EXP-18`도 추가했습니다.
+  - `T04 review`에서 `지역 반복 제약`만 분리
+- `EXP-18` 결과:
+  - baseline prompt의 `region repeat 3`을 variant에서 `2`로 줄였습니다.
+  - `failed_checks`도 제거됐습니다.
+  - 현재 `review` 템플릿에서는 `지역 반복 제약`이 가장 유의미한 레버 후보로 보입니다.
+- 이어서 `EXP-19`도 추가했습니다.
+  - `T04 review`에서 `CTA 강도`만 분리
+  - 실험 중 `저장`이 action keyword에서 빠진 평가 버그도 수정
+- `EXP-19` 결과:
+  - baseline의 `지금 바로 달려가기`보다 variant의 `지금 저장하기`가 더 직접적인 행동 문구로 수렴했습니다.
+  - 지역 반복은 유지하면서 CTA 품질을 개선했습니다.
+  - `review` 템플릿에서는 `지역 반복 제약`과 `CTA 강도`가 현재 가장 유의미한 레버로 보입니다.
+- 이어서 `EXP-20`도 추가했습니다.
+  - `promotion`과 `review`의 상위 레버 비교 표 정리
+  - web이 실제 prompt experiment `scenePlan` artifact를 직접 읽는 bridge 추가
+  - `scenePlan -> web -> PNG capture` 스크립트 추가
+- `EXP-20` 결과:
+  - `promotion`의 상위 레버는 `B급 tone guidance`로 정리됐습니다.
+  - `review`의 상위 레버는 `지역 반복 제약`, `CTA 강도`로 정리됐습니다.
+  - `scene-frame`이 hardcoded scene 대신 실제 `scenePlan` artifact를 렌더할 수 있게 됐습니다.
+- `EXP-21` 결과:
+  - web이 실제 `project result.scenePlan`을 직접 소비하게 됐습니다.
+  - `project 생성 -> scenePlan fetch -> scene-frame capture` 경로가 `T02`, `T04` 모두에서 통과했습니다.
+  - main workbench 결과 패널에 실제 `scenePlan` 확인 링크를 추가했습니다.
+- `EXP-22` 결과:
+  - `history` 화면도 같은 `scenePlan` preview 경로를 쓰게 됐습니다.
+  - 기본 선택 프로젝트를 result-ready 상태 우선으로 바꿔 preview가 첫 진입부터 보이도록 정리했습니다.
+  - `/history` 화면 캡처로 preview block 노출을 실제 확인했습니다.
+- `EXP-23` 결과:
+  - cross-provider model comparison 하네스를 추가했습니다.
+  - `Gemma 4`는 정상 실행됐지만 `OpenAI` 두 모델은 현재 환경의 invalid key 때문에 `401`로 실패했습니다.
+  - 실패 모델도 artifact에 남도록 기록 경로를 정리했고 에러 메시지 마스킹도 넣었습니다.
+- `EXP-24` 결과:
+  - Google family model-only 비교를 실제로 실행했습니다.
+  - `Gemma 4`는 가장 안정적이었고, `Gemini 2.5 Flash`는 JSON format failure, `Flash-Lite`는 속도는 빠르지만 길이 제약에서 가장 불리했습니다.
+- 데모 기본 생성 옵션도 서비스 정책에 맞게 수정했습니다.
+  - `apps/web/src/components/demo-workbench.tsx`에서 기본 `quickOptions.emphasizeRegion`을 `false`로 변경했습니다.
+- 관련 문서:
+  - `docs/adr/ADR-004-history-log-policy.md`
+  - `docs/adr/ADR-005-b-grade-video-first-experiment-priority.md`
+  - `docs/adr/ADR-006-service-loop-aligned-b-grade-experiment-baseline.md`
+  - `docs/adr/ADR-007-visual-baseline-rebuild-before-ovaat.md`
+  - `docs/adr/ADR-008-reject-handcrafted-pillow-visual-baseline.md`
+  - `docs/adr/ADR-009-bound-renderer-spike-and-resume-generation-experiments.md`
+  - `docs/daily/2026-04-08-codex.md`
+  - `docs/experiments/EXP-01-prompt-harness-and-slot-guidance.md`
+  - `docs/experiments/EXP-02-audience-tone-guidance.md`
+  - `docs/experiments/EXP-03-b-grade-video-layout.md`
+  - `docs/experiments/EXP-04-owner-made-safe-zone-layout.md`
+  - `docs/experiments/EXP-05-hand-drawn-reference-with-real-food-photos.md`
+  - `docs/experiments/EXP-06-service-aligned-b-grade-promotion-opening-priority.md`
+  - `docs/experiments/EXP-07-visual-baseline-rebuild-before-ovaat.md`
+  - `docs/experiments/EXP-08-structured-bgrade-v2-linebreak-and-multi-photo-validation.md`
+  - `docs/experiments/EXP-09-renderer-strategy-pivot-options.md`
+  - `docs/experiments/EXP-10-html-css-scene-lab-prototype.md`
+  - `docs/experiments/EXP-11-scene-frame-capture-and-poster-composition.md`
+  - `docs/experiments/EXP-12-scene-copy-budget-and-type-scale.md`
+  - `docs/experiments/EXP-13-bottom-panel-and-proof-hierarchy-polish.md`
+  - `docs/experiments/EXP-14-worker-scene-plan-bridge.md`
+  - `docs/experiments/EXP-15-service-aligned-b-grade-tone-guidance.md`
+  - `docs/experiments/EXP-16-service-aligned-b-grade-review-tone.md`
+  - `docs/experiments/EXP-17-review-slot-length-cap.md`
+  - `docs/experiments/EXP-18-review-region-repeat-constraint.md`
+  - `docs/experiments/EXP-19-review-cta-strength.md`
+  - `docs/experiments/EXP-20-template-lever-comparison-and-scene-plan-web-bridge.md`
+  - `docs/experiments/EXP-21-project-result-scene-plan-direct-web-bridge.md`
+  - `docs/experiments/EXP-22-history-result-scene-plan-preview.md`
+  - `docs/experiments/EXP-23-service-aligned-promotion-cross-provider-model-comparison.md`
+  - `docs/experiments/EXP-24-service-aligned-promotion-google-model-comparison.md`
+  - `docs/testing/test-scenario-06-prompt-harness-and-slot-guidance.md`
+  - `docs/testing/test-scenario-07-audience-tone-guidance.md`
+  - `docs/testing/test-scenario-08-b-grade-video-layout.md`
+  - `docs/testing/test-scenario-09-reference-driven-owner-made-layout.md`
+  - `docs/testing/test-scenario-10-handdrawn-real-photo-style.md`
+  - `docs/testing/test-scenario-11-service-aligned-b-grade-promotion-opening.md`
+  - `docs/testing/test-scenario-12-visual-baseline-rebuild.md`
+  - `docs/testing/test-scenario-13-structured-bgrade-v2-multi-photo-validation.md`
+  - `docs/testing/test-scenario-14-html-css-scene-lab-build.md`
+  - `docs/testing/test-scenario-15-scene-frame-capture.md`
+  - `docs/testing/test-scenario-16-scene-copy-budget-capture.md`
+  - `docs/testing/test-scenario-17-bottom-panel-proof-polish.md`
+  - `docs/testing/test-scenario-18-worker-scene-plan-bridge.md`
+  - `docs/testing/test-scenario-19-service-aligned-b-grade-tone-guidance.md`
+  - `docs/testing/test-scenario-20-service-aligned-b-grade-review-tone.md`
+  - `docs/testing/test-scenario-21-review-slot-length-cap.md`
+  - `docs/testing/test-scenario-22-review-region-repeat-constraint.md`
+  - `docs/testing/test-scenario-23-review-cta-strength.md`
+  - `docs/testing/test-scenario-24-scene-plan-web-bridge.md`
+  - `docs/testing/test-scenario-25-project-result-scene-plan-web-bridge.md`
+  - `docs/testing/test-scenario-26-history-scene-plan-preview.md`
+  - `docs/testing/test-scenario-27-cross-provider-model-comparison.md`
+  - `docs/testing/test-scenario-28-google-model-comparison.md`
+- 검증:
+  - `npm run worker:test`
+  - `uv run --project services/worker python scripts/generate_sample_assets.py`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-01`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-02`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-03`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-04`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-05`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-06`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-07`
+  - `uv run --project services/worker python scripts/run_video_experiment.py --experiment-id EXP-08`
+  - `npm run build:web`
+  - `node scripts/capture_scene_lab_frames.mjs`
+  - `uv run --project services/worker python scripts/export_scene_plan_samples.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-15`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-16`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-17`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-18`
+  - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-19`
+  - `node scripts/capture_scene_plan_frames.mjs`
+  - `node scripts/capture_project_scene_plan_frames.mjs`
+  - `node scripts/capture_history_scene_plan_preview.mjs`
+  - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-23`
+  - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-24`
+  - `npm run check`
+- 남은 리스크 / 다음 액션:
+  - 자동 점수/heuristic만으로는 시각 품질 우열을 충분히 설명하기 어려워 사람 시각 평가 또는 screenshot rubric이 필요합니다.
+  - 실제 매장 사진 기준 재검증이 아직 필요합니다.
+  - 현재는 `subtitle_density` 같은 레버 실험보다 `renderer/layout baseline rebuild`가 우선입니다.
+  - 새 baseline은 `overflow 0`, `겹침 0`, `CTA 식별 가능` 조건을 통과해야 합니다.
+  - HTML/CSS capture path는 생겼고 worker scene plan bridge도 생겼으며, web도 이제 `project result.scenePlan`을 직접 소비합니다.
+  - artifact를 보면 deterministic copy planning 문구가 여전히 길고 둔합니다.
+  - `EXP-15`는 `T02`에서 유효했지만 `review` 템플릿에는 그대로 일반화되지 않았습니다.
+  - `review` 템플릿은 `지역 반복 제약`, `CTA 강도` 같은 레버를 더 봐야 합니다.
+  - `review` 템플릿에서는 현재 `지역 반복 제약`이 가장 유의미한 레버로 보입니다.
+  - `review` 템플릿에서는 현재 `지역 반복 제약`, `CTA 강도`가 가장 유의미한 레버로 보입니다.
+  - local demo의 `scenePlan`은 worker Python output과 동일 파일은 아니고 TypeScript mirror builder입니다.
+  - `history`도 preview는 붙었지만 복수 결과를 비교하는 view는 아직 없습니다.
+  - 현재 `OPENAI_API_KEY`는 존재하지만 유효하지 않아 cross-provider 실험이 완전하지 않습니다.
+  - `Gemini 2.5 Flash`는 output format 안정성이 약합니다.
+  - 다음 작업은 `review(T04)` 축 model-only 비교와 `Flash` 계열 output constraint 실험입니다.
+  - `repo 루트 .env.local`과 `apps/web/.env.local` 템플릿을 추가했고, Python 실험/API config는 이제 루트 `.env`/`.env.local`을 자동으로 읽습니다.
+  - 루트 `.env.local`은 빈 placeholder는 무시하고, 실제로 채운 값은 기존 머신 환경변수보다 우선되도록 맞췄습니다.
+  - `HF_TOKEN`/`HUGGINGFACE_HUB_TOKEN`, `LANGFUSE_BASE_URL`/`LANGFUSE_HOST` alias 처리도 추가했습니다.
+  - `EXP-25`에서 현재 계정에서 사용 가능한 OpenAI 모델(`gpt-5-mini`, `gpt-5-nano`)과 `Gemma 4`를 다시 비교했고, `gpt-5-mini`는 실전 후보, `gpt-5-nano`는 초안 후보 수준으로 정리됐습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-25-service-aligned-promotion-openai-available-model-comparison.md`
+    - `docs/testing/test-scenario-29-openai-available-model-comparison.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_env_loader.py services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-25`
+  - `EXP-26`에서 `T04 review` 축 model-only 비교를 진행했고, `gpt-5-mini`는 score는 높지만 scene-plan 안정성 문제를 드러냈습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-26-service-aligned-review-model-comparison.md`
+    - `docs/testing/test-scenario-30-review-model-comparison.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-26`
+  - 다음 우선순위는 `gpt-5-mini output constraint` 실험이고, 그 다음이 `Gemini 2.5 Flash` 형식 안정화입니다.
+  - `EXP-27`에서 `gpt-5-mini`를 고정하고 `review output constraint` 한 레버만 추가했더니 `T04 review`의 길이/CTA 문제가 실제로 개선됐습니다.
+  - `EXP-28`에서는 `Gemini 2.5 Flash`에 `strict JSON output constraint`를 붙였지만 format failure를 줄이지 못했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-27-gpt-5-mini-review-output-constraint.md`
+    - `docs/testing/test-scenario-31-gpt5mini-review-output-constraint.md`
+    - `docs/experiments/EXP-28-gemini-2-5-flash-strict-json-output-constraint.md`
+    - `docs/testing/test-scenario-32-gemini-flash-strict-json-output-constraint.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-27 --api-key-env OPENAI_API_KEY`
+    - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-28`
+  - 다음 우선순위는 Hugging Face token 기반 오픈소스 비교 경로 추가이고, `Gemini 2.5 Flash`는 prompt가 아니라 토큰/자산 수 축으로 다시 봐야 합니다.
+  - `EXP-29`에서 `HF_TOKEN`을 실제로 사용하는 Hugging Face 오픈소스 비교 경로를 열었고, 현재 환경에서 `Qwen/Qwen3-4B-Instruct-2507`는 통과하지만 `Qwen/Qwen3.5-27B`는 provider timeout이 났습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-29-hugging-face-open-source-text-model-comparison.md`
+    - `docs/testing/test-scenario-33-huggingface-open-source-model-comparison.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-29`
+  - 다음 우선순위는 `Qwen/Qwen3-4B-Instruct-2507` output constraint 실험과, 실제로 통과하는 다른 Hugging Face 오픈소스 후보 발굴입니다.
+  - 로컬 환경을 다시 확인해 보니 `Ollama`가 이미 떠 있었고, `gemma3:12b`, `exaone3.5:7.8b`, `llama3.1:8b`, `mistral-small3.1:24b-instruct-2503-q4_K_M`가 설치돼 있었습니다.
+  - `prompt_harness`에 `ollama` provider와 `korean_integrity` heuristic을 추가했습니다.
+  - `EXP-30`에서 위 4개 로컬 모델을 `T02 / promotion / b_grade_fun`에 실제로 비교했습니다.
+    - `EXAONE 3.5 7.8B`는 한국어 자연스러움이 가장 좋았지만 region repeat와 길이 제약이 남았습니다.
+    - `Gemma3 12B`는 로컬 멀티모달 후보로는 가장 다루기 쉬웠지만 CTA 행동성/지역 반복이 약했습니다.
+    - `Llama 3.1 8B`는 schema 안정성이 부족했습니다.
+    - `Mistral Small 3.1 24B`는 동작은 했지만 느리고 반복이 남았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-30-local-ollama-model-comparison-on-4080-super.md`
+    - `docs/testing/test-scenario-34-local-ollama-model-comparison.md`
+  - 추가 검증:
+    - `nvidia-smi`
+    - `ollama list`
+    - `ollama show gemma3:12b`
+    - `ollama show exaone3.5:7.8b`
+    - `ollama show mistral-small3.1:24b-instruct-2503-q4_K_M`
+    - `ollama show llama3.1:8b`
+    - `uv run --project services/worker pytest services/worker/tests/test_env_loader.py services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_model_comparison_experiment.py --experiment-id EXP-30`
+  - `EXP-31`에서 `EXAONE 3.5 7.8B`를 고정하고 `region_repeat_constraint` 한 레버만 붙여 봤지만, region repeat는 줄지 않았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-31-local-exaone-3-5-7-8b-prompt-lever-experiment-promotion-region-repeat-constraint.md`
+    - `docs/testing/test-scenario-35-local-exaone-region-repeat-constraint.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-31 --api-key-env OLLAMA_HOST`
+  - `Wan2.2-I2V-A14B`, `LTX-2.3` 포함 로컬 비디오 후보도 공식 문서 기준으로 다시 분류했습니다.
+    - 현재 16GB 로컬 first try 후보는 `LTX-Video 2B distilled / GGUF`
+    - 그다음 후보는 `CogVideoX-5B-I2V`
+    - `Wan2.2-I2V-A14B`, `LTX-2.3`는 지금 로컬 baseline lane에서는 제외
+  - 새 문서:
+    - `docs/experiments/EXP-32-local-video-model-feasibility-matrix-4080super.md`
+    - `docs/testing/test-scenario-36-local-video-model-feasibility-review.md`
+  - 남은 리스크 / 다음 액션:
+    - `EXAONE 3.5 7.8B`는 한글은 안정적이지만, region/length constraint를 잘 따르는지는 추가 실험이 필요합니다.
+    - 다음 로컬 텍스트 레버는 `EXAONE + output constraint`가 더 적절합니다.
+    - 다음 로컬 비디오 실험 1순위는 `LTX-Video 2B distilled / GGUF`, 2순위는 `CogVideoX-5B-I2V`입니다.
+  - `EXP-33`에서 `EXAONE 3.5 7.8B`를 고정하고 `output constraint` 한 레버를 추가했습니다.
+    - hashtags 개수와 CTA 길이 같은 format/readability는 개선됐습니다.
+    - 하지만 region repeat는 줄지 않아 부분 성공에 그쳤습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-33-local-exaone-3-5-7-8b-prompt-lever-experiment-promotion-output-constraint.md`
+    - `docs/testing/test-scenario-37-local-exaone-output-constraint.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py`
+    - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-33 --api-key-env OLLAMA_HOST`
+  - `EXP-34`로 `LTX-Video 2B / GGUF` 로컬 preflight 스크립트를 추가하고 실제로 실행했습니다.
+    - 스크립트: `scripts/local_video_ltx_preflight.py`
+    - GGUF 파일 목록과 base component 구성을 artifact로 남겼습니다.
+    - 추천 first try 파일은 `ltx-video-2b-v0.9-Q3_K_S.gguf`입니다.
+    - 다만 `uv` 임시 환경의 torch가 CPU-only라서 실제 생성 전에는 GPU-enabled Python runtime 분리가 필요합니다.
+  - 새 문서:
+    - `docs/experiments/EXP-34-local-ltx-video-preflight.md`
+    - `docs/testing/test-scenario-38-local-ltx-video-preflight.md`
+  - 추가 검증:
+    - `uv run scripts/local_video_ltx_preflight.py`
+  - 남은 리스크 / 다음 액션:
+    - `EXAONE 3.5 7.8B`는 이제 `hashtag rule` 또는 `caption region budget` 레버가 더 적절합니다.
+    - `LTX-Video 2B / GGUF`는 GPU torch 전용 환경을 먼저 만든 뒤 실제 1회 생성으로 넘어가야 합니다.
+  - `EXP-35`에서 `EXAONE 3.5 7.8B`를 고정하고 `hashtag/caption region budget` 한 레버를 붙였지만, region repeat는 `3 -> 4`로 오히려 악화됐습니다.
+    - 결론적으로 EXAONE는 이 레버 phrasing을 안정적으로 따르지 않았습니다.
+    - baseline/variant 모두 `korean_integrity` 기준에서는 명백한 한글 깨짐이 없었습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-35-local-exaone-3-5-7-8b-prompt-lever-experiment-promotion-hashtag-region-budget.md`
+    - `docs/testing/test-scenario-39-local-exaone-hashtag-region-budget.md`
+  - 추가 검증:
+    - `uv run --project services/worker pytest services/worker/tests/test_prompt_harness.py -q`
+    - `uv run --project services/worker python scripts/run_prompt_experiment.py --experiment-id EXP-35 --api-key-env OLLAMA_HOST`
+  - `EXP-36`으로 `LTX-Video 2B / GGUF` 실제 I2V 1회 생성을 성공시켰습니다.
+    - 스크립트: `scripts/local_video_ltx_first_try.py`
+    - 입력 이미지: `docs/sample/음식사진샘플(규카츠).jpg`
+    - 설정: `17프레임 / 6스텝 / 8fps`
+    - warm cache 기준 실행 시간은 `12.6초`
+    - 첫 프레임은 음식 구조 보존이 괜찮았지만 중간 프레임에는 약한 고스팅이 남았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-36-local-ltx-video-first-try.md`
+    - `docs/testing/test-scenario-40-local-ltx-video-first-try.md`
+  - 추가 검증:
+    - `python -m pip install --user diffusers==0.37.1 sentencepiece imageio-ffmpeg`
+    - `python -m pip install --user "gguf>=0.10.0"`
+    - `python scripts/local_video_ltx_first_try.py --num-frames 17 --steps 6 --fps 8`
+  - 남은 리스크 / 다음 액션:
+    - EXAONE는 prompt phrasing보다 후처리 guardrail 검토가 더 적절합니다.
+    - 로컬 비디오는 이제 `LTX` 파라미터 OVAT 실험과 `CogVideoX-5B-I2V` 비교로 넘어갑니다.
+  - `EXP-37`에서 `LTX-Video 2B / GGUF`를 고정하고 `steps`만 `6 -> 10`으로 바꿔 OVAT를 진행했습니다.
+    - 두 실행 모두 성공
+    - 하지만 `steps=10`이 품질 개선 레버는 아니었고, mid frame 기준 고스팅이 오히려 더 커 보였습니다.
+    - 실행 시간 차이도 크지 않았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-37-local-ltx-video-steps-ovaat.md`
+    - `docs/testing/test-scenario-41-local-ltx-steps-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_first_try.py --num-frames 17 --steps 6 --fps 8 --output-dir docs/experiments/artifacts/exp-37-local-ltx-video-steps-ovaat/steps-6`
+    - `python scripts/local_video_ltx_first_try.py --num-frames 17 --steps 10 --fps 8 --output-dir docs/experiments/artifacts/exp-37-local-ltx-video-steps-ovaat/steps-10`
+  - `EXP-38`로 `CogVideoX-5B-I2V` first try를 실제 실행했습니다.
+    - 스크립트: `scripts/local_video_cogvideox_first_try.py`
+    - 입력 이미지: `docs/sample/음식사진샘플(규카츠).jpg`
+    - 설정: `16프레임 / 8스텝 / 8fps`
+    - 실행은 성공했지만 첫 프레임부터 격자형 artifact가 강했고, 현재 first try 품질은 `LTX`보다 약했습니다.
+    - 실행 시간은 `353.29초`로 길었습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-38-local-cogvideox-first-try.md`
+    - `docs/testing/test-scenario-42-local-cogvideox-first-try.md`
+  - 추가 검증:
+    - `python scripts/local_video_cogvideox_first_try.py --num-frames 16 --steps 8 --fps 8`
+  - 남은 리스크 / 다음 액션:
+    - 현재 로컬 비디오 baseline lane은 `LTX`가 유지됩니다.
+    - 다음 `LTX` OVAT는 `prompt length` 또는 `num_frames`가 더 적절합니다.
+    - `CogVideoX`는 설정 재조정 후 재시도 후보입니다.
+  - `EXP-39`로 지금까지의 실험 방향이 기획 의도와 계속 맞는지 중간 점검을 수행했습니다.
+    - 기준 문서:
+      - `docs/planning/01_SERVICE_PROJECT_PLAN.md`
+      - `docs/planning/03_CONTENT_PIPELINE_AND_TEMPLATE_SPEC.md`
+      - `docs/planning/06_EVALUATION_TEST_AND_OPERATIONS.md`
+      - `HISTORY.md`
+    - 판단:
+      - 방향이 완전히 틀린 것은 아니지만, 현재는 `서비스 본선`보다 `생성 연구선` 비중이 조금 더 커진 상태
+      - 본선은 여전히 `템플릿 기반 MVP`, `quick action`, `업로드/업로드 보조`, `KPI 검증`
+      - 연구선은 `LTX`, `모델 비교`, `guardrail` 중심으로 유지
+  - 새 문서:
+    - `docs/experiments/EXP-39-midpoint-direction-review.md`
+  - 남은 리스크 / 다음 액션:
+    - 다음 생성 연구는 `LTX + prompt length` OVAT가 적절합니다.
+    - 동시에 `quick action visible delta`, `업로드 보조 흐름`, `첫 결과물 생성 시간` 검증을 다시 올려야 합니다.
+  - `EXP-40`에서 `LTX-Video 2B / GGUF`를 고정하고 `prompt length`만 바꾸는 OVAT를 진행했습니다.
+    - baseline: 설명형 default prompt
+    - variant: 짧고 직접적인 short prompt
+    - warm cache 기준 실행 시간은 `11.07초` vs `10.94초`로 거의 같았습니다.
+    - mid frame 관찰 기준으로는 short prompt가 음식 구조 보존과 고스팅 측면에서 더 좋았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-40-local-ltx-video-prompt-length-ovaat.md`
+    - `docs/testing/test-scenario-43-local-ltx-prompt-length-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_first_try.py --num-frames 17 --steps 6 --fps 8 --output-dir docs/experiments/artifacts/exp-40-local-ltx-video-prompt-length-ovaat/default-prompt`
+    - `python scripts/local_video_ltx_first_try.py --num-frames 17 --steps 6 --fps 8 --prompt "crispy gyukatsu, gentle steam, slow push-in, warm restaurant lighting, realistic food motion" --output-dir docs/experiments/artifacts/exp-40-local-ltx-video-prompt-length-ovaat/short-prompt`
+    - `HF_HUB_OFFLINE=1`로 warm cache 재실행
+  - `EXP-41`에서 서비스 본선 `quick action visible delta`를 실제로 검증했습니다.
+    - 스크립트: `scripts/capture_quick_action_delta.mjs`
+    - 액션: `shorterCopy`
+    - 처음에는 zero-delta였고 `scene-frame`도 오류 페이지였습니다.
+    - 원인을 수정했습니다:
+      - `apps/web/src/lib/demo-store.ts`: regenerate `changeSet` 반영
+      - `apps/web/src/lib/scene-plan.ts`: `scene-frame?projectId=`가 같은 web 서버 API를 보도록 수정
+    - 수정 후 재실행에서는 hookText와 opening primaryText 길이가 각각 `11자` 줄었고, opening scene에서 문구가 실제로 짧아졌습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-41-quick-action-visible-delta-shorter-copy.md`
+    - `docs/testing/test-scenario-44-quick-action-visible-delta-shorter-copy.md`
+  - 추가 검증:
+    - `node scripts/capture_quick_action_delta.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `LTX num_frames` 또는 `camera motion phrase` OVAT로 이어갑니다.
+    - 본선은 `highlightPrice`, `emphasizeRegion` quick action과 `업로드 보조`, `첫 결과 생성 시간` 검증이 다음 우선순위입니다.
+  - `EXP-42`에서 `LTX-Video 2B / GGUF`를 고정하고 `num_frames`만 바꾸는 OVAT를 진행했습니다.
+    - baseline: `17프레임`
+    - variant: `25프레임`
+    - prompt는 `EXP-40`의 short prompt를 그대로 유지했습니다.
+    - 실행 시간 차이는 `0.2초` 수준이었고, mid frame 기준으로는 `25프레임`이 약간 더 안정적이었습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-42-local-ltx-video-num-frames-ovaat.md`
+    - `docs/testing/test-scenario-45-local-ltx-num-frames-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_num_frames_ovaat.py --offline`
+  - `EXP-43`에서 서비스 본선 `quick action visible delta`를 `highlightPrice`까지 확장해 검증했습니다.
+    - 스크립트: `scripts/capture_quick_action_delta.mjs`
+    - 이번에는 `--lever highlightPrice`와 별도 output dir를 받아 재사용 가능하게 일반화했습니다.
+    - `benefit scene(s2)` primary text가 `짧게 봐도 느낌이 전해집니다`에서 `가격 메리트가 한눈에 보입니다`로 바뀌었습니다.
+    - opening/CTA는 그대로였고, 변화는 `benefit scene`에 집중됐습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-43-quick-action-visible-delta-highlight-price.md`
+    - `docs/testing/test-scenario-46-quick-action-visible-delta-highlight-price.md`
+  - 추가 검증:
+    - `node scripts/capture_quick_action_delta.mjs --lever highlightPrice --output-dir docs/experiments/artifacts/exp-43-quick-action-visible-delta-highlight-price`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `LTX + camera motion phrase` OVAT가 다음 후보입니다.
+    - 본선은 `업로드 보조 흐름`과 `첫 결과 생성 시간` 검증으로 넘어가는 편이 맞습니다.
+  - `EXP-44`에서 `LTX-Video 2B / GGUF`를 고정하고 `camera motion phrase`만 바꾸는 OVAT를 진행했습니다.
+    - baseline: `slow push-in`
+    - variant: `static close-up, minimal camera movement`
+    - 나머지 조건은 `25프레임 / 6스텝 / 8fps / short prompt`
+    - mid frame 기준으로는 `static close-up` 쪽이 음식 구조 보존이 더 좋았습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-44-local-ltx-video-camera-motion-ovaat.md`
+    - `docs/testing/test-scenario-47-local-ltx-camera-motion-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_camera_motion_ovaat.py --offline`
+  - `EXP-45`에서 서비스 본선 KPI인 `첫 결과 생성 시간`과 `업로드 보조 흐름`을 실제로 점검했습니다.
+    - 스크립트: `scripts/check_generation_timing_and_upload_assist.mjs`
+    - 프로젝트 생성 -> 자산 업로드 -> generate -> publish assist -> assist complete까지 한 번에 재현했습니다.
+    - 첫 결과 생성 시간은 `4872ms`였고, KPI인 `3분 이내`를 충족했습니다.
+    - `youtube_shorts + assist` 경로는 `assist_required` -> `assisted_completed` -> 프로젝트 `published`로 정상 전이됐습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-45-generation-timing-and-upload-assist-flow.md`
+    - `docs/testing/test-scenario-48-generation-timing-and-upload-assist-flow.md`
+  - 추가 검증:
+    - `node scripts/check_generation_timing_and_upload_assist.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `static close-up` 기준으로 `micro movement` 또는 `steam intensity` OVAT가 다음 후보입니다.
+    - 본선은 `instagram auto publish` 또는 `auto 실패 -> assist fallback` 추가 점검이 다음 우선순위입니다.
+  - `EXP-46`에서 `LTX-Video 2B / GGUF` baseline 위에 `micro movement`를 추가하는 OVAT를 진행했습니다.
+    - baseline: `static close-up, minimal camera movement`
+    - variant: `static close-up, subtle camera drift`
+    - 결과는 variant가 오히려 더 나빴고, 현재 baseline 유지가 맞다고 판단했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-46-local-ltx-video-micro-movement-ovaat.md`
+    - `docs/testing/test-scenario-49-local-ltx-micro-movement-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_camera_motion_ovaat.py --offline --baseline-motion "static close-up, minimal camera movement" --variant-motion "static close-up, subtle camera drift" --output-dir docs/experiments/artifacts/exp-46-local-ltx-video-micro-movement-ovaat`
+  - `EXP-47`에서 서비스 본선 게시 경로를 matrix로 검증했습니다.
+    - 스크립트: `scripts/check_publish_route_matrix.mjs`
+    - 시나리오:
+      - `instagram auto success`
+      - `tiktok auto fallback`
+    - 두 경로 모두 정상 전이를 확인했습니다.
+    - 이 과정에서 `demo-store`가 runtime과 다르게 `assist complete` 후 error를 남기고, `instagram auto success`에도 assistPackage를 노출하던 문제를 수정했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-47-publish-route-matrix.md`
+    - `docs/testing/test-scenario-50-publish-route-matrix.md`
+  - 추가 검증:
+    - `node scripts/check_publish_route_matrix.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `steam intensity` 또는 `lighting phrase` OVAT가 다음 후보입니다.
+    - 본선은 `instagram permission_error -> assist fallback`과 publish 상태 UI 가시성 점검이 다음 우선순위입니다.
+  - `EXP-48`에서 `LTX-Video 2B / GGUF`의 `steam intensity` OVAT를 진행했습니다.
+    - baseline: `gentle steam`
+    - variant: `strong steam cloud`
+    - 이번 샘플에서는 variant가 오히려 더 안정적이었습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-48-local-ltx-video-steam-intensity-ovaat.md`
+    - `docs/testing/test-scenario-51-local-ltx-steam-intensity-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_steam_ovaat.py --offline`
+  - `EXP-49`에서 `instagram permission_error -> assist fallback`과 UI 가시성을 함께 검증했습니다.
+    - 스크립트: `scripts/capture_instagram_permission_error_fallback_ui.mjs`
+    - `DemoWorkbench`를 보강해 `uploadJobId` query 기반 로드와 upload job 에러 메시지 표시를 추가했습니다.
+    - `demo-store`의 `PUBLISH_FAILED` 메시지도 runtime과 맞췄습니다.
+    - 결과 카드에서 `보조 필요` 상태와 fallback 이유가 함께 보이도록 정리했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-49-instagram-permission-error-fallback-ui.md`
+    - `docs/testing/test-scenario-52-instagram-permission-error-fallback-ui.md`
+  - 추가 검증:
+    - `node scripts/capture_instagram_permission_error_fallback_ui.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `lighting phrase` 또는 `texture emphasis` OVAT가 다음 후보입니다.
+    - 본선은 history/result 화면의 publish 상태 가시성 점검이 다음 우선순위입니다.
+  - `EXP-50`에서 history/result 화면의 publish 상태 가시성을 보강했습니다.
+    - 스크립트: `scripts/capture_history_publish_status_visibility.mjs`
+    - `HistoryBoard`가 `projectId` query로 특정 프로젝트를 우선 선택하고, latest upload job을 별도 panel로 보여주도록 수정했습니다.
+    - `instagram permission_error -> assist fallback` 시나리오를 `/history?projectId=...` 기준으로 캡처했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-50-history-publish-status-visibility.md`
+    - `docs/testing/test-scenario-53-history-publish-status-visibility.md`
+  - 추가 검증:
+    - `node scripts/capture_history_publish_status_visibility.mjs`
+  - `EXP-51`에서 `LTX-Video 2B / GGUF`의 `lighting phrase` OVAT를 진행했습니다.
+    - baseline: `warm restaurant lighting`
+    - variant: `bright tabletop lighting`
+    - 이번 샘플에서는 variant가 더 안정적이었습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-51-local-ltx-video-lighting-phrase-ovaat.md`
+    - `docs/testing/test-scenario-54-local-ltx-lighting-phrase-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_lighting_ovaat.py --offline`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `texture emphasis` 또는 `food motion phrase` OVAT가 다음 후보입니다.
+    - 본선은 history에서 복수 publish 시도가 누적될 때 최신 상태 설명이 충분한지 확인해야 합니다.
+  - `EXP-52`에서 `LTX-Video 2B / GGUF`의 `texture emphasis` OVAT를 진행했습니다.
+    - baseline: `no explicit texture phrase`
+    - variant: `detailed crispy breading texture`
+    - 이번 샘플에서는 variant가 baseline을 이기지 못했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-52-local-ltx-video-texture-emphasis-ovaat.md`
+    - `docs/testing/test-scenario-55-local-ltx-texture-emphasis-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_texture_ovaat.py --offline`
+  - `EXP-53`에서 history 화면이 복수 publish 시도 중 최신 작업을 제대로 선택하는지 검증했습니다.
+    - 스크립트: `scripts/capture_history_latest_publish_attempt.mjs`
+    - 같은 프로젝트에서 `instagram auto success` 후 `tiktok auto fallback`을 실행했습니다.
+    - latest upload job이 두 번째 시도와 일치하는지 확인했고, history detail panel에 `최근 시도` 시각도 노출했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-53-history-latest-publish-attempt.md`
+    - `docs/testing/test-scenario-56-history-latest-publish-attempt.md`
+  - 추가 검증:
+    - `node scripts/capture_history_latest_publish_attempt.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `food motion phrase` 또는 `negative phrase` OVAT가 다음 후보입니다.
+    - 본선은 복수 publish 시도 목록이 실제로 필요한지 UX 관점에서 검토해야 합니다.
+  - `EXP-54`에서 `LTX-Video 2B / GGUF`의 `food motion phrase` OVAT를 진행했습니다.
+    - baseline: `realistic food motion`
+    - variant: `subtle sizzling food motion`
+    - 이번 샘플에서는 variant가 baseline을 이기지 못했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-54-local-ltx-video-food-motion-phrase-ovaat.md`
+    - `docs/testing/test-scenario-57-local-ltx-food-motion-phrase-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_food_motion_ovaat.py --offline`
+  - `EXP-55`에서 history 화면의 최근 게시 시도 요약 UI를 검증했습니다.
+    - 스크립트: `scripts/capture_history_recent_publish_attempts_ui.mjs`
+    - same-origin route `GET /api/projects/[projectId]/upload-jobs`를 추가했습니다.
+    - history detail panel에 최근 2~3건 시도 요약을 표시하도록 보강했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-55-history-recent-publish-attempts-ui.md`
+    - `docs/testing/test-scenario-58-history-recent-publish-attempts-ui.md`
+  - 추가 검증:
+    - `node scripts/capture_history_recent_publish_attempts_ui.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `negative phrase` OVAT가 다음 후보입니다.
+    - 본선은 최근 시도 요약이 모바일에서도 충분히 읽히는지 확인해야 합니다.
+  - `EXP-56`에서 `LTX-Video 2B / GGUF`의 `negative prompt` OVAT를 진행했습니다.
+    - baseline: 기본 negative prompt
+    - variant: `ghosting / duplicated utensils / malformed cutlet / extra food pieces`를 더한 stronger negative prompt
+    - 이번 샘플에서는 variant가 크게 나빠졌습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-56-local-ltx-video-negative-prompt-ovaat.md`
+    - `docs/testing/test-scenario-59-local-ltx-negative-prompt-ovaat.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_negative_prompt_ovaat.py --offline`
+  - `EXP-57`에서 history recent attempts 요약의 모바일 가독성을 검증했습니다.
+    - 스크립트: `scripts/capture_history_recent_publish_attempts_mobile_ui.mjs`
+    - viewport `430 x 2600` 기준으로 캡처했습니다.
+    - recent attempts 요약은 모바일에서도 구조 붕괴 없이 읽혔습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-57-history-recent-publish-attempts-mobile-ui.md`
+    - `docs/testing/test-scenario-60-history-recent-publish-attempts-mobile-ui.md`
+  - 추가 검증:
+    - `node scripts/capture_history_recent_publish_attempts_mobile_ui.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 prompt phrasing보다 입력 이미지 다양화나 seed 안정성 쪽을 보는 편이 더 적절합니다.
+    - 본선은 history보다 publish/package 전체 흐름과 생성 실험 결과 연결을 다시 볼 필요가 있습니다.
+  - `EXP-58`에서 현재 `LTX-Video 2B / GGUF` baseline을 여러 실제 음식 사진으로 검증했습니다.
+    - 규카츠 / 라멘 / 순두부짬뽕 / 장어덮밥 4장을 돌렸습니다.
+    - 규카츠는 상대적으로 안정적이었지만, 나머지 음식군은 품질 편차가 컸습니다.
+    - 현재 baseline은 음식군 전반으로 일반화되지 않는다고 판단했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-58-local-ltx-baseline-multi-image-validation.md`
+    - `docs/testing/test-scenario-61-local-ltx-baseline-multi-image-validation.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_baseline_multi_image_validation.py --offline`
+  - `EXP-59`에서 `generate -> regenerate -> publish assist` 일관성을 검증했습니다.
+    - `shorterCopy` regenerate 이후 latest result를 fetch했습니다.
+    - publish assist package의 `video/caption/hashtags`가 regenerated result와 모두 일치했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-59-result-to-publish-package-consistency.md`
+    - `docs/testing/test-scenario-62-result-to-publish-package-consistency.md`
+  - 추가 검증:
+    - `node scripts/check_result_to_publish_package_consistency.mjs`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 `seed 안정성` 또는 `음식군별 prompt template 분리` 검토가 다음 후보입니다.
+    - 본선은 package consistency보다 생성 품질 실험에 더 집중해도 됩니다.
+  - `EXP-60`에서 stale `variantId` publish guard를 검증하고, demo/runtime 계약을 맞췄습니다.
+    - regenerate 후 baseline variant로 publish하면 `422 INVALID_STATE_TRANSITION`이 반환되도록 정리했습니다.
+    - fresh variant로는 `assist_required`가 정상 반환됐습니다.
+    - 이 검증 중 드러난 regenerate derivative unique 충돌도 upsert로 수정했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-60-stale-variant-publish-guard.md`
+    - `docs/testing/test-scenario-63-stale-variant-publish-guard.md`
+  - 추가 검증:
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -k stale_variant`
+    - `node scripts/check_stale_variant_publish_guard.mjs`
+  - `EXP-61`에서 현재 `LTX-Video 2B / GGUF` baseline의 seed 안정성을 검증했습니다.
+    - seed `7 / 11 / 19`만 바꿔 비교했습니다.
+    - seed `7`이 가장 나았고 seed `19`가 가장 나빴습니다.
+    - 최고/최악 seed 간 mid-frame MSE 차이는 `331.95`였습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-61-local-ltx-seed-stability.md`
+    - `docs/testing/test-scenario-64-local-ltx-seed-stability.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_seed_stability.py --offline`
+  - 남은 리스크 / 다음 액션:
+    - 본선은 cross-project variant guard나 schedule guard를 볼 수 있습니다.
+    - 연구선은 `multi-seed shortlist` 또는 `음식군별 baseline prompt 분리`가 다음 후보입니다.
+  - `EXP-62`에서 cross-project variant publish guard를 검증했습니다.
+    - project A의 variant를 project B publish에 넣으면 `422 INVALID_STATE_TRANSITION`이 반환됐습니다.
+    - project B 자신의 variant는 정상 `assist_required`가 반환됐습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-62-cross-project-variant-publish-guard.md`
+    - `docs/testing/test-scenario-65-cross-project-variant-publish-guard.md`
+  - 추가 검증:
+    - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -k cross_project_variant`
+    - `node scripts/check_cross_project_variant_publish_guard.mjs`
+  - `EXP-63`에서 fixed seed `7`와 multi-seed shortlist(`7 / 11 / 19`)를 비교했습니다.
+    - 규카츠/라멘/장어덮밥은 fixed seed `7`이 그대로 best였습니다.
+    - 순두부짬뽕만 seed `19`가 더 나았습니다.
+    - shortlist가 실제로 나아진 이미지는 `4개 중 1개`였습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-63-local-ltx-multi-seed-shortlist.md`
+    - `docs/testing/test-scenario-66-local-ltx-multi-seed-shortlist.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_multi_seed_shortlist.py --offline`
+  - 남은 리스크 / 다음 액션:
+    - 본선은 schedule 경로가 생기면 같은 variant guard를 재사용하면 됩니다.
+    - 연구선은 `multi-seed shortlist`보다 `음식군별 baseline prompt 분리`가 더 강한 후보입니다.
+  - `EXP-64`에서 generic baseline prompt와 음식군별 tailored prompt를 비교했습니다.
+    - 규카츠와 커피는 tailored prompt가 더 좋았습니다.
+    - 라멘과 장어덮밥은 tailored prompt가 크게 나빠졌습니다.
+    - aggregate 기준으로는 tailored prompt가 전반 개선을 만들지 못했습니다.
+  - 새 문서:
+    - `docs/experiments/EXP-64-local-ltx-food-category-prompt-split.md`
+    - `docs/testing/test-scenario-67-local-ltx-food-category-prompt-split.md`
+  - 추가 검증:
+    - `python scripts/local_video_ltx_food_category_prompt_split.py --offline`
+  - 남은 리스크 / 다음 액션:
+    - 연구선은 음식군 분기보다 `구도/촬영 타입 분기`가 더 유력합니다.
+    - 본선은 당분간 variant guard보다 생성 품질 연구가 우선입니다.
+- `EXP-65`에서 single-photo 조건에 맞춰 입력 프레이밍 방식만 바꾸는 OVAT를 진행했습니다.
+  - baseline: `cover_center`
+  - variant: `contain_blur`
+  - `contain_blur`가 `6개 중 5개`에서 더 좋았습니다.
+  - 다만 규카츠처럼 이미 꽉 찬 트레이샷은 `cover_center`가 더 나았습니다.
+- 새 문서:
+  - `docs/experiments/EXP-65-local-ltx-framing-mode-ovaat.md`
+  - `docs/testing/test-scenario-68-local-ltx-framing-mode-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_framing_mode_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+  - 연구선은 prompt보다 `샷 타입 -> prepare_mode` 분기가 더 유력합니다.
+  - 다음은 bowl/soup/drink/dessert와 tray/full-plate를 나누는 baseline 분기가 후보입니다.
+- `EXP-66`에서 global `contain_blur`와 `규카츠=cover_center` policy를 비교했습니다.
+  - `규카츠`에만 명확한 개선이 생겼고, 나머지 5장은 그대로 유지됐습니다.
+  - 즉 `샷 타입 -> prepare_mode` 분기가 실제 baseline 후보로 올라왔습니다.
+- 새 문서:
+  - `docs/experiments/EXP-66-local-ltx-prepare-mode-policy-split.md`
+  - `docs/testing/test-scenario-69-local-ltx-prepare-mode-policy-split.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_prepare_mode_policy_split.py --offline`
+- `EXP-67`에서 preserve-shot subset에 `cover_top`을 얹는 OVAT를 진행했습니다.
+  - `cover_top`은 `커피` 1건만 더 좋았고, 라멘/장어덮밥은 크게 나빠졌습니다.
+  - preserve-shot의 일반 baseline은 여전히 `contain_blur`가 맞습니다.
+- 새 문서:
+  - `docs/experiments/EXP-67-local-ltx-preserve-shot-top-bias-ovaat.md`
+  - `docs/testing/test-scenario-70-local-ltx-preserve-shot-top-bias-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_preserve_shot_top_bias_ovaat.py --offline`
+- `EXP-68`에서 기존 policy 위에 `커피만 cover_top` 예외를 얹는 OVAT를 진행했습니다.
+  - 전체 회귀 없이 `커피` 1장에서만 작은 개선이 생겼습니다.
+  - 현재 single-photo baseline은 `tray/full-plate -> cover_center`, `glass drink candidate -> cover_top`, 그 외 preserve-shot -> `contain_blur` 방향으로 좁혀졌습니다.
+- 새 문서:
+  - `docs/experiments/EXP-68-local-ltx-prepare-mode-drink-exception-policy.md`
+  - `docs/testing/test-scenario-71-local-ltx-prepare-mode-drink-exception-policy.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_prepare_mode_drink_exception.py --offline`
+- 남은 리스크 / 다음 액션:
+  - `drink` 일반화 근거는 아직 `커피` 1장뿐입니다.
+  - 다음은 prompt보다 `shot type auto classification` 또는 prepare_mode 자동 분기 로직이 우선입니다.
+- `EXP-69`에서 image-only `prepare_mode` auto classifier v1을 추가했습니다.
+  - known baseline 6장에 대해서는 `100%` 일치했습니다.
+  - 다만 `맥주`는 `contain_blur`로 예측돼 추가 검증이 필요했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-69-local-ltx-prepare-mode-auto-classifier.md`
+  - `docs/testing/test-scenario-72-local-ltx-prepare-mode-auto-classifier.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_prepare_mode_auto_classifier.py`
+- `EXP-70`에서 `커피`, `맥주` drink subset에 `contain_blur vs cover_top` OVAT를 진행했습니다.
+  - 두 이미지 모두 `cover_top`이 더 좋았습니다.
+  - 즉 `cover_top`은 커피 전용 예외가 아니라 `glass drink candidate` 일반 규칙 후보가 됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-70-local-ltx-drink-top-bias-generalization.md`
+  - `docs/testing/test-scenario-73-local-ltx-drink-top-bias-generalization.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_drink_top_bias_generalization.py --offline`
+- `EXP-71`에서 auto classifier를 v2로 보정했습니다.
+  - 변경된 샘플은 `맥주` 1장뿐이었고, known baseline 정확도는 `0.8571 -> 1.0`으로 올라갔습니다.
+  - 현재 baseline 정책은 `tray/full-plate -> cover_center`, `glass drink candidate -> cover_top`, 그 외 preserve-shot -> `contain_blur`로 정리됩니다.
+- 새 문서:
+  - `docs/experiments/EXP-71-local-ltx-prepare-mode-classifier-refinement.md`
+  - `docs/testing/test-scenario-74-local-ltx-prepare-mode-classifier-refinement.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_prepare_mode_classifier_refinement.py`
+- 남은 리스크 / 다음 액션:
+  - `glass drink candidate` 일반화 근거는 아직 2장뿐입니다.
+  - 다음은 classifier v2를 실제 generation runner나 batch path에 연결하는 편이 맞습니다.
+- `EXP-72`에서 classifier v2를 실제 generation runner에 연결했습니다.
+  - `scripts/local_video_ltx_first_try.py`에 `--prepare-mode auto`를 추가했습니다.
+  - artifact에 `resolved_prepare_mode`, `auto_shot_type`, `structure_features`를 남기도록 확장했습니다.
+  - 수동 policy와 `auto`를 같은 seed로 비교했을 때 7장 모두 parity가 유지됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-72-local-ltx-auto-prepare-mode-parity.md`
+  - `docs/testing/test-scenario-75-local-ltx-auto-prepare-mode-parity.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_auto_prepare_mode_parity.py --offline`
+- 남은 리스크 / 다음 액션:
+  - 현재 정책은 runner에 붙었지만, batch validation에서 아직 기본값으로 쓰진 않고 있습니다.
+  - 다음은 batch path에서 `auto`를 기본값으로 쓰고 일반화가 유지되는지 보는 편이 맞습니다.
+- `EXP-73`에서 `prepare_mode auto`를 전체 샘플 11장 batch validation에 태웠습니다.
+  - 전체 11장이 정상 완료됐습니다.
+  - 분기 결과는 `cover_center 2`, `contain_blur 7`, `cover_top 2`였습니다.
+  - `커피`, `맥주`는 모두 `glass_drink_candidate -> cover_top`으로 분기됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-73-local-ltx-auto-full-sample-validation.md`
+  - `docs/testing/test-scenario-76-local-ltx-auto-full-sample-validation.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_auto_full_sample_validation.py --offline`
+- 남은 리스크 / 다음 액션:
+  - `prepare_mode auto`는 batch path에서도 유지됐지만, `타코야키`, `맥주`처럼 결과가 거친 샘플은 여전히 남습니다.
+  - 다음은 batch runner 계열에서 `auto`를 기본값으로 승격하고, 이후엔 샘플별 품질 병목을 따로 봐야 합니다.
+- `EXP-74`에서 `타코야키` 샘플의 `steam phrase`를 한 변수만 줄이는 OVAT를 진행했습니다.
+  - `strong steam cloud`를 제거한 variant가 크게 더 좋았습니다.
+  - 현재 tray/full-plate 안에서도 subtype별 prompt family가 필요하다는 점이 더 분명해졌습니다.
+- 새 문서:
+  - `docs/experiments/EXP-74-local-ltx-takoyaki-steam-phrase-ovaat.md`
+  - `docs/testing/test-scenario-77-local-ltx-takoyaki-steam-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_takoyaki_steam_phrase_ovaat.py --offline`
+- `EXP-75`에서 reusable batch runner 초안을 추가했습니다.
+  - `scripts/local_video_ltx_batch_runner.py`
+  - 기본값은 `--prepare-mode auto`입니다.
+  - 대표 샘플 6장으로 실제 실행했을 때 current baseline 정책이 그대로 유지됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-75-local-ltx-batch-runner-auto-default.md`
+  - `docs/testing/test-scenario-78-local-ltx-batch-runner-auto-default.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_batch_runner.py --offline`
+- 남은 리스크 / 다음 액션:
+  - `prepare_mode auto`는 runner 레벨까지 올라갔지만, `타코야키`, `맥주` 같은 샘플별 품질 병목은 여전히 남습니다.
+  - 다음은 `tray/full-plate subtype`과 `맥주 전용` 후속 레버를 분리해서 보는 편이 맞습니다.
+- `EXP-76`에서 `규카츠` 샘플의 `steam phrase`를 한 변수만 줄이는 OVAT를 진행했습니다.
+  - `strong steam cloud`를 제거한 variant가 `규카츠`에서도 소폭 더 좋았습니다.
+  - `타코야키 전용 예외`보다 `tray/full-plate 기본값 변경` 가능성이 더 커졌습니다.
+- 새 문서:
+  - `docs/experiments/EXP-76-local-ltx-gyukatsu-steam-phrase-ovaat.md`
+  - `docs/testing/test-scenario-79-local-ltx-gyukatsu-steam-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_gyukatsu_steam_phrase_ovaat.py --offline`
+- `EXP-77`에서 `규카츠 + 타코야키`를 묶은 `tray/full-plate steam default on/off` 비교를 진행했습니다.
+  - aggregate 기준 `avg mid-frame MSE`가 `753.46 -> 312.40`으로 내려가 `steam off`가 명확히 더 나았습니다.
+  - reusable runner의 tray/full-plate prompt 기본값도 `no steam`으로 맞췄습니다.
+- 새 문서:
+  - `docs/experiments/EXP-77-local-ltx-tray-steam-default-policy-split.md`
+  - `docs/testing/test-scenario-80-local-ltx-tray-steam-default-policy-split.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_tray_steam_default_policy_split.py --offline`
+- 남은 리스크 / 다음 액션:
+  - tray/full-plate 일반화 근거는 아직 `규카츠`, `타코야키` 2장뿐입니다.
+  - 다음은 `맥주`처럼 분기는 맞지만 결과가 거친 drink lane 후속 레버를 보는 편이 맞습니다.
+- `EXP-78`에서 `맥주` 샘플의 `drink motion phrase`를 한 변수만 바꾸는 OVAT를 진행했습니다.
+  - `realistic drink commercial motion`보다 `still life beverage shot`이 `mid-frame MSE 797.78 -> 268.79`로 크게 더 좋았습니다.
+  - 처음에는 `맥주` 예외로 봤지만, 후속 parity 검증 전 단계로 기록했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-78-local-ltx-beer-drink-motion-phrase-ovaat.md`
+  - `docs/testing/test-scenario-81-local-ltx-beer-drink-motion-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_drink_motion_phrase_ovaat.py --offline`
+- `EXP-79`에서 `커피` 샘플에도 같은 `drink motion phrase` 레버를 붙여 parity를 확인했습니다.
+  - `커피`도 `still life beverage shot`이 `mid-frame MSE 279.75 -> 152.54`로 더 좋았습니다.
+  - reusable runner의 glass drink baseline은 이제 `cover_top + still life beverage shot`으로 정리했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-79-local-ltx-coffee-drink-motion-phrase-ovaat.md`
+  - `docs/testing/test-scenario-82-local-ltx-coffee-drink-motion-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_coffee_drink_motion_phrase_ovaat.py --offline`
+- `EXP-80`에서 `맥주` baseline에 `carbonation/foam phrase`를 추가하는 OVAT를 진행했습니다.
+  - `mid-frame MSE`는 `268.79 -> 187.23`으로 좋아졌지만, `edge variance`는 소폭 낮아졌습니다.
+  - 따라서 이 레버는 `유망 후보`로만 두고 아직 baseline에는 반영하지 않았습니다.
+- 새 문서:
+  - `docs/experiments/EXP-80-local-ltx-beer-carbonation-phrase-ovaat.md`
+  - `docs/testing/test-scenario-83-local-ltx-beer-carbonation-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_carbonation_phrase_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+  - drink lane 일반화 근거는 아직 `커피`, `맥주` 2장뿐입니다.
+  - 다음은 `맥주`의 bottle label / text preservation 후속 레버를 보는 편이 맞습니다.
+- `EXP-81`에서 `맥주` baseline에 `clear bottle label` phrase를 추가하는 OVAT를 진행했습니다.
+  - `mid-frame MSE`는 `268.79 -> 198.48`로 좋아졌지만, `edge variance`는 소폭 내려갔고 시각적으로도 label이 확실히 더 읽히진 않았습니다.
+  - 따라서 `label preservation phrase`는 `보류 후보`로만 남기고 baseline에는 반영하지 않았습니다.
+- 새 문서:
+  - `docs/experiments/EXP-81-local-ltx-beer-label-preservation-phrase-ovaat.md`
+  - `docs/testing/test-scenario-84-local-ltx-beer-label-preservation-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_label_preservation_phrase_ovaat.py --offline`
+- `EXP-82`에서 `맥주` baseline negative prompt에서 `text, watermark`를 제거하는 OVAT를 진행했습니다.
+  - `mid-frame MSE`가 `268.79 -> 354.10`으로 오히려 나빠졌습니다.
+  - 현재 조건에서는 `text/watermark` 제거가 label 보존 해결책이 아니라는 점을 확인했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-82-local-ltx-beer-label-negative-prompt-ovaat.md`
+  - `docs/testing/test-scenario-85-local-ltx-beer-label-negative-prompt-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_label_negative_prompt_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+  - `맥주` label 문제는 여전히 남아 있고, prompt보다 framing/crop 계열 레버가 더 유력해졌습니다.
+  - 다음은 bottle label이 더 크게 보이도록 만드는 입력 framing 레버를 보는 편이 맞습니다.
+- `EXP-83`에서 `맥주` baseline의 `prepare_mode`를 `cover_top -> cover_center`로 바꾸는 OVAT를 진행했습니다.
+  - `mid-frame MSE`가 `268.79 -> 120.99`, `edge variance`가 `+226.31`로 크게 좋아졌습니다.
+  - 현재 `맥주` 병목은 prompt보다 `prepare_mode` 쪽이 더 컸습니다.
+  - 이 단계에서 `scripts/local_video_ltx_prepare_mode_classifier.py`도 `bottom-heavy bottle+glass` 케이스를 별도 분기로 보정했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-83-local-ltx-beer-prepare-mode-ovaat.md`
+  - `docs/testing/test-scenario-86-local-ltx-beer-prepare-mode-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_prepare_mode_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+- `EXP-84`에서 `맥주` baseline의 `prepare_mode`를 `cover_center -> cover_bottom`으로 한 단계 더 내리는 OVAT를 진행했습니다.
+  - `mid-frame MSE`가 `120.99 -> 103.34`, `edge variance`가 `+60.50`으로 추가 개선됐습니다.
+  - prepared input 단계에서도 label과 glass 하단 정보가 더 넓게 살아났습니다.
+  - `scripts/local_video_ltx_prepare_mode_classifier.py`도 `bottom-heavy bottle+glass` 케이스는 `cover_bottom`으로 최종 보정했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-84-local-ltx-beer-cover-bottom-bias-ovaat.md`
+  - `docs/testing/test-scenario-87-local-ltx-beer-cover-bottom-bias-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_cover_bottom_bias_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+  - `bottom-heavy bottle+glass -> cover_bottom` 분기 근거는 아직 `맥주` 1장 기준입니다.
+  - 다음은 `커피`는 `cover_top`, `맥주`는 `cover_bottom`이 그대로 유지되는지 확인하는 편이 맞습니다.
+- `EXP-85`에서 `커피/맥주` 2장 기준으로 old drink policy와 current drink policy를 묶어서 비교했습니다.
+  - aggregate 기준 `avg mid-frame MSE`가 `210.67 -> 127.94`, `avg edge variance`가 `+143.40`으로 현재 policy가 더 좋았습니다.
+  - 즉 `top-heavy -> cover_top`, `bottom-heavy bottle+glass -> cover_bottom` 분기는 정책 수준에서도 유지됩니다.
+- 새 문서:
+  - `docs/experiments/EXP-85-local-ltx-drink-prepare-mode-policy-split.md`
+  - `docs/testing/test-scenario-88-local-ltx-drink-prepare-mode-policy-split.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_drink_prepare_mode_policy_split.py --offline`
+- `EXP-86`에서 `맥주` baseline에 bottle/glass separation phrase를 추가하는 OVAT를 진행했습니다.
+  - `mid-frame MSE delta`가 `-0.19`로 사실상 개선이 없었습니다.
+  - separation phrase는 현재 baseline 위에서 유효 레버가 아니었습니다.
+- 새 문서:
+  - `docs/experiments/EXP-86-local-ltx-beer-glass-separation-phrase-ovaat.md`
+  - `docs/testing/test-scenario-89-local-ltx-beer-glass-separation-phrase-ovaat.md`
+- 추가 검증:
+  - `python scripts/local_video_ltx_beer_glass_separation_phrase_ovaat.py --offline`
+- 남은 리스크 / 다음 액션:
+  - drink lane 일반화 근거는 여전히 `커피`, `맥주` 2장뿐입니다.
+  - 다음은 다른 샘플군으로 넘어가거나, 현재 video generation baseline을 한 번 중간 점검하는 편이 맞습니다.
+- `EXP-106`에서 `gpt-5-mini`에 exact region caption anchor를 더 직접적으로 추가했습니다.
+  - 자동 score는 baseline/candidate 모두 `100`이었지만, 실제 출력에는 여전히 `성수동`과 `서울숲 근처`가 같이 붙는 nearby-location leakage가 남았습니다.
+  - 즉 exact region slot hit는 만들 수 있어도, PM 기준의 위치 일관성은 아직 불안정합니다.
+- `EXP-107`에서 `Gemma 4`에 benefit headline 14자 cap도 추가했습니다.
+  - baseline/candidate 모두 `100`이었고, candidate는 benefit headline을 더 짧게 줄여 headline headroom을 확보했습니다.
+  - 다만 nearby-location 계열 hashtag가 다시 섞일 수 있다는 점은 그대로 남았습니다.
+- `EXP-108`에서는 exact region anchor + tighter benefit budget을 함께 고정한 동일 prompt로 `Gemma 4`와 `gpt-5-mini`를 다시 비교했습니다.
+  - `Gemma 4`는 `score 100`으로 strict prompt를 안정적으로 통과했습니다.
+  - `gpt-5-mini`는 `score 92.9`로 다시 `region appears in fewer than required areas`가 발생했습니다.
+- `EXP-109`에서는 `EXP-108` strict prompt를 두 모델에 3회씩 다시 돌려 repeatability를 확인했습니다.
+  - `Gemma 4`는 3회 모두 `score 100`으로 통과했고 hook도 동일하게 유지됐습니다.
+  - `gpt-5-mini`는 평균 `97.6`이었지만, 1회는 exact region slot을 놓쳤고, score 100인 run에서도 `서울숲 근처`, `#서울숲근처`가 다시 섞였습니다.
+  - 이로 인해 현재 자동 평가기는 `exact region slot`만 세고 nearby-location leakage는 놓친다는 blind spot이 확인됐습니다.
+- `EXP-110`에서 strict region 평가기에 nearby-location leakage 체크를 추가했습니다.
+  - `detail_location` 기반 alias를 써서 `서울숲 근처`, `#서울숲근처`, `#서울숲데이트` 같은 nearby landmark 유입을 자동 실패로 잡도록 바꿨습니다.
+  - 이 체크는 `emphasizeRegion=false`인 strict region 시나리오에서만 켜지도록 제한했습니다.
+- 같은 기준으로 `EXP-106`~`EXP-109`를 다시 실행했습니다.
+  - `EXP-106`: baseline `86.7`, candidate `93.3`
+  - `EXP-107`: baseline `93.3`, candidate `100.0`
+  - `EXP-108`: `Gemma 4 = 100.0`, `gpt-5-mini = 93.3`
+  - `EXP-109`: `Gemma 4 avg = 100.0`, `gpt-5-mini avg = 91.1`
+  - 즉 새 기준에서도 본선 prompt baseline 후보는 `Gemma 4`가 더 타당하다는 판단이 강화됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-106-gpt5mini-exact-region-caption-anchor.md`
+  - `docs/experiments/EXP-107-gemma4-benefit-14-char-cap.md`
+  - `docs/experiments/EXP-108-strict-anchor-benefit-budget-comparison.md`
+  - `docs/experiments/EXP-109-strict-anchor-benefit-budget-repeatability.md`
+  - `docs/experiments/EXP-110-nearby-location-leakage-evaluator-patch.md`
+  - `docs/testing/test-scenario-108-gpt5mini-exact-region-caption-anchor.md`
+  - `docs/testing/test-scenario-109-gemma4-benefit-14-char-cap.md`
+  - `docs/testing/test-scenario-110-strict-anchor-benefit-budget-comparison.md`
+  - `docs/testing/test-scenario-111-strict-anchor-benefit-budget-repeatability.md`
+  - `docs/testing/test-scenario-112-nearby-location-leakage-evaluator-patch.md`
+- 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python -m py_compile scripts/run_prompt_experiment.py`
+  - `python -m py_compile scripts/run_model_comparison_experiment.py`
+  - `python -m py_compile scripts/run_prompt_repeatability_spot_check.py`
+  - `python scripts/run_prompt_experiment.py --experiment-id EXP-106 --api-key-env OPENAI_API_KEY`
+  - `python scripts/run_prompt_experiment.py --experiment-id EXP-107 --api-key-env GEMINI_API_KEY`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-108`
+  - `python scripts/run_prompt_repeatability_spot_check.py --experiment-id EXP-108 --repeat 3`
+- 남은 리스크 / 다음 액션:
+  - 현재 본선 prompt baseline 후보는 `Gemma 4`가 더 타당합니다.
+  - `gpt-5-mini`는 짧고 직설적인 톤 reference로는 유효하지만, exact region / nearby-location leakage 억제는 아직 불안정합니다.
+  - 다음은 새 prompt variant보다 `evaluation blind spot`, 특히 `서울숲 근처`, `#서울숲근처`, `#서울숲데이트`류를 어떤 정책으로 reject할지 정하는 편이 맞습니다.
+- `EXP-111`에서는 nearby-location leakage를 surface 정책별로 다시 점수화하는 matrix를 추가했습니다.
+  - `scripts/rescore_location_surface_policy.py`로 `strict_all_surfaces`, `public_copy_surfaces`, `distribution_surfaces` 세 정책을 비교했습니다.
+  - `EXP-108 repeatability` 기준으로 `Gemma 4`는 세 정책 모두 pass rate `1.0`, `gpt-5-mini`는 세 정책 모두 pass rate `0.0`이었습니다.
+  - 즉 정책을 느슨하게 풀어도 현재 모델 판단은 바뀌지 않았고, `gpt-5-mini` leakage는 이미 `captions/hashtags`에서 반복됩니다.
+- `packages/template-spec/manifests/location-surface-policy-v1.json`도 draft로 추가했습니다.
+  - 현재 `promotion / T02 / b_grade_fun` 기준 기본값은 `strict_all_surfaces`로 두는 판단을 문서화했습니다.
+- `EXP-112`에서는 이 위치 정책을 실제 `copy-rule` 레이어에 연결했습니다.
+  - `services/worker/experiments/prompt_harness.py`가 이제 `copy_rule.locationPolicy.forbiddenDetailLocationSurfaces`를 직접 읽습니다.
+  - `packages/template-spec/copy-rules/promotion.json`, `packages/template-spec/copy-rules/review.json`에도 `locationPolicy.policyId = strict_all_surfaces`를 추가했습니다.
+  - 최신 `EXP-108` artifact에는 `detail_location_policy_surfaces`, `detail_location_leaks_by_surface`가 함께 기록돼, nearby-location 누수가 어느 surface에서 났는지 바로 보이게 됐습니다.
+- `EXP-113`에서는 이 위치 정책을 `web runtime/editor`에도 보이도록 연결했습니다.
+  - `apps/web/src/components/copy-policy-summary.tsx` 공통 카드 추가
+  - `apps/web/src/lib/contracts.ts`에 `CopyRule` 타입 확장과 `findCopyRule(templateId, purpose)` helper 추가
+  - `apps/web/src/components/demo-workbench.tsx`에 `현재 템플릿 카피 정책`, `결과 기준 카피 정책` 카드 추가
+  - `apps/web/src/components/history-board.tsx`에 `최근 결과 카피 정책` 카드 추가
+  - 당시 기준 coverage도 화면에서 바로 드러났습니다.
+    - `T02 promotion`, `T04 review`: `strict_all_surfaces`
+    - `T01 new_menu`, `T03 location_push`: `상세 위치 정책 미연결`
+- `EXP-114`에서는 이 coverage gap을 실제로 닫았습니다.
+  - `packages/template-spec/copy-rules/new_menu.json`, `location_push.json`에도 `locationPolicy.policyId = strict_all_surfaces`를 추가했습니다.
+  - 이제 `T01`~`T04` 전부가 동일한 `locationPolicy` coverage를 가집니다.
+  - 동시에 `apps/web/src/components/copy-policy-summary.tsx`에는 `emphasizeRegion` quick action의 의미를 같이 설명하도록 정리했습니다.
+- `EXP-115`에서는 `emphasizeRegion=true`가 정말 policy 완화 근거가 되는지 다시 확인했습니다.
+  - `EXP-01`, `EXP-02`를 `strict_all_surfaces`, `public_copy_surfaces`, `distribution_surfaces`로 다시 점수화했지만, Gemma 4 결과는 세 정책 모두 통과하지 못했습니다.
+  - 즉 `emphasizeRegion=true` 시나리오에서도 nearby-location leakage는 이미 공개 surface에 들어가 있었고, relaxed policy로 바꿔도 해결되지 않았습니다.
+  - 그래서 `services/worker/experiments/prompt_harness.py`는 이제 `emphasizeRegion=true`여도 `detailLocation` guard를 끄지 않고, evaluation에 `detail_location_policy_id`도 같이 남깁니다.
+  - `apps/web/src/components/copy-policy-summary.tsx`, `packages/template-spec/README.md`도 `지역명 강조 = detailLocation 공개 허용`처럼 읽히지 않도록 수정했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-111-nearby-location-surface-policy-matrix.md`
+  - `docs/experiments/EXP-112-location-policy-wired-to-copy-rules.md`
+  - `docs/experiments/EXP-113-location-policy-runtime-editor-preview.md`
+  - `docs/experiments/EXP-114-location-policy-coverage-expansion.md`
+  - `docs/experiments/EXP-115-emphasize-region-does-not-disable-location-policy.md`
+  - `docs/testing/test-scenario-113-nearby-location-surface-policy-matrix.md`
+  - `docs/testing/test-scenario-114-location-policy-wired-to-copy-rules.md`
+  - `docs/testing/test-scenario-115-location-policy-runtime-editor-preview.md`
+  - `docs/testing/test-scenario-116-location-policy-coverage-expansion.md`
+  - `docs/testing/test-scenario-117-emphasize-region-does-not-disable-location-policy.md`
+- 추가 검증:
+  - `python -m py_compile scripts/rescore_location_surface_policy.py`
+  - `python scripts/rescore_location_surface_policy.py --artifact-path docs/experiments/artifacts/exp-108-repeatability.json --source-experiment-id EXP-108`
+  - `python scripts/rescore_location_surface_policy.py --artifact-path docs/experiments/artifacts/exp-01-slot-guidance-gemma4.json --source-experiment-id EXP-01`
+  - `python scripts/rescore_location_surface_policy.py --artifact-path docs/experiments/artifacts/exp-02-gemma-4-prompt-lever-experiment-audience-tone-guidance.json --source-experiment-id EXP-02`
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-108`
+  - `python -c "import json, pathlib; [json.loads(pathlib.Path(p).read_text(encoding='utf-8')) for p in ['packages/template-spec/copy-rules/new_menu.json','packages/template-spec/copy-rules/location_push.json']]; print('ok')"`
+  - `python -c "import json, pathlib; from services.worker.experiments.prompt_harness import evaluate_copy_bundle, get_experiment_definition, DEFAULT_TEMPLATE_SPEC_ROOT; from services.worker.adapters.template_loader import load_template, load_copy_rule; artifact=json.loads(pathlib.Path('docs/experiments/artifacts/exp-01-slot-guidance-gemma4.json').read_text(encoding='utf-8')); scenario=get_experiment_definition('EXP-01').scenario; row=artifact['results'][1]; template=load_template(DEFAULT_TEMPLATE_SPEC_ROOT, scenario.template_id); copy_rule=load_copy_rule(DEFAULT_TEMPLATE_SPEC_ROOT, scenario.purpose); result=evaluate_copy_bundle(row['output'], scenario, template, copy_rule); print(result['detail_location_policy_id'], result['detail_location_leak_count'], result['failed_checks'])"`
+  - `npm run build:web`
+- 다음 액션 보강:
+  - 다음은 새 prompt variant보다 이 위치 정책을 `copy-rule` 또는 별도 evaluation policy layer에 어떻게 연결할지 정하는 편이 맞습니다.
+  - 현재는 runtime/editor preview, `T01`/`T03` coverage, `emphasizeRegion` 의미 재정렬까지 마쳤으므로, 다음은 scene preview/result payload에 `active policy state`를 보여줄지와 예외 policy가 필요할 때 어떤 `policyId`로 분기할지 판단하는 편이 맞습니다.
+
+## 2026-04-10 추가
+
+- prompt baseline 축을 더 진행했습니다.
+- `EXP-127`에서는 prompt baseline을 `packages/template-spec/manifests/prompt-baseline-v1.json`과 snapshot artifact로 freeze했습니다.
+  - baseline scope는 `T02 promotion / b_grade_fun / Gemma 4 / strict_all_surfaces`입니다.
+  - snapshot은 `accepted=true`, `score=100.0`, `detail_location_leak_count=0`, `over_limit_scene_count=0`으로 다시 통과했습니다.
+- `EXP-128`에서는 `T02 promotion` strict baseline 원칙이 `T04 review`까지 전이되는지 확인했습니다.
+  - direct transfer와 translated transfer 모두 single run에서는 `100.0`을 통과했습니다.
+  - 다만 repeatability에서는 두 variant 모두 `1/3 success`였고, 실패 원인은 품질 붕괴가 아니라 `Gemma 4 timeout`이었습니다.
+- `EXP-129`에서는 `T04 review`에서 누가 fallback model이 될 수 있는지 확인했습니다.
+  - `Gemma 4`는 single run과 repeatability 모두 `100.0`을 유지했습니다.
+  - `gpt-5-mini`는 single run과 repeatability 모두 `nearby location leaked into strict region budget`로 `93.3`에 머물렀습니다.
+  - 즉 현재 `T04 review` strict baseline에서는 `gpt-5-mini`를 fallback으로 freeze하기 어렵습니다.
+- `prompt-baseline-v1.json`에는 `transferChecks`를 추가해 `EXP-128`, `EXP-129` 결과를 manifest 기준선에 같이 남겼습니다.
+- 새 문서:
+  - `docs/experiments/EXP-127-prompt-baseline-freeze.md`
+  - `docs/experiments/EXP-128-prompt-baseline-transfer-check-review.md`
+  - `docs/experiments/EXP-129-review-baseline-fallback-model-comparison.md`
+  - `docs/testing/test-scenario-129-prompt-baseline-freeze.md`
+  - `docs/testing/test-scenario-130-prompt-baseline-transfer-check-review.md`
+  - `docs/testing/test-scenario-131-review-baseline-fallback-model-comparison.md`
+- 검증:
+  - `python -m py_compile scripts/run_prompt_baseline_snapshot.py`
+  - `python scripts/run_prompt_baseline_snapshot.py`
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python -m py_compile scripts/run_prompt_repeatability_spot_check.py`
+  - `python scripts/run_prompt_experiment.py --experiment-id EXP-128 --api-key-env GEMINI_API_KEY`
+  - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-128 --repeat 3 --api-key-env GEMINI_API_KEY`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-129`
+  - `python scripts/run_prompt_repeatability_spot_check.py --experiment-id EXP-129 --repeat 3`
+- 남은 리스크 / 다음 액션:
+  - `T02 promotion` baseline은 freeze됐지만, `T04 review`는 아직 `전이 확인`과 `fallback 검증` 단계입니다.
+  - 현재 `Gemma 4`는 strict review baseline을 통과하지만 timeout 리스크가 남아 있습니다.
+  - `gpt-5-mini`는 tone reference로는 유효하지만 strict review fallback candidate로는 부족합니다.
+  - 다음은 `Gemma 4 timeout 완화` 또는 `strict review fallback` 후보 탐색이 더 맞습니다.
+
+## 2026-04-10 추가 2
+
+- `EXP-130`에서 `T04 review` strict baseline의 fallback 후보를 더 넓혀 보기 위해 `Gemma 4`, `gpt-4.1-mini`, `gpt-5-mini`를 비교했습니다.
+- 이 과정에서 OpenAI Responses request shape를 모델별로 다르게 보내는 호환성 패치를 넣었습니다.
+  - `reasoning.effort`는 `gpt-5` 계열에만 전송
+  - `text.verbosity`는 `gpt-5=low`, 그 외는 `medium`
+- 결과:
+  - `Gemma 4`는 다시 `100.0`을 유지했습니다.
+  - `gpt-5-mini`는 여전히 `nearby location leaked into strict region budget`로 `93.3`에 머물렀습니다.
+  - `gpt-4.1-mini`는 request shape를 맞춘 뒤에도 현재 project access가 없어 `403 model_not_found`로 막혔습니다.
+- 따라서 현재 접근 가능한 review strict fallback 후보는 여전히 뚜렷하지 않고, 실질적으로는 `Gemma 4`만 strict baseline 통과 상태입니다.
+- `prompt-baseline-v1.json`의 `transferChecks`에도 `EXP-130` 판단을 추가했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-130-review-strict-fallback-candidate-sweep.md`
+  - `docs/testing/test-scenario-132-review-strict-fallback-candidate-sweep.md`
+- 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python -m py_compile scripts/run_prompt_repeatability_spot_check.py`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-130`
+- 남은 리스크 / 다음 액션:
+  - `gpt-4.1-mini`는 품질 이전에 access 리스크가 있습니다.
+  - `gpt-5-mini`는 access는 되지만 strict region leakage가 남습니다.
+  - 다음은 `Gemma 4 timeout 완화` 또는 `gpt-5-mini leakage 억제` 중 하나로 좁히는 편이 맞습니다.
+
+## 2026-04-10 추가 3
+
+- `EXP-131`에서 `gpt-5-mini`를 strict review fallback으로 rescue할 수 있는지 확인했습니다.
+- baseline은 `review_translated_baseline_gpt5mini`, candidate는 `review_surface_locked_exact_region_anchor`였습니다.
+- candidate는 surface 단위로 위치 표현을 더 강하게 잠갔습니다.
+  - `성수동` exact string은 정확히 1개 caption에만 허용
+  - 지역 hashtag는 `#성수동`만 허용
+  - `서울숲`, `성수역`, `근처`, `인근`, `동네`, `핫플`, `앞` 같은 nearby/detail-location 표현은 모든 surface에서 금지
+- 결과:
+  - baseline은 `93.3`으로 nearby-location leakage가 남았습니다.
+  - candidate는 single run `100.0`, repeatability `3/3 pass`를 기록했습니다.
+- 따라서 현재 `T04 review` strict baseline 기준은 이렇게 다시 정리할 수 있습니다.
+  - `Gemma 4`: main baseline
+  - `gpt-5-mini`: surface-locked prompt 사용 시 strict fallback candidate
+- `prompt-baseline-v1.json`의 `transferChecks`에도 `EXP-131` 판단을 추가했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-131-gpt5mini-review-strict-region-leakage-suppression.md`
+  - `docs/testing/test-scenario-133-gpt5mini-review-strict-region-leakage-suppression.md`
+- 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python scripts/run_prompt_experiment.py --experiment-id EXP-131 --api-key-env OPENAI_API_KEY`
+  - `python scripts/run_prompt_variant_repeatability_spot_check.py --experiment-id EXP-131 --repeat 3 --api-key-env OPENAI_API_KEY`
+- 남은 리스크 / 다음 액션:
+  - `gpt-5-mini`는 이제 완전히 탈락이 아니라, `surface-locked strict fallback` 조건부 통과 상태입니다.
+  - 다음은 이 prompt를 manifest 수준 baseline option으로 올릴지, 아니면 `Gemma 4 timeout 완화`를 계속 우선할지 결정하면 됩니다.
+
+## 2026-04-10 추가 4
+
+- `EXP-132`에서 `gpt-5-mini surface-locked strict fallback`을 실험 메모가 아니라 baseline manifest option으로 승격했습니다.
+- `packages/template-spec/manifests/prompt-baseline-v1.json`에 `baselineOptions[]`를 추가했고, 새 profile은 `review_strict_fallback_surface_lock`입니다.
+- `scripts/run_prompt_baseline_snapshot.py`도 확장했습니다.
+  - `--profile-id` 옵션 추가
+  - `prompt_experiment + promptVariantId` source snapshot 지원
+- 실제 snapshot도 바로 돌렸습니다.
+  - artifact: `docs/experiments/artifacts/exp-132-review-strict-fallback-surface-lock-snapshot.json`
+  - 결과: `accepted=true`, `score=100.0`, `detail_location_leak_count=0`, `over_limit_scene_count=0`
+- 따라서 현재 prompt baseline은 이렇게 정리됩니다.
+  - main baseline: `Gemma 4 / T02 promotion`
+  - conditional fallback profile: `gpt-5-mini / T04 review / surface-locked exact region anchor`
+- 새 문서:
+  - `docs/experiments/EXP-132-review-strict-fallback-surface-lock-profile.md`
+  - `docs/testing/test-scenario-134-review-strict-fallback-surface-lock-profile.md`
+- 검증:
+  - `python -m py_compile scripts/run_prompt_baseline_snapshot.py`
+  - `python -c "import json, pathlib; json.loads(pathlib.Path('packages/template-spec/manifests/prompt-baseline-v1.json').read_text(encoding='utf-8')); print('ok')"`
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id review_strict_fallback_surface_lock`
+- 남은 리스크 / 다음 액션:
+  - 이제 남은 질문은 `이 fallback profile을 runtime policy와 실제 연결할지`입니다.
+  - 아니면 `Gemma 4 timeout 완화`를 더 먼저 검증할지도 선택해야 합니다.
+
+## 2026-04-10 추가 5
+
+- `EXP-133`에서 prompt baseline manifest를 실제 result payload와 web surface에 recommendation metadata로 연결했습니다.
+- `services/worker/pipelines/generation.py`가 `promptBaselineSummary`를 `render-meta.json`에 같이 저장합니다.
+- `/api/projects/{projectId}/result`도 이 field를 그대로 반환하도록 확장했습니다.
+- demo fallback과 web UI도 함께 맞췄습니다.
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `apps/web/src/lib/demo-store.ts`
+  - `apps/web/src/components/prompt-baseline-summary.tsx`
+- 현재 이 summary는 `recommendation only`입니다.
+  - deterministic runtime의 실제 generation provider routing을 자동으로 바꾸지는 않습니다.
+- 새 문서:
+  - `docs/experiments/EXP-133-prompt-baseline-runtime-visibility.md`
+  - `docs/testing/test-scenario-135-prompt-baseline-runtime-visibility.md`
+- 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py services/api/app/services/runtime.py services/api/app/schemas/api.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - baseline/fallback profile visibility는 붙었지만 실제 provider routing 정책은 아직 미연결입니다.
+  - 다음 분기는 `runtime routing 연결` 또는 `Gemma 4 timeout 완화`입니다.
+
+## 2026-04-13
+
+- `EXP-134`에서 Gemma 4 transport timeout risk를 prompt 변경 없이 다시 확인했습니다.
+- source는 `EXP-128`의 `promotion_baseline_principles_translated_to_review` variant였습니다.
+- 새 스크립트:
+  - `scripts/run_gemma_transport_profile_check.py`
+- harness 확장:
+  - `services/worker/experiments/prompt_harness.py`
+  - `generate_copy_bundle_with_google_model_with_meta()` 추가
+  - timeout / retry / attemptCount / retriesUsed 추적 가능
+- 비교한 transport profile:
+  - `default_60s_no_retry`
+  - `timeout_90s_retry1`
+  - `timeout_120s_retry1`
+- 결과:
+  - 세 profile 모두 `3/3 pass`
+  - 세 profile 모두 `avg_score=100.0`
+  - 다만 `90초 / retry 1회`는 `avg_attempt_count=1.33`으로 retry가 실제 한 번 개입했습니다.
+- 해석:
+  - timeout risk는 이번 세션에서 상시 재현되지 않았습니다.
+  - 따라서 `Gemma 4 baseline 자체를 바꿔야 한다`는 결론은 아직 아닙니다.
+  - 대신 retry는 간헐적 transport guard로는 의미가 있습니다.
+- baseline manifest 반영:
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+  - `operationalChecks[]`에 `EXP-134` 판단 추가
+- 새 문서:
+  - `docs/experiments/EXP-134-gemma-transport-timeout-mitigation-check.md`
+  - `docs/testing/test-scenario-136-gemma-transport-timeout-mitigation-check.md`
+- 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py scripts/run_gemma_transport_profile_check.py`
+  - `python scripts/run_gemma_transport_profile_check.py --experiment-id EXP-128 --variant-id promotion_baseline_principles_translated_to_review --repeat 3 --api-key-env GEMINI_API_KEY`
+- 남은 리스크 / 다음 액션:
+  - 지금 더 시급한 분기는 `runtime routing 연결` 또는 `baseline coverage 확장`입니다.
+  - timeout 이슈는 운영성 체크로 계속 관찰하면 됩니다.
+- 이어서 `EXP-135`에서 `T01 new_menu / friendly / emphasizeRegion=true` coverage를 직접 확인했습니다.
+- `services/worker/experiments/prompt_harness.py`에 `EXP-135`를 추가해 `Gemma 4`와 `gpt-5-mini`를 같은 strict region anchor prompt 아래에서 비교했습니다.
+- 결과:
+  - single run은 두 모델 모두 `100.0`
+  - repeatability는 `gpt-5-mini 3/3 pass`, `Gemma 4 0/3 timeout`
+- 해석:
+  - `T01` coverage prompt 자체는 유효합니다.
+  - 하지만 이번 세션의 실용 후보는 `gpt-5-mini`이고, `Gemma 4`는 품질이 아니라 transport timeout으로 탈락했습니다.
+- 이어서 `EXP-136`으로 `T01` coverage candidate를 manifest option profile로 올렸습니다.
+- baseline manifest 반영:
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+  - `transferChecks[]`에 `EXP-135` 추가
+  - `baselineOptions[]`에 `new_menu_friendly_strict_region_anchor` 추가
+- snapshot 결과:
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id new_menu_friendly_strict_region_anchor`
+  - `accepted=true`
+  - `score=100.0`
+- 새 문서:
+  - `docs/experiments/EXP-135-new-menu-strict-region-anchor-coverage-comparison.md`
+  - `docs/experiments/EXP-136-new-menu-friendly-strict-region-profile.md`
+  - `docs/testing/test-scenario-137-new-menu-strict-region-anchor-coverage-comparison.md`
+  - `docs/testing/test-scenario-138-new-menu-friendly-strict-region-profile.md`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py scripts/run_model_comparison_experiment.py scripts/run_prompt_repeatability_spot_check.py scripts/run_prompt_baseline_snapshot.py`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-135`
+  - `python scripts/run_prompt_repeatability_spot_check.py --experiment-id EXP-135 --repeat 3 --model-names models/gemma-4-31b-it,gpt-5-mini`
+  - `python -c "import json, pathlib; json.loads(pathlib.Path('packages/template-spec/manifests/prompt-baseline-v1.json').read_text(encoding='utf-8')); print('ok')"`
+- 남은 리스크 / 다음 액션:
+  - `T01` coverage는 확보됐지만, `Gemma 4` timeout 재발은 여전히 운영성 이슈로 남습니다.
+  - 다음 우선순위는 새 coverage profile 추가보다 `runtime recommendation`과 `transport guard` 연결 범위를 정하는 쪽입니다.
+- 이어서 `EXP-137`으로 prompt baseline summary를 `execution advisory` 단계까지 확장했습니다.
+- 구현 범위:
+  - `packages/contracts/schemas/generation.ts`
+  - `services/worker/pipelines/generation.py`
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `apps/web/src/components/prompt-baseline-summary.tsx`
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+- 추가된 내용:
+  - `executionHint`
+  - `operationalChecks`
+  - `transportRecommendation`
+- 결과:
+  - worker smoke는 여전히 `coverage_gap`
+  - api smoke의 `T01 / emphasizeRegion=true`는 `option_match`
+  - 즉 `visibility`만 있던 summary가 이제 `추천 profile / 추천 model / transport note`까지 포함하게 됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-137-prompt-baseline-execution-advisory.md`
+  - `docs/testing/test-scenario-139-prompt-baseline-execution-advisory.md`
+- 추가 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `python -c "import json, pathlib; json.loads(pathlib.Path('packages/template-spec/manifests/prompt-baseline-v1.json').read_text(encoding='utf-8')); print('ok')"`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - 아직 실제 generation provider routing은 자동으로 바뀌지 않습니다.
+  - 다음 단계는 `executionHint`를 runtime policy에 어디까지 연결할지 작게 정의하는 일입니다.
+- 이어서 `EXP-138`로 `executionHint` 위에 `policyHint`를 추가했습니다.
+- 구현 범위:
+  - `packages/contracts/schemas/generation.ts`
+  - `services/worker/pipelines/generation.py`
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `apps/web/src/components/prompt-baseline-summary.tsx`
+  - `services/worker/tests/test_generation_pipeline.py`
+  - `services/api/tests/test_api_smoke.py`
+- 추가된 내용:
+  - `policyHint`
+  - `policyState`
+  - `recommendedAction`
+  - `requiresManualReview`
+- 결과:
+  - worker smoke는 `coverage_gap -> manual_review_required`
+  - api smoke의 `T01 / emphasizeRegion=true`는 `option_reference -> use_option_profile_reference`
+  - 즉 이제 summary가 "권장 profile/model"을 넘어서 "운영에서 어떤 액션으로 읽을지"까지 함께 전달합니다.
+- 새 문서:
+  - `docs/experiments/EXP-138-prompt-baseline-policy-hint.md`
+  - `docs/testing/test-scenario-140-prompt-baseline-policy-hint.md`
+- 추가 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - 아직도 이 단계는 `policy metadata` 확장일 뿐이며, provider routing 자동화는 아닙니다.
+  - 다음 기준선은 `policyHint`를 보고 어떤 케이스를 수동 검토로 고정할지 더 좁히는 일입니다.
+- 이어서 `EXP-139`로 coverage gap 진단 정보를 추가했습니다.
+- 구현 범위:
+  - `packages/contracts/schemas/generation.ts`
+  - `services/worker/pipelines/generation.py`
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `apps/web/src/components/prompt-baseline-summary.tsx`
+  - `services/worker/tests/test_generation_pipeline.py`
+  - `services/api/tests/test_api_smoke.py`
+- 추가된 내용:
+  - `coverageHint`
+  - `nearestProfileId`
+  - `nearestProfileKind`
+  - `mismatchDimensions`
+- 결과:
+  - worker smoke는 `coverage_gap`이 유지되지만, 이제 nearest profile이 `new_menu_friendly_strict_region_anchor`이고 mismatch가 `quickOptions.emphasizeRegion` 하나라는 점이 같이 드러납니다.
+  - api smoke의 exact-match 시나리오는 `coverageHint=null`로 유지되어, 진단이 coverage gap 케이스에만 붙도록 정리됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-139-prompt-baseline-coverage-gap-diagnostics.md`
+  - `docs/testing/test-scenario-141-prompt-baseline-coverage-gap-diagnostics.md`
+- 추가 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - `coverageHint`는 여전히 가장 가까운 profile과 mismatch 축까지만 설명하며, 실제 runtime routing을 바꾸지는 않습니다.
+  - 다음 기준선은 `coverageHint`가 반복해서 가리키는 mismatch 축이 baseline option 승격 대상인지, 단순 수동 검토 축인지 더 분리하는 일입니다.
+- 이어서 `EXP-140`으로 coverage gap action classification을 추가했습니다.
+- 구현 범위:
+  - `packages/contracts/schemas/generation.ts`
+  - `services/worker/pipelines/generation.py`
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `apps/web/src/components/prompt-baseline-summary.tsx`
+  - `services/worker/tests/test_generation_pipeline.py`
+  - `services/api/tests/test_api_smoke.py`
+- 추가된 내용:
+  - `coverageHint.gapClass`
+  - `coverageHint.recommendedAction`
+- 결과:
+  - worker smoke의 coverage gap은 `quick_option_gap -> consider_option_profile`로 분류됩니다.
+  - 즉 현재 gap은 새 scenario 실험이 아니라, 기존 `new_menu` 시나리오의 quick option coverage를 option profile로 메울 후보라는 해석이 가능합니다.
+  - api smoke의 exact-match 시나리오는 여전히 `coverageHint=null`로 유지됩니다.
+- 새 문서:
+  - `docs/experiments/EXP-140-prompt-baseline-coverage-gap-action-classification.md`
+  - `docs/testing/test-scenario-142-prompt-baseline-coverage-gap-action-classification.md`
+- 추가 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+- 남은 리스크 / 다음 액션:
+  - 지금 분류는 `quick option gap / scenario gap / mixed gap` 3단계의 단순 규칙입니다.
+  - 다음 기준선은 `quick_option_gap`가 실제로 option profile 승격으로 이어질 만큼 반복되는지 확인하고, 아니라면 수동 검토로 남기는 경계를 정하는 일입니다.
+- 이어서 `EXP-141`로 prompt baseline coverage audit를 추가했습니다.
+- 구현 범위:
+  - `scripts/run_prompt_baseline_coverage_audit.py`
+  - `services/worker/pipelines/generation.py`
+  - `apps/web/src/lib/prompt-baseline.ts`
+  - `services/worker/tests/test_generation_pipeline.py`
+- 추가된 내용:
+  - `main + option profiles` 기준 quick option 8조합 전수 audit script
+  - nearest profile 선택 시 구조 mismatch 우선 weighting
+- 결과:
+  - coverage audit 집계는 `totalContexts=24`, `default_match=1`, `option_match=2`, `coverage_gap=21`, `quick_option_gap=21`, `exact_match=3`입니다.
+  - audit 과정에서 드러난 tie-break 문제를 보정해, quick option 차이만 있는 `new_menu` 케이스가 더 이상 `scenario_gap`로 잘못 분류되지 않게 했습니다.
+  - 즉 현재 baseline coverage 공백은 거의 전부 `quick_option_gap`로 볼 수 있습니다.
+- 새 문서:
+  - `docs/experiments/EXP-141-prompt-baseline-coverage-audit.md`
+  - `docs/testing/test-scenario-143-prompt-baseline-coverage-audit.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-141-prompt-baseline-coverage-audit.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/pipelines/generation.py scripts/run_prompt_baseline_coverage_audit.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+  - `python scripts/run_prompt_baseline_coverage_audit.py`
+- 남은 리스크 / 다음 액션:
+  - audit는 현재 manifest coverage 분포를 보여주지만, 아직 `quick_option_gap` 중 어떤 조합을 실제 option profile로 승격할지는 정하지 않았습니다.
+  - 다음 기준선은 `quick_option_gap` 21건 중 승격 우선순위가 높은 조합부터 좁혀서, option 승격 규칙을 명시하는 일입니다.
+- 이어서 `EXP-142`로 quick option gap priority artifact를 추가했습니다.
+- 구현 범위:
+  - `scripts/run_prompt_baseline_quick_option_gap_priority.py`
+- 추가된 내용:
+  - `quick_option_gap` 21건을 `P1~P4` priority band로 분류하는 스크립트
+- 결과:
+  - 집계는 `P1=2`, `P2=4`, `P3=3`, `P4=12`입니다.
+  - 가장 먼저 볼 후보는 `promotion / T02 / b_grade_fun`의 단일 토글 2건입니다.
+    - `highlightPrice only`
+    - `shorterCopy only`
+  - 즉 다음 실험 우선순위는 `main baseline` 주변의 단일 quick option coverage를 먼저 메우는 쪽으로 정리됐습니다.
+- 새 문서:
+  - `docs/experiments/EXP-142-prompt-baseline-quick-option-gap-priority.md`
+  - `docs/testing/test-scenario-144-prompt-baseline-quick-option-gap-priority.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-142-prompt-baseline-quick-option-gap-priority.json`
+- 추가 검증:
+  - `python -m py_compile scripts/run_prompt_baseline_quick_option_gap_priority.py`
+  - `python scripts/run_prompt_baseline_quick_option_gap_priority.py`
+- 남은 리스크 / 다음 액션:
+  - 지금 priority는 정해졌지만, 아직 `P1` 2건 중 어느 쪽을 먼저 snapshot/profile 후보로 올릴지는 정하지 않았습니다.
+  - 다음 기준선은 `T02 promotion`의 `highlightPrice only` 또는 `shorterCopy only` 중 하나를 골라 실제 profile 후보로 검증하는 일입니다.
+- 이어서 `EXP-143`으로 `P1` 첫 후보를 실제 model comparison으로 검증했습니다.
+- 구현 범위:
+  - `services/worker/experiments/prompt_harness.py`
+    - `scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off`
+    - `EXP-143`
+- 결과:
+  - single run에서는 `Gemma 4 = 100.0`, `gpt-5-mini = 86.7`
+  - repeatability에서는 `Gemma 4 = 0/3` transport timeout, `gpt-5-mini = 3/3` but `avg_score = 86.7`
+  - 즉 `promotion / highlightPrice=false`는 아직 option profile 승격 조건을 만족하지 못했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-143-promotion-highlight-price-off-coverage-comparison.md`
+  - `docs/testing/test-scenario-145-promotion-highlight-price-off-coverage-comparison.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-143-promotion-strict-anchor-highlight-price-off-coverage-comparison.json`
+  - `docs/experiments/artifacts/exp-143-repeatability.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-143`
+  - `python scripts/run_prompt_repeatability_spot_check.py --experiment-id EXP-143 --repeat 3 --model-names models/gemma-4-31b-it,gpt-5-mini`
+- 남은 리스크 / 다음 액션:
+  - `P1` 첫 후보는 우선순위는 높았지만 승격에는 실패했습니다.
+  - 다음 기준선은 두 번째 `P1` 후보인 `promotion / shorterCopy=false / highlightPrice=true / emphasizeRegion=false`를 같은 방식으로 검증하는 일입니다.
+- 이어서 `EXP-144`로 `P1` 두 번째 후보도 실제 model comparison으로 검증했습니다.
+- 구현 범위:
+  - `services/worker/experiments/prompt_harness.py`
+    - `scenario-restaurant-promotion-b-grade-real-photo-shorter-copy-off`
+    - `EXP-144`
+- 결과:
+  - single run에서는 `Gemma 4 = 100.0`, `gpt-5-mini = 86.7`
+  - repeatability에서는 `Gemma 4 = 0/3` transport timeout, `gpt-5-mini = 3/3` but `avg_score = 86.7`
+  - 즉 `promotion / shorterCopy=false`도 아직 option profile 승격 조건을 만족하지 못했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-144-promotion-shorter-copy-off-coverage-comparison.md`
+  - `docs/testing/test-scenario-146-promotion-shorter-copy-off-coverage-comparison.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-144-promotion-strict-anchor-shorter-copy-off-coverage-comparison.json`
+  - `docs/experiments/artifacts/exp-144-repeatability.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py`
+  - `python scripts/run_model_comparison_experiment.py --experiment-id EXP-144`
+  - `python scripts/run_prompt_repeatability_spot_check.py --experiment-id EXP-144 --repeat 3 --model-names models/gemma-4-31b-it,gpt-5-mini`
+- 남은 리스크 / 다음 액션:
+  - `P1` 단일 토글 2건을 모두 확인했지만, 현재 모델 조합만으로는 `promotion / T02`의 인접 quick option gap을 승격 가능한 option profile로 고정하지 못했습니다.
+  - 다음 기준선은 `P2` 후보로 내려가거나, `Gemma 4` transport instability와 `gpt-5-mini` strict region 품질 한계를 분리해서 다루는 일입니다.
+- 이어서 `EXP-145`로 `Gemma 4`의 `promotion strict anchor` 축 transport profile을 다시 점검했습니다.
+- 구현 범위:
+  - `scripts/run_gemma_transport_model_comparison_check.py`
+- 결과:
+  - `default_60s_no_retry = success 2/3`, `timeout fail 1`, `avg_score 66.7`
+  - `timeout_90s_retry1 = success 3/3`, `timeout fail 0`, `avg_score 97.8`
+  - `timeout_120s_retry1 = success 3/3`, `timeout fail 0`, `avg_score 97.8`
+  - 즉 현재 `promotion strict anchor` 축에서 `Gemma 4` 병목은 모델 불가가 아니라 `60초 transport ceiling`에 더 가깝습니다.
+- 추가 관찰:
+  - `90초`와 `120초`에서는 timeout이 사라졌지만, 각 1회씩 `nearby location leaked into strict region budget`가 남았습니다.
+  - 따라서 transport 안정화와 option profile 승격은 여전히 별개입니다.
+- 새 문서:
+  - `docs/experiments/EXP-145-gemma-promotion-strict-anchor-transport-profile-check.md`
+  - `docs/testing/test-scenario-147-gemma-promotion-strict-anchor-transport-profile-check.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-145-gemma-promotion-strict-anchor-transport-profile-check.json`
+- 추가 검증:
+  - `python -m py_compile scripts/run_gemma_transport_model_comparison_check.py`
+  - `python scripts/run_gemma_transport_model_comparison_check.py --experiment-id EXP-144 --repeat 3`
+- 남은 리스크 / 다음 액션:
+  - `Gemma 4`를 이 축에서 제외할 필요는 줄었지만, `90초/retry 1회` 전제에서도 strict region 품질 `3/3`이 아직 아닙니다.
+  - 다음 기준선은 transport 조정이 아니라 `subText/hashtag` nearby leakage를 더 강하게 막는 prompt 보강 실험입니다.
+- 이어서 `EXP-146`으로 `Gemma 4` promotion strict anchor 축의 nearby leakage suppression prompt를 실험했습니다.
+- 구현 범위:
+  - `services/worker/experiments/prompt_harness.py`
+    - `EXP-146`
+  - `scripts/run_google_prompt_experiment_with_transport.py`
+  - `scripts/run_google_prompt_variant_repeatability_with_transport.py`
+- 결과:
+  - single run에서는 baseline/candidate 모두 `100.0`
+  - repeatability에서는 baseline `3/3`, `avg_score=97.8`, `all_runs_passed=false`
+  - candidate `promotion_surface_locked_nearby_leakage_suppression_gemma`는 `3/3`, `avg_score=100.0`, `all_runs_passed=true`
+  - baseline 실패는 `hashtags`의 nearby leakage(`#서울숲데이트`) 1회였습니다.
+- 새 문서:
+  - `docs/experiments/EXP-146-gemma-promotion-surface-locked-nearby-leakage-suppression.md`
+  - `docs/testing/test-scenario-148-gemma-promotion-surface-locked-nearby-leakage-suppression.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-146-gemma-4-promotion-surface-locked-nearby-leakage-suppression-google-transport.json`
+  - `docs/experiments/artifacts/exp-146-variant-repeatability-google-transport.json`
+- 이어서 `EXP-147`로 이 candidate를 prompt baseline manifest option profile로 연결하고 snapshot acceptance까지 확인했습니다.
+- 구현 범위:
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+  - `packages/template-spec/README.md`
+  - `scripts/run_prompt_baseline_snapshot.py`
+- 추가된 내용:
+  - option profile `promotion_surface_lock_shorter_copy_off`
+  - operational check `EXP-145` (`default_60s_no_retry -> timeout_90s_retry1`)
+- 결과:
+  - snapshot `accepted=true`
+  - worker `promptBaselineSummary`는 이 컨텍스트에서 `promotion_surface_lock_shorter_copy_off`와 `timeout_90s_retry1` recommendation을 함께 반환합니다.
+- 새 문서:
+  - `docs/experiments/EXP-147-promotion-surface-lock-shorter-copy-profile-snapshot.md`
+  - `docs/testing/test-scenario-149-promotion-surface-lock-shorter-copy-profile-snapshot.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-147-promotion-surface-lock-shorter-copy-profile-snapshot.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py scripts/run_google_prompt_experiment_with_transport.py scripts/run_google_prompt_variant_repeatability_with_transport.py`
+  - `python scripts/run_google_prompt_experiment_with_transport.py --experiment-id EXP-146 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python scripts/run_google_prompt_variant_repeatability_with_transport.py --experiment-id EXP-146 --repeat 3 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python -m py_compile scripts/run_prompt_baseline_snapshot.py`
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id promotion_surface_lock_shorter_copy_off --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - worker `_build_prompt_baseline_summary(...)`
+- 남은 리스크 / 다음 액션:
+  - `P1` 두 번째 후보는 rescue에 성공했지만, 이 profile은 여전히 `T02 promotion / shorterCopy=false` 전용 candidate입니다.
+  - 다음 기준선은 남은 `P1` 첫 후보(`highlightPrice=false`)를 같은 방식으로 rescue 가능한지 확인하거나, manifest coverage audit를 다시 돌려 실제 gap 감소를 수치로 확인하는 일입니다.
+- 이어서 `EXP-148`로 남은 `P1` 첫 후보인 `promotion / highlightPrice=false / shorterCopy=true / emphasizeRegion=false`를 `Gemma 4` 기준 surface-lock prompt로 다시 검증했습니다.
+- 구현 범위:
+  - `services/worker/experiments/prompt_harness.py`
+    - `EXP-148`
+- 결과:
+  - single run에서는 baseline/candidate 모두 `100.0`
+  - repeatability에서는 baseline `3/3`, `avg_score=100.0`, `all_runs_passed=true`
+  - candidate `promotion_surface_locked_highlight_price_off_gemma`도 `3/3`, `avg_score=100.0`, `all_runs_passed=true`
+  - candidate는 `가격 비강조 + nearby leakage 금지`를 option-specific prompt로 명시적으로 고정하는 역할을 했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-148-gemma-promotion-highlight-price-off-surface-lock.md`
+  - `docs/testing/test-scenario-150-gemma-promotion-highlight-price-off-surface-lock.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-148-gemma-4-promotion-highlight-price-off-surface-lock-google-transport.json`
+  - `docs/experiments/artifacts/exp-148-variant-repeatability-google-transport.json`
+- 이어서 `EXP-149`로 이 candidate를 prompt baseline manifest option profile로 연결하고 snapshot acceptance까지 확인했습니다.
+- 구현 범위:
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+  - `packages/template-spec/README.md`
+- 추가된 내용:
+  - option profile `promotion_surface_lock_highlight_price_off`
+  - operational check `EXP-148` (`default_60s_no_retry -> timeout_90s_retry1`, notes에 `EXP-143` timeout evidence 반영)
+- 결과:
+  - snapshot `accepted=true`
+  - worker `promptBaselineSummary`는 이 컨텍스트에서 `promotion_surface_lock_highlight_price_off`와 `timeout_90s_retry1` recommendation을 함께 반환합니다.
+- 새 문서:
+  - `docs/experiments/EXP-149-promotion-surface-lock-highlight-price-profile-snapshot.md`
+  - `docs/testing/test-scenario-151-promotion-surface-lock-highlight-price-profile-snapshot.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-149-promotion-surface-lock-highlight-price-profile-snapshot.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py scripts/run_google_prompt_experiment_with_transport.py scripts/run_google_prompt_variant_repeatability_with_transport.py`
+  - `python scripts/run_google_prompt_experiment_with_transport.py --experiment-id EXP-148 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python scripts/run_google_prompt_variant_repeatability_with_transport.py --experiment-id EXP-148 --repeat 3 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python -c "import json; json.load(open(r'...\\packages\\template-spec\\manifests\\prompt-baseline-v1.json', encoding='utf-8')); print('manifest_ok')"`
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id promotion_surface_lock_highlight_price_off --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - worker `_build_prompt_baseline_summary(...)`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+- 남은 리스크 / 다음 액션:
+  - 이 profile도 여전히 `T02 promotion / highlightPrice=false` 전용 candidate이며, main baseline 일반화 근거는 아닙니다.
+  - 다음 우선순위는 새 option profile 2개가 실제 coverage gap을 얼마나 줄였는지 manifest coverage audit로 다시 확인하는 일입니다.
+- 이어서 `EXP-150`으로 새 promotion option profile 2개를 반영한 뒤 prompt baseline coverage audit를 다시 돌렸습니다.
+- 구현 범위:
+  - `scripts/run_prompt_baseline_coverage_audit.py`
+    - `--experiment-id`, `--experiment-title` 지원
+- 결과:
+  - `totalContexts=24`는 동일
+  - `option_match=2 -> 4`
+  - `coverage_gap=21 -> 19`
+  - `exact_match=3 -> 5`
+  - 실제로 메워진 컨텍스트는 `promotion / highlightPrice=false / shorterCopy=true / emphasizeRegion=false`, `promotion / highlightPrice=true / shorterCopy=false / emphasizeRegion=false` 2건입니다.
+- 새 문서:
+  - `docs/experiments/EXP-150-prompt-baseline-coverage-audit-after-p1-promotions.md`
+  - `docs/testing/test-scenario-152-prompt-baseline-coverage-audit-after-p1-promotions.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-150-prompt-baseline-coverage-audit-after-p1-promotions.json`
+- 이어서 `EXP-151`로 quick option gap priority를 현재 manifest 기준으로 다시 정렬했습니다.
+- 구현 범위:
+  - `scripts/run_prompt_baseline_quick_option_gap_priority.py`
+    - `--experiment-id`, `--experiment-title` 지원
+    - `P1/P2` 판정을 `sourceProfileId`가 아니라 `nearestProfileKind / nearestProfileId` 기준으로 보정
+- 결과:
+  - `P1=0`, `P2=5`, `P3=5`, `P4=9`
+  - 즉 `P1` 단계는 실질적으로 종료됐고, 다음 최상위 후보는 option-adjacent single-toggle들입니다.
+  - 현재 맨 앞 후보는 `promotion / highlightPrice=false / shorterCopy=false / emphasizeRegion=false`입니다.
+- 새 문서:
+  - `docs/experiments/EXP-151-prompt-baseline-quick-option-gap-priority-after-p1-promotions.md`
+  - `docs/testing/test-scenario-153-prompt-baseline-quick-option-gap-priority-after-p1-promotions.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-151-prompt-baseline-quick-option-gap-priority-after-p1-promotions.json`
+- 추가 검증:
+  - `python -m py_compile scripts/run_prompt_baseline_coverage_audit.py`
+  - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-150 --experiment-title "Prompt Baseline Coverage Audit After P1 Promotions" --artifact-name exp-150-prompt-baseline-coverage-audit-after-p1-promotions.json`
+  - `python -m py_compile scripts/run_prompt_baseline_quick_option_gap_priority.py`
+  - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact docs/experiments/artifacts/exp-150-prompt-baseline-coverage-audit-after-p1-promotions.json --experiment-id EXP-151 --experiment-title "Prompt Baseline Quick Option Gap Priority After P1 Promotions" --artifact-name exp-151-prompt-baseline-quick-option-gap-priority-after-p1-promotions.json`
+- 남은 리스크 / 다음 액션:
+  - 이제 promotion에서 남은 최상위 후보는 `highlightPrice=false + shorterCopy=false` 조합 1건입니다.
+  - 그 다음 우선순위는 `new_menu/review`의 option-adjacent single-toggle 4건이며, `emphasizeRegion` 계열은 여전히 뒤에서 보는 편이 맞습니다.
+- 이어서 `EXP-152`로 promotion의 남은 non-region `P2` 후보인 `highlightPrice=false / shorterCopy=false / emphasizeRegion=false`를 rescue했습니다.
+- 구현 범위:
+  - `services/worker/experiments/prompt_harness.py`
+    - `scenario-restaurant-promotion-b-grade-real-photo-highlight-price-off-shorter-copy-off`
+    - `EXP-152`
+- baseline/candidate:
+  - baseline: `promotion_surface_lock_shorter_copy_off_baseline_gemma`
+  - candidate: `promotion_surface_locked_highlight_price_off_shorter_copy_off_gemma`
+- 결과:
+  - single run에서는 baseline/candidate 모두 `100.0`
+  - repeatability에서도 baseline/candidate 모두 `3/3`, `avg_score=100.0`, `all_runs_passed=true`
+  - candidate는 `highlightPrice=false + shorterCopy=false` 조합 전용 prompt를 manifest profile로 고정할 수 있는 명시적 variant 역할을 했습니다.
+- 새 문서:
+  - `docs/experiments/EXP-152-gemma-promotion-highlight-price-off-shorter-copy-off-surface-lock.md`
+  - `docs/testing/test-scenario-154-gemma-promotion-highlight-price-off-shorter-copy-off-surface-lock.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-152-gemma-4-promotion-highlight-price-off-shorter-copy-off-surface-lock-google-transport.json`
+  - `docs/experiments/artifacts/exp-152-variant-repeatability-google-transport.json`
+- 이어서 `EXP-153`로 이 combined candidate를 prompt baseline manifest option profile로 연결하고 snapshot acceptance까지 확인했습니다.
+- 구현 범위:
+  - `packages/template-spec/manifests/prompt-baseline-v1.json`
+  - `packages/template-spec/README.md`
+- 추가된 내용:
+  - option profile `promotion_surface_lock_highlight_price_off_shorter_copy_off`
+  - operational check `EXP-152` (`default_60s_no_retry -> timeout_90s_retry1`)
+- 결과:
+  - snapshot `accepted=true`
+  - worker `promptBaselineSummary`는 이 컨텍스트에서 `promotion_surface_lock_highlight_price_off_shorter_copy_off`와 `timeout_90s_retry1` recommendation을 함께 반환합니다.
+- 새 문서:
+  - `docs/experiments/EXP-153-promotion-surface-lock-highlight-price-off-shorter-copy-profile-snapshot.md`
+  - `docs/testing/test-scenario-155-promotion-surface-lock-highlight-price-off-shorter-copy-profile-snapshot.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-153-promotion-surface-lock-highlight-price-off-shorter-copy-profile-snapshot.json`
+- 이어서 `EXP-154`, `EXP-155`로 coverage audit와 priority를 현재 manifest 기준으로 다시 갱신했습니다.
+- 결과:
+  - `EXP-154`
+    - `option_match=5`
+    - `coverage_gap=18`
+    - promotion non-region gap은 사실상 정리되고, 남은 promotion 공백은 `emphasizeRegion=true` 계열만 남았습니다.
+  - `EXP-155`
+    - `P2=4`, `P3=6`, `P4=8`
+    - 최상위 후보는 이제 promotion이 아니라 `new_menu` 2건, `review` 2건입니다.
+- 새 문서:
+  - `docs/experiments/EXP-154-prompt-baseline-coverage-audit-after-combined-promotion-profile.md`
+  - `docs/experiments/EXP-155-prompt-baseline-quick-option-gap-priority-after-combined-promotion-profile.md`
+  - `docs/testing/test-scenario-156-prompt-baseline-coverage-audit-after-combined-promotion-profile.md`
+  - `docs/testing/test-scenario-157-prompt-baseline-quick-option-gap-priority-after-combined-promotion-profile.md`
+- 추가 artifact:
+  - `docs/experiments/artifacts/exp-154-prompt-baseline-coverage-audit-after-combined-promotion-profile.json`
+  - `docs/experiments/artifacts/exp-155-prompt-baseline-quick-option-gap-priority-after-combined-promotion-profile.json`
+- 추가 검증:
+  - `python -m py_compile services/worker/experiments/prompt_harness.py scripts/run_google_prompt_experiment_with_transport.py scripts/run_google_prompt_variant_repeatability_with_transport.py`
+  - `python scripts/run_google_prompt_experiment_with_transport.py --experiment-id EXP-152 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python scripts/run_google_prompt_variant_repeatability_with_transport.py --experiment-id EXP-152 --repeat 3 --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - `python -c "import json; json.load(open(r'...\\packages\\template-spec\\manifests\\prompt-baseline-v1.json', encoding='utf-8')); print('manifest_ok')"`
+  - `python scripts/run_prompt_baseline_snapshot.py --profile-id promotion_surface_lock_highlight_price_off_shorter_copy_off --timeout-sec 90 --max-retries 1 --retry-backoff-sec 3`
+  - worker `_build_prompt_baseline_summary(...)`
+  - `uv run --project services/worker pytest services/worker/tests/test_generation_pipeline.py -q`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `python -m py_compile scripts/run_prompt_baseline_coverage_audit.py scripts/run_prompt_baseline_quick_option_gap_priority.py`
+  - `python scripts/run_prompt_baseline_coverage_audit.py --experiment-id EXP-154 --experiment-title "Prompt Baseline Coverage Audit After Combined Promotion Profile" --artifact-name exp-154-prompt-baseline-coverage-audit-after-combined-promotion-profile.json`
+  - `python scripts/run_prompt_baseline_quick_option_gap_priority.py --audit-artifact docs/experiments/artifacts/exp-154-prompt-baseline-coverage-audit-after-combined-promotion-profile.json --experiment-id EXP-155 --experiment-title "Prompt Baseline Quick Option Gap Priority After Combined Promotion Profile" --artifact-name exp-155-prompt-baseline-quick-option-gap-priority-after-combined-promotion-profile.json`
+- 남은 리스크 / 다음 액션:
+  - promotion 축은 이제 `emphasizeRegion=true` 계열만 남았고, 이들은 location policy 리스크 때문에 `P3`로 유지하는 편이 맞습니다.
+  - 다음 최상위 실험은 `new_menu` 또는 `review`의 option-adjacent `P2` 단일 토글 4건 중 하나를 고르는 일입니다.
+  - 이어서 `EXP-156`으로 `new_menu / shorterCopy=true / emphasizeRegion=true`를 열었지만, baseline/candidate 모두 `OPENAI_API_KEY 401 invalid_api_key`로 막혀 quality 판단을 하지 못했습니다.
+  - 따라서 `gpt-5-mini` 기반 `new_menu/review P2`는 우선 prompt 문제가 아니라 provider access 상태부터 확인해야 합니다.
+  - 같은 세션에서 실행 가능한 Google 라인으로 전환해 `EXP-158`을 진행했고, `promotion / highlightPrice=false / shorterCopy=false / emphasizeRegion=true` region-anchor candidate가 single/repeatability 모두 `100.0`, `3/3 pass`를 기록했습니다.
+  - 이어서 `EXP-159`로 `promotion_surface_lock_highlight_price_off_shorter_copy_off_region_anchor` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`, transport fallback `timeout_90s_retry1`까지 확인했습니다.
+  - `EXP-160`, `EXP-161` 기준 coverage는 `option_match=6`, `coverage_gap=17`, `exact_match=7`, priority는 `P2=4`, `P3=5`, `P4=8`로 다시 줄었습니다.
+  - 즉 promotion region-emphasis gap은 1건 더 줄었지만, 최상위 미해결 축은 여전히 `new_menu/review P2`이며, 이건 OpenAI credential 복구 전까지는 실험 해석을 보류하는 편이 맞습니다.
+  - 관련 문서:
+    - `docs/experiments/EXP-156-gpt5mini-new-menu-shorter-copy-region-anchor.md`
+    - `docs/experiments/EXP-158-gemma-promotion-highlight-price-off-shorter-copy-off-region-anchor.md`
+    - `docs/experiments/EXP-159-promotion-surface-lock-highlight-price-off-shorter-copy-region-anchor-profile-snapshot.md`
+    - `docs/experiments/EXP-160-prompt-baseline-coverage-audit-after-promotion-region-anchor-profile.md`
+    - `docs/experiments/EXP-161-prompt-baseline-quick-option-gap-priority-after-promotion-region-anchor-profile.md`
+    - `docs/testing/test-scenario-158-gpt5mini-new-menu-shorter-copy-region-anchor.md`
+    - `docs/testing/test-scenario-159-gemma-promotion-highlight-price-off-shorter-copy-off-region-anchor.md`
+    - `docs/testing/test-scenario-160-promotion-surface-lock-highlight-price-off-shorter-copy-region-anchor-profile-snapshot.md`
+    - `docs/testing/test-scenario-161-prompt-baseline-coverage-audit-after-promotion-region-anchor-profile.md`
+    - `docs/testing/test-scenario-162-prompt-baseline-quick-option-gap-priority-after-promotion-region-anchor-profile.md`
+- 추가로 root cause를 재확인한 결과, `EXP-156`의 401은 key 자체가 아니라 `run_prompt_experiment.py`, `run_prompt_variant_repeatability_spot_check.py` 기본 `--api-key-env=GEMINI_API_KEY` 버그였습니다.
+- 두 runner를 provider-specific env key 기본값으로 수정한 뒤 `EXP-156`을 다시 실행했고, baseline/candidate 모두 single/repeatability `100.0`, `3/3 pass`를 기록했습니다.
+- 이어서 `EXP-162`로 `new_menu_friendly_region_anchor_shorter_copy` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`를 확인했습니다.
+- `EXP-163`, `EXP-164` 기준 coverage는 `option_match=7`, `coverage_gap=16`, `exact_match=8`, priority는 `P2=4`, `P3=6`, `P4=6`입니다.
+- 즉 `new_menu shorterCopy=true` 공백도 정리됐고, 다음 최상위는 `new_menu highlightPrice=true` 2건과 `review` 2건입니다.
+- 추가 문서:
+  - `docs/experiments/EXP-162-new-menu-friendly-region-anchor-shorter-copy-profile-snapshot.md`
+  - `docs/experiments/EXP-163-prompt-baseline-coverage-audit-after-new-menu-shorter-copy-profile.md`
+  - `docs/experiments/EXP-164-prompt-baseline-quick-option-gap-priority-after-new-menu-shorter-copy-profile.md`
+  - `docs/testing/test-scenario-163-new-menu-friendly-region-anchor-shorter-copy-profile-snapshot.md`
+  - `docs/testing/test-scenario-164-prompt-baseline-coverage-audit-after-new-menu-shorter-copy-profile.md`
+  - `docs/testing/test-scenario-165-prompt-baseline-quick-option-gap-priority-after-new-menu-shorter-copy-profile.md`
+- 이어서 `new_menu / emphasizeRegion=false`를 `region 삭제`가 아니라 `caption 1개 + #성수동 1개`만 남기는 `minimal region anchor`로 재정의했습니다.
+- `EXP-185`에서 `new_menu minimal region anchor`를 열었고, 첫 draft는 hashtag 수 부족으로 repeatability가 흔들렸지만 `총 5~8개 hashtag 유지` 제약을 추가한 뒤 baseline/candidate 모두 single/repeatability `100.0`, `3/3 pass`를 기록했습니다.
+- `EXP-186`으로 `new_menu_friendly_minimal_region_anchor` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`, worker `11 passed`, api `5 passed`를 확인했습니다.
+- `EXP-187`, `EXP-188` 기준 coverage는 `option_match=13`, `coverage_gap=10`, `exact_match=14`, priority는 `P2=2`, `P3=8`로 재정렬됐습니다.
+- 이어서 `EXP-189`와 `EXP-193`으로 각각 `shorterCopy=true / emphasizeRegion=false`, `highlightPrice=true / emphasizeRegion=false`를 같은 minimal anchor 축으로 확장했고, 모두 baseline/candidate single/repeatability `100.0`, `3/3 pass`를 유지했습니다.
+- `EXP-190`, `EXP-194` snapshot까지 반영한 뒤 `EXP-195`, `EXP-196` 기준 coverage는 `option_match=15`, `coverage_gap=8`, `exact_match=16`, priority는 `P2=1`, `P3=7`이 됐습니다.
+- 마지막 non-region `P2`였던 `highlightPrice=true + shorterCopy=true + emphasizeRegion=false`도 `EXP-197`에서 정리했고, baseline/candidate 모두 single/repeatability `100.0`, `3/3 pass`를 기록했습니다.
+- `EXP-198` snapshot `accepted=true`, runtime `option_match`, worker `14 passed`, api `5 passed`를 확인했습니다.
+- 최종 `EXP-199`, `EXP-200` 기준 coverage는 `option_match=16`, `coverage_gap=7`, `exact_match=17`, priority는 `P3=7`만 남았습니다.
+- 즉 이번 세션으로 `new_menu`의 비지역 quick option 조합은 모두 option profile로 정리됐고, 남은 quick option gap은 전부 region emphasis 계열입니다.
+- 추가 문서:
+  - `docs/experiments/EXP-185-gpt5mini-new-menu-minimal-region-anchor.md`
+  - `docs/experiments/EXP-186-new-menu-friendly-minimal-region-anchor-profile-snapshot.md`
+  - `docs/experiments/EXP-187-prompt-baseline-coverage-audit-after-new-menu-minimal-region-profile.md`
+  - `docs/experiments/EXP-188-prompt-baseline-quick-option-gap-priority-after-new-menu-minimal-region-profile.md`
+  - `docs/experiments/EXP-189-gpt5mini-new-menu-shorter-copy-minimal-region-anchor.md`
+  - `docs/experiments/EXP-190-new-menu-friendly-minimal-region-anchor-shorter-copy-profile-snapshot.md`
+  - `docs/experiments/EXP-193-gpt5mini-new-menu-highlight-price-minimal-region-anchor.md`
+  - `docs/experiments/EXP-194-new-menu-friendly-minimal-region-anchor-highlight-price-profile-snapshot.md`
+  - `docs/experiments/EXP-195-prompt-baseline-coverage-audit-after-new-menu-minimal-region-shorter-and-highlight-profiles.md`
+  - `docs/experiments/EXP-196-prompt-baseline-quick-option-gap-priority-after-new-menu-minimal-region-shorter-and-highlight-profiles.md`
+  - `docs/experiments/EXP-197-gpt5mini-new-menu-highlight-price-shorter-copy-minimal-region-anchor.md`
+  - `docs/experiments/EXP-198-new-menu-friendly-minimal-region-anchor-highlight-price-shorter-copy-profile-snapshot.md`
+  - `docs/experiments/EXP-199-prompt-baseline-coverage-audit-after-new-menu-minimal-region-combined-profile.md`
+  - `docs/experiments/EXP-200-prompt-baseline-quick-option-gap-priority-after-new-menu-minimal-region-combined-profile.md`
+- 이어서 `EXP-201`, `EXP-205`, `EXP-209`로 남아 있던 `promotion / emphasizeRegion=true` 3건을 연속으로 진행했습니다.
+- `EXP-201`은 `highlightPrice=false / shorterCopy=true / emphasizeRegion=true` 조합이었고, baseline/candidate single run `100.0`, repeatability `3/3 pass`를 기록했습니다.
+- `EXP-202`로 `promotion_surface_lock_highlight_price_off_region_anchor` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`, worker `17 passed`, api `5 passed`를 확인했습니다.
+- `EXP-205`는 `highlightPrice=true / shorterCopy=false / emphasizeRegion=true` 조합이었고, baseline/candidate single run `100.0`, repeatability `3/3 pass`를 기록했습니다.
+- `EXP-206`으로 `promotion_surface_lock_shorter_copy_off_region_anchor` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`, worker `17 passed`, api `5 passed`를 확인했습니다.
+- `EXP-209`는 default promotion region 조합 `highlightPrice=true / shorterCopy=true / emphasizeRegion=true`였고, 첫 `90초 / retry 1회` 실행에서 candidate timeout 1회를 본 뒤 `120초 / retry 1회`로 rerun/repeatability를 통과했습니다.
+- `EXP-210`으로 `promotion_surface_lock_region_anchor` profile을 manifest에 추가했고, snapshot `accepted=true`, runtime `option_match`, worker `17 passed`, api `5 passed`를 확인했습니다.
+- 최종 `EXP-211`, `EXP-212` 기준 coverage는 `option_match=19`, `coverage_gap=4`, `exact_match=20`, priority는 `P3=4`만 남았습니다.
+- 즉 이번 추가 라운드로 `promotion` quick option 축은 region emphasis까지 전부 option profile로 정리됐고, 남은 gap은 전부 `review / emphasizeRegion=true` 4건입니다.
+- 관련 문서:
+  - `docs/experiments/EXP-201-gemma-promotion-highlight-price-off-region-anchor.md`
+  - `docs/experiments/EXP-202-promotion-surface-lock-highlight-price-off-region-anchor-profile-snapshot.md`
+  - `docs/experiments/EXP-205-gemma-promotion-shorter-copy-off-region-anchor.md`
+  - `docs/experiments/EXP-206-promotion-surface-lock-shorter-copy-off-region-anchor-profile-snapshot.md`
+  - `docs/experiments/EXP-209-gemma-promotion-region-anchor.md`
+  - `docs/experiments/EXP-210-promotion-surface-lock-region-anchor-profile-snapshot.md`
+  - `docs/experiments/EXP-211-prompt-baseline-coverage-audit-after-promotion-region-anchor-profiles.md`
+  - `docs/experiments/EXP-212-prompt-baseline-quick-option-gap-priority-after-promotion-region-anchor-profiles.md`
+  - `docs/daily/2026-04-13-codex.md`
+- 같은 날 후반에는 `real video lane` 쪽을 `더 많은 prompt`가 아니라 `generated clip을 서비스 결과물로 끝낼 수 있는 경로`로 재정렬했습니다.
+- `EXP-243`에서 generated mp4 위에 template overlay를 얹는 hybrid packaging proof를 만들었고, raw generated clip보다 광고 문법이 더 빠르게 읽힌다는 점을 확인했습니다.
+- 이어서 `EXP-244`에서 이 경로를 `services/worker/renderers/media.py`의 `create_scene_overlay_image()`, `render_hybrid_video()`로 올려 renderer 재사용 기능으로 정리했습니다.
+- 마지막으로 `EXP-245`에서 `services/worker/pipelines/generation.py`가 `input_snapshot.hybridSourceVideoPath`를 읽어 generated source mp4를 실제 generation pipeline에 태울 수 있게 연결했습니다.
+- 첫 spike에서는 source generated clip(`약 4.3초`)이 `T02` template timeline(`6.4초`)보다 짧아 `PERIOD/CTA` overlay가 잘리는 문제가 드러났고, 이를 `render_hybrid_video()`의 `freeze_last_frame` 길이 보정으로 해결했습니다.
+- rerun 결과 최종 hybrid output은 `6.3초`로 늘어났고, `rendererVideoSourceMode=hybrid_generated_clip`, `rendererMotionMode=hybrid_overlay_packaging`, `rendererHybridDurationStrategy=freeze_last_frame`가 meta에 기록되며 `CTA`까지 보이는 artifact를 확보했습니다.
+- 추가로 result API payload와 web 결과 카드에도 `rendererSummary`를 연결해, 지금 보는 결과가 `scene_image_render`인지 `hybrid_generated_clip`인지 바로 구분할 수 있게 했습니다.
+- 이어서 `EXP-246`으로 `hybrid lane source clip acceptance gate`를 코드로 고정했습니다.
+- `scripts/video_quality_gate.py`를 추가했고, `mid_frame_metrics.mse`와 `motion_metrics.avg_rgb_diff`를 기준으로 `native_control / accept / manual_review / reject`를 계산하도록 정리했습니다.
+- 이 helper를 `scripts/video_upper_bound_benchmark.py`에도 연결해, 앞으로 새 benchmark summary에는 각 provider별 `hybrid_source_gate`와 aggregate summary가 자동으로 남습니다.
+- 기존 `EXP-238`, `EXP-239` artifact를 다시 읽는 `scripts/run_hybrid_source_gate_report.py`도 추가했고, calibration report 기준으로 `native_control=3`, `accept=2`, `manual_review=3`, `reject=1`이 나왔습니다.
+- 해석상 `sora2_current_best / 맥주`는 `accept`, `sora2_current_best / 규카츠`는 `manual_review`, `manual_veo / 규카츠`는 `reject`가 돼서, drink lane과 tray lane을 같은 기준으로 보지 않아야 한다는 점이 다시 확인됐습니다.
+- 이어서 `EXP-247`에서 이 gate를 실제 입력 선택 흐름에 연결했습니다.
+- `scripts/hybrid_source_selection.py`를 추가했고, benchmark summary에서 `accept`만 자동 선택하고 `manual_review`는 명시적 허용 없이는 막도록 정리했습니다.
+- `scripts/run_hybrid_generation_pipeline_spike.py`는 이제 benchmark summary + label(+ provider) 기준으로 source를 자동 선택할 수 있고, selection provenance를 `hybridSourceSelection`으로 `input_snapshot_json`에 함께 넣습니다.
+- `services/worker/pipelines/generation.py`도 이를 `rendererHybridSourceSelection`으로 `render-meta.json`까지 전파하도록 확장했습니다.
+- 실제로 `EXP-239 / 맥주 / sora2_current_best / accept`를 자동 선택해 hybrid pipeline spike를 돌렸고, 최종 artifact에 `benchmarkId`, `provider`, `gateDecision=accept`가 남는 것을 확인했습니다.
+- 반대로 `규카츠`는 같은 benchmark 기준으로 `manual_review / reject`만 있어 기본 차단됐습니다.
+- 이어서 `EXP-248`에서 `manual_review` 상태를 실제 검토 대기열 artifact로 분리했습니다.
+- `scripts/manual_review_queue.py`를 추가했고, benchmark summary에서 `manual_review` 후보만 모으되 기본값으로 `role=hybrid_source_candidate`만 queue에 남기고 `reference_only`는 제외하도록 정리했습니다.
+- `scripts/run_manual_review_queue_report.py`는 기존 `EXP-238`, `EXP-239` summary를 다시 읽어 `report.json`, `queue.md`를 생성합니다.
+- 실제 queue 결과 기준으로는 `EXP-239 / 규카츠 / sora2_current_best / manual_review` 한 건만 승격 검토 후보로 남았고, `manual_veo`는 `reference_only`라 기본 queue에서 제외됐습니다.
+- 이어서 `EXP-249`에서 queue 후보를 실제 review packet / decision log로 기록하는 포맷을 추가했습니다.
+- `scripts/manual_review_decision.py`는 5개 checklist(`main_subject_identity`, `peripheral_layout`, `text_qr_intrusion`, `motion_packaging_fit`, `promotion_readiness`)와 `hold / promote / reject` 최종 결정을 다루도록 정리했습니다.
+- `scripts/run_manual_review_decision_log.py`는 queue report를 읽어 candidate별 `review_packet.json`, `decision.json`, `decision.md`를 생성합니다.
+- 현재 유일한 queue 후보인 `EXP-239 / 규카츠 / sora2_current_best`는 contact sheet 기준 예비 판단으로 `hold`를 남겼고, 핵심 이유는 메인 규카츠는 유지되지만 프레이밍이 더 타이트해져 주변 구성 보존이 추가 확인 대상이기 때문입니다.
+- 이어서 `EXP-250`에서 이 decision log를 실제 selection 경로에 연결하는 승인 레지스트리를 추가했습니다.
+- `scripts/manual_review_registry.py`는 decision artifact를 읽어 `hold / promote / reject` 집계를 만들고, `promote`된 candidate key만 lookup할 수 있게 정리했습니다.
+- `scripts/hybrid_source_selection.py`는 이제 `manual_review_decisions_dir`를 받으면 `promote`된 manual-review 후보를 다시 선택할 수 있고, snapshot에 `candidateKey`, `reviewFinalDecision`, `reviewDecisionPath`, `reviewer`, `reviewDecidedAt`를 남깁니다.
+- `scripts/run_hybrid_generation_pipeline_spike.py`에도 `--manual-review-decisions-dir`를 추가해 spike 실행이 이 registry를 읽을 수 있게 했습니다.
+- 다만 현재 실제 registry 상태는 `entryCount=1`, `decisionCounts={"hold": 1}`, `promotedCandidateKeys=[]`라서 승인된 manual-review 후보는 아직 없습니다.
+- 따라서 `규카츠 / sora2_current_best`는 registry를 넘겨도 계속 차단되며, `hold` 상태가 잘못 본선 경로로 들어가지 않는 것도 smoke로 확인했습니다.
+- 이어서 `EXP-251`에서 이 `hold` 후보를 실제 hybrid packaging 결과 기준으로 다시 검토했습니다.
+- review-only spike로 `규카츠 / sora2_current_best`를 최종 hybrid 결과까지 태웠고, `hybrid_contact_sheet.png`, `original_vs_hybrid_mid.png` 기준 메인 규카츠와 주요 그릇 구성은 유지되며 text/QR intrusion 없이 광고 읽힘도 충분하다고 판단했습니다.
+- 이에 따라 decision log를 `finalDecision=promote`, `statusCounts={pass: 5}`로 갱신했습니다.
+- `EXP-250` registry report도 다시 생성했고, 현재 상태는 `entryCount=1`, `decisionCounts={"promote": 1}`, `promotedCandidateKeys=["EXP-239-sora2-current-best-vs-control-two-sample-check::규카츠::sora2_current_best"]`입니다.
+- 마지막으로 `EXP-252` selection smoke를 실행해 이 promoted candidate가 실제로 `promoted_manual_review` 모드로 선택되고 hybrid generation이 정상 완료되는 것까지 확인했습니다.
+- 이어서 `EXP-253`에서 이 approved candidate 개념을 실제 API generate 경로로 연결했습니다.
+- `services/api/app/schemas/api.py`에는 `approvedHybridSourceCandidateKey`를 추가했고, `services/api/app/api/routes.py`도 generate/regenerate 바디를 실제 request schema로 받도록 정리했습니다.
+- `services/api/app/core/config.py`에는 `APP_MANUAL_REVIEW_DECISIONS_DIR`를 추가했고, `services/api/app/services/runtime.py`는 promoted decision을 읽어 source video를 project storage로 stage한 뒤 `input_snapshot.hybridSourceVideoPath`, `input_snapshot.hybridSourceSelection`을 자동 주입하도록 확장했습니다.
+- result API의 `rendererSummary`에도 `hybridSourceSelectionMode`, `hybridSourceCandidateKey`를 노출해서 본선 결과에서도 provenance를 바로 확인할 수 있게 했습니다.
+- artifact `docs/experiments/artifacts/exp-253-approved-hybrid-source-api-path/summary.json` 기준으로 실제 API generate 결과는 `status=generated`, `rendererSummary.videoSourceMode=hybrid_generated_clip`, `motionMode=hybrid_overlay_packaging`, `hybridSourceSelectionMode=promoted_manual_review`, `targetDurationSec=6.4`로 남았습니다.
+- 즉 이제 `decision log -> registry/promote -> approved candidate key -> API generate -> worker hybrid render` 경로가 본선 입력까지 닫혔습니다.
+- 이어서 `EXP-254`에서 이 approved 후보들을 lane별 inventory로 정리하는 기준선을 추가했습니다.
+- `scripts/approved_hybrid_inventory.py`는 benchmark summary의 `accept` 후보와 manual review decision log의 `promote` 후보를 합쳐 `approved hybrid inventory`를 만듭니다.
+- `scripts/run_approved_hybrid_inventory_report.py`는 기본값으로 `EXP-238`, `EXP-239`, `EXP-249`를 읽어 inventory artifact를 생성합니다.
+- `services/worker/tests/test_approved_hybrid_inventory.py`도 추가해 `benchmark_accept`와 `manual_review_promote`가 하나의 approved inventory로 합쳐지는지 검증했습니다.
+- 실제 artifact `docs/experiments/artifacts/exp-254-approved-hybrid-candidate-inventory/report.json` 기준 현재 approved 후보는 `3건`이며, `laneCounts={"drink_glass_lane": 2, "tray_full_plate_lane": 1}`, `approvalSourceCounts={"benchmark_accept": 2, "manual_review_promote": 1}`입니다.
+- lane별 추천 후보는 `drink_glass_lane -> EXP-238 / 맥주 / sora2_current_best / benchmark_accept`, `tray_full_plate_lane -> EXP-239 / 규카츠 / sora2_current_best / manual_review_promote`로 정리됐습니다.
+- 즉 이제 운영 기준선은 `drink lane은 gate accept 중심`, `tray/full-plate lane은 review promote 중심`으로 inventory 문서상 고정됐습니다.
+- 이어서 `EXP-255`에서 이 inventory를 API가 직접 읽을 수 있는 최소 소비 경로를 붙였습니다.
+- `services/api/app/core/config.py`에는 `APP_APPROVED_HYBRID_INVENTORY_REPORT_PATH`를 추가했고, `services/api/app/services/runtime.py`는 inventory report artifact를 읽어 `label`, `serviceLane` 기준으로 필터링하는 helper를 가지게 됐습니다.
+- `services/api/app/api/routes.py`에는 `GET /api/hybrid-candidates/approved`를 추가했고, `services/api/tests/test_api_smoke.py`에 inventory 조회 스모크 테스트도 넣었습니다.
+- 실제 artifact `docs/experiments/artifacts/exp-255-approved-hybrid-inventory-api-read-path/summary.json` 기준 full 응답은 `itemCount=3`, `laneCounts={"drink_glass_lane": 2, "tray_full_plate_lane": 1}`이며, lane 추천은 `drink_glass_lane -> EXP-238 / 맥주 / sora2_current_best`, `tray_full_plate_lane -> EXP-239 / 규카츠 / sora2_current_best`로 읽힙니다.
+- 즉 approved inventory는 이제 문서 artifact에만 머무는 것이 아니라, API에서 바로 소비 가능한 기준선이 됐습니다.
+- 검증:
+  - `python -m py_compile services/worker/renderers/media.py services/worker/pipelines/generation.py services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py scripts/run_hybrid_generation_pipeline_spike.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py -q`
+  - `python -m py_compile services/api/app/schemas/api.py services/api/app/services/runtime.py services/api/tests/test_api_smoke.py`
+  - `uv run --project services/api pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run build:web`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py`
+  - `python -m py_compile scripts/video_quality_gate.py scripts/video_upper_bound_benchmark.py scripts/run_hybrid_source_gate_report.py services/worker/tests/test_video_quality_gate.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_video_quality_gate.py -q`
+  - `python scripts/run_hybrid_source_gate_report.py`
+  - `python scripts/video_upper_bound_benchmark.py --benchmark-id EXP-246-benchmark-annotation-smoke --providers product_control_motion --images "docs\\sample\\음식사진샘플(맥주).jpg" --output-dir docs/experiments/artifacts/exp-246-benchmark-annotation-smoke`
+  - `python -m py_compile scripts/hybrid_source_selection.py scripts/run_hybrid_generation_pipeline_spike.py services/worker/pipelines/generation.py services/worker/tests/test_generation_pipeline.py services/worker/tests/test_hybrid_source_selection.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_media_renderer.py services/worker/tests/test_generation_pipeline.py services/worker/tests/test_video_quality_gate.py services/worker/tests/test_hybrid_source_selection.py -q`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py --experiment-id EXP-247-hybrid-source-selection-flow-spike --output-dir docs/experiments/artifacts/exp-247-hybrid-source-selection-flow-spike --benchmark-summary docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/summary.json --label 맥주`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py --experiment-id EXP-247-manual-review-block-smoke --output-dir docs/experiments/artifacts/exp-247-manual-review-block-smoke --benchmark-summary docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/summary.json --label 규카츠`
+  - `python -m py_compile scripts/manual_review_queue.py scripts/run_manual_review_queue_report.py services/worker/tests/test_manual_review_queue.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_manual_review_queue.py services/worker/tests/test_hybrid_source_selection.py services/worker/tests/test_video_quality_gate.py -q`
+  - `python scripts/run_manual_review_queue_report.py`
+  - `python -m py_compile scripts/manual_review_decision.py scripts/run_manual_review_decision_log.py services/worker/tests/test_manual_review_decision.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_manual_review_decision.py services/worker/tests/test_manual_review_queue.py services/worker/tests/test_hybrid_source_selection.py services/worker/tests/test_video_quality_gate.py -q`
+  - `python scripts/run_manual_review_decision_log.py --summary-note "contact sheet 기준으로 메인 규카츠는 유지되지만 프레이밍이 더 타이트해져 주변 구성 보존은 추가 확인이 필요합니다." --check main_subject_identity=pass --check peripheral_layout=hold --check text_qr_intrusion=pass --check motion_packaging_fit=pass --check promotion_readiness=hold --check-note "peripheral_layout=프레이밍이 타이트해 원본의 주변 구성 일부가 잘립니다" --check-note "promotion_readiness=contact sheet 기준 예비판정이며 실제 video 확인이 추가로 필요합니다"`
+  - `python -m py_compile scripts/manual_review_registry.py scripts/run_manual_review_registry_report.py scripts/hybrid_source_selection.py scripts/run_hybrid_generation_pipeline_spike.py services/worker/tests/test_hybrid_source_selection.py services/worker/tests/test_manual_review_registry.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_manual_review_registry.py services/worker/tests/test_manual_review_decision.py services/worker/tests/test_manual_review_queue.py services/worker/tests/test_hybrid_source_selection.py services/worker/tests/test_video_quality_gate.py -q`
+  - `python scripts/run_manual_review_registry_report.py`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py --experiment-id EXP-250-hold-registry-block-smoke --output-dir docs/experiments/artifacts/exp-250-hold-registry-block-smoke --benchmark-summary docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/summary.json --label 규카츠 --manual-review-decisions-dir docs/experiments/artifacts/exp-249-manual-review-decision-log`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py --experiment-id EXP-251-manual-review-hybrid-packaging-check --output-dir docs/experiments/artifacts/exp-251-manual-review-hybrid-packaging-check --benchmark-summary docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/summary.json --label 규카츠 --allow-manual-review`
+  - `python scripts/run_manual_review_decision_log.py --final-decision promote --summary-note "final hybrid packaging check 기준으로 메인 규카츠와 주요 그릇 구성이 유지되고 text/QR intrusion이 없어 packaging tolerance 안에서 승격 가능합니다." --check main_subject_identity=pass --check peripheral_layout=pass --check text_qr_intrusion=pass --check motion_packaging_fit=pass --check promotion_readiness=pass --check-note "peripheral_layout=원본보다 타이트한 crop이지만 주요 그릇과 소스 구성이 유지되어 packaging tolerance 안으로 판단했습니다" --check-note "promotion_readiness=final hybrid contact sheet 기준 광고 읽힘이 충분해 accept lane 승격 가능으로 판단했습니다"`
+  - `python scripts/run_manual_review_registry_report.py`
+  - `python scripts/run_hybrid_generation_pipeline_spike.py --experiment-id EXP-252-promoted-manual-review-selection-smoke --output-dir docs/experiments/artifacts/exp-252-promoted-manual-review-selection-smoke --benchmark-summary docs/experiments/artifacts/exp-239-sora2-current-best-vs-control-two-sample-check/summary.json --label 규카츠 --manual-review-decisions-dir docs/experiments/artifacts/exp-249-manual-review-decision-log`
+  - `python -m py_compile services/api/app/core/config.py services/api/app/schemas/api.py services/api/app/api/routes.py services/api/app/services/runtime.py services/api/tests/test_api_smoke.py`
+  - `uv run --project services/worker pytest services/api/tests/test_api_smoke.py -q`
+  - `python -m py_compile scripts/approved_hybrid_inventory.py scripts/run_approved_hybrid_inventory_report.py services/worker/tests/test_approved_hybrid_inventory.py`
+  - `uv run --project services/worker pytest services/worker/tests/test_approved_hybrid_inventory.py services/worker/tests/test_manual_review_registry.py services/worker/tests/test_hybrid_source_selection.py -q`
+  - `python scripts/run_approved_hybrid_inventory_report.py`
+  - `python -m py_compile services/api/app/core/config.py services/api/app/schemas/api.py services/api/app/api/routes.py services/api/app/services/runtime.py services/api/tests/test_api_smoke.py`
+  - `uv run --project services/worker pytest services/api/tests/test_api_smoke.py -q`
+  - `npm run lint:web`
+  - `npm run build:web`
+- 관련 문서:
+  - `docs/experiments/EXP-243-generated-video-hybrid-packaging-proof.md`
+  - `docs/experiments/EXP-244-hybrid-renderer-bridge-spike.md`
+  - `docs/experiments/EXP-245-hybrid-generation-pipeline-spike.md`
+  - `docs/experiments/EXP-246-hybrid-source-gate-calibration.md`
+  - `docs/experiments/EXP-247-hybrid-source-selection-flow-spike.md`
+  - `docs/experiments/EXP-248-manual-review-queue.md`
+  - `docs/experiments/EXP-249-manual-review-decision-log.md`
+  - `docs/experiments/EXP-250-manual-review-registry.md`
+  - `docs/experiments/EXP-251-manual-review-hybrid-packaging-check.md`
+  - `docs/experiments/EXP-252-promoted-manual-review-selection-smoke.md`
+  - `docs/experiments/EXP-253-approved-hybrid-source-api-path.md`
+  - `docs/experiments/EXP-254-approved-hybrid-candidate-inventory.md`
+  - `docs/experiments/EXP-255-approved-hybrid-inventory-api-read-path.md`
+  - `docs/experiments/EXP-256-approved-hybrid-inventory-web-consumption.md`
+  - `docs/experiments/EXP-257-approved-hybrid-lane-hint-ui.md`
+  - `docs/experiments/EXP-258-evidence-based-hybrid-lane-hint.md`
+  - `docs/daily/2026-04-14-codex.md`
+- 남은 리스크 / 다음 액션:
+  - web generate UI의 lane hint는 이제 evidence-based scoring까지 올라왔지만, 여전히 파일명/label 신호가 약한 경우가 있어 완전 자동 추천 기준으로는 부족합니다.
+  - tray/full-plate lane은 여전히 `규카츠 / sora2_current_best` 한 건뿐이라 일반화 근거가 약합니다.
+  - 다음 우선순위는 `asset/lane annotation 또는 분류 신호 추가`이거나, 같은 `review packet -> decision -> registry -> inventory` 절차로 tray lane 후보를 1~2건 더 쌓는 일입니다.
+
+## 2026-04-07
+
+- `docs/planning` 기준선에 맞춰 Phase 1 MVP 뼈대를 실제 구현했습니다.
+- 구현 범위:
+  - `packages/contracts`, `packages/template-spec`
+  - `services/api` FastAPI 로컬 런타임
+  - `services/worker` preprocess/copy/render/publish fallback
+  - `apps/web` 생성 플로우, 결과 화면, quick action, 생성 이력, 계정 연동, 모바일 우선 웹 보강
+- 중요 기준선과 차이는 ADR로 기록했습니다.
+  - `ADR-001 phase1 local runtime baseline`
+  - `ADR-002 deterministic copy and render baseline`
+  - `ADR-003 mobile-first web surface`
+- 검증:
+  - `npm run check` 반복 통과
+  - API, worker, web lint/build 검증 완료
+- 추가로 잡은 리스크:
+  - OAuth `permission-error` 상태가 rollback되던 버그 수정
+  - 영상 산출물 무결성 테스트와 게시 fallback 테스트 보강
+- 관련 문서:
+  - `docs/daily/2026-04-07-codex.md`
+  - `docs/testing/test-scenario-01-phase1-mvp-smoke.md`
+  - `docs/testing/test-scenario-02-history-and-account-ux.md`
+  - `docs/testing/test-scenario-03-api-contract-and-oauth.md`
+  - `docs/testing/test-scenario-04-mobile-web-surface.md`
+  - `docs/testing/test-scenario-05-render-and-publish-risk-check.md`
+- 남은 리스크 / 다음 액션:
+  - 실제 SNS provider 연동은 아직 시뮬레이션입니다.
+  - ffmpeg 배포 전략과 실기기 모바일 검증이 남아 있습니다.
+  - 이제 다음 우선순위는 모델/프롬프트 실험입니다.

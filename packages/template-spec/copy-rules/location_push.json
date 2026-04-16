@@ -1,0 +1,28 @@
+{
+  "purpose": "location_push",
+  "structure": ["region_hook", "visit_reason", "product_name", "cta"],
+  "regionPolicy": {
+    "minSlots": 2,
+    "maxRepeat": 3
+  },
+  "locationPolicy": {
+    "policyId": "strict_all_surfaces",
+    "forbiddenDetailLocationSurfaces": ["hookText", "ctaText", "captions", "hashtags", "sceneText", "subText"]
+  },
+  "templateIds": ["T03"],
+  "supportedQuickActions": [
+    "shorterCopy",
+    "emphasizeRegion",
+    "styleOverride",
+    "templateId"
+  ],
+  "captionRules": {
+    "minOptions": 3,
+    "maxLength": 75
+  },
+  "sampleHooks": [
+    "성수동에서 가볍게 들르기 좋은 곳",
+    "역삼에서 점심 고민 끝",
+    "퇴근길에 들르기 좋은 동네 한 곳"
+  ]
+}

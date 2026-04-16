@@ -1,0 +1,59 @@
+{
+  "templateId": "T02",
+  "title": "오늘만 할인형",
+  "supportedBusinessTypes": ["cafe", "restaurant"],
+  "supportedPurposes": ["promotion"],
+  "supportedStyles": ["default", "friendly", "b_grade_fun"],
+  "description": "할인, 행사, 기간성 프로모션을 강조하는 템플릿",
+  "sceneSpecVersion": "v1",
+  "durationSec": 6.4,
+  "outputRatio": "9:16",
+  "safeArea": {
+    "top": 120,
+    "right": 72,
+    "bottom": 160,
+    "left": 72
+  },
+  "ctaPolicy": "final_scene_fixed",
+  "copyRulePurpose": "promotion",
+  "changeSetCompatibility": {
+    "highlightPrice": true,
+    "shorterCopy": true,
+    "emphasizeRegion": false,
+    "styleOverride": ["default", "friendly", "b_grade_fun"]
+  },
+  "scenes": [
+    {
+      "sceneId": "s1",
+      "durationSec": 1.3,
+      "slot": "hook",
+      "textRole": "hook",
+      "mediaRole": "hero",
+      "effects": ["flash_text"]
+    },
+    {
+      "sceneId": "s2",
+      "durationSec": 1.7,
+      "slot": "benefit",
+      "textRole": "benefit",
+      "mediaRole": "detail",
+      "effects": ["shake_pop"]
+    },
+    {
+      "sceneId": "s3",
+      "durationSec": 1.8,
+      "slot": "period",
+      "textRole": "urgency",
+      "mediaRole": "detail",
+      "effects": ["quick_zoom"]
+    },
+    {
+      "sceneId": "s4",
+      "durationSec": 1.6,
+      "slot": "cta",
+      "textRole": "cta",
+      "mediaRole": "hero",
+      "effects": ["cta_sting"]
+    }
+  ]
+}

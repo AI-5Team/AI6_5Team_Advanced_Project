@@ -1,0 +1,18 @@
+[project]
+name = "team-advanced-worker"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "pillow>=11.3.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = ["-q"]
+asyncio_default_fixture_loop_scope = "function"

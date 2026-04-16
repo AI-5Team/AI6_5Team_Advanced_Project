@@ -1,0 +1,59 @@
+{
+  "templateId": "T01",
+  "title": "신메뉴 티저형",
+  "supportedBusinessTypes": ["cafe", "restaurant"],
+  "supportedPurposes": ["new_menu"],
+  "supportedStyles": ["default", "friendly"],
+  "description": "신메뉴를 짧은 후킹과 함께 소개하는 기본 템플릿",
+  "sceneSpecVersion": "v1",
+  "durationSec": 6.0,
+  "outputRatio": "9:16",
+  "safeArea": {
+    "top": 120,
+    "right": 72,
+    "bottom": 160,
+    "left": 72
+  },
+  "ctaPolicy": "final_scene_fixed",
+  "copyRulePurpose": "new_menu",
+  "changeSetCompatibility": {
+    "highlightPrice": true,
+    "shorterCopy": true,
+    "emphasizeRegion": true,
+    "styleOverride": ["default", "friendly"]
+  },
+  "scenes": [
+    {
+      "sceneId": "s1",
+      "durationSec": 1.4,
+      "slot": "hook",
+      "textRole": "hook",
+      "mediaRole": "hero",
+      "effects": ["fade_in", "light_zoom_in"]
+    },
+    {
+      "sceneId": "s2",
+      "durationSec": 1.8,
+      "slot": "product",
+      "textRole": "product_name",
+      "mediaRole": "detail",
+      "effects": ["quick_cut"]
+    },
+    {
+      "sceneId": "s3",
+      "durationSec": 1.6,
+      "slot": "difference",
+      "textRole": "difference",
+      "mediaRole": "detail",
+      "effects": ["price_pop"]
+    },
+    {
+      "sceneId": "s4",
+      "durationSec": 1.2,
+      "slot": "cta",
+      "textRole": "cta",
+      "mediaRole": "hero",
+      "effects": ["fade_out"]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "assetIds": ["asset_001", "asset_002"],
+  "templateId": "T01",
+  "quickOptions": {
+    "highlightPrice": true,
+    "shorterCopy": false,
+    "emphasizeRegion": true
+  }
+}
+

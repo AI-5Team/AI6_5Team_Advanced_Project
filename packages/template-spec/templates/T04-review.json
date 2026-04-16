@@ -1,0 +1,51 @@
+{
+  "templateId": "T04",
+  "title": "한줄 후기형",
+  "supportedBusinessTypes": ["cafe", "restaurant"],
+  "supportedPurposes": ["review"],
+  "supportedStyles": ["friendly", "b_grade_fun"],
+  "description": "짧은 후기나 반응을 전면에 세우는 템플릿",
+  "sceneSpecVersion": "v1",
+  "durationSec": 5.5,
+  "outputRatio": "9:16",
+  "safeArea": {
+    "top": 120,
+    "right": 72,
+    "bottom": 160,
+    "left": 72
+  },
+  "ctaPolicy": "final_scene_fixed",
+  "copyRulePurpose": "review",
+  "changeSetCompatibility": {
+    "highlightPrice": false,
+    "shorterCopy": true,
+    "emphasizeRegion": false,
+    "styleOverride": ["friendly", "b_grade_fun"]
+  },
+  "scenes": [
+    {
+      "sceneId": "s1",
+      "durationSec": 1.7,
+      "slot": "quote",
+      "textRole": "review_quote",
+      "mediaRole": "hero",
+      "effects": ["quote_pop"]
+    },
+    {
+      "sceneId": "s2",
+      "durationSec": 1.9,
+      "slot": "product",
+      "textRole": "product_name",
+      "mediaRole": "detail",
+      "effects": ["quick_cut"]
+    },
+    {
+      "sceneId": "s3",
+      "durationSec": 1.9,
+      "slot": "cta",
+      "textRole": "cta",
+      "mediaRole": "hero",
+      "effects": ["cta_sting"]
+    }
+  ]
+}

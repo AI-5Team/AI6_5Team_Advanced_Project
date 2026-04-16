@@ -1,0 +1,23 @@
+{
+  "purpose": "review",
+  "structure": ["review_quote", "product_name", "cta"],
+  "regionPolicy": {
+    "minSlots": 1,
+    "maxRepeat": 2
+  },
+  "locationPolicy": {
+    "policyId": "strict_all_surfaces",
+    "forbiddenDetailLocationSurfaces": ["hookText", "ctaText", "captions", "hashtags", "sceneText", "subText"]
+  },
+  "templateIds": ["T04"],
+  "supportedQuickActions": ["shorterCopy", "styleOverride", "templateId"],
+  "captionRules": {
+    "minOptions": 3,
+    "maxLength": 70
+  },
+  "sampleHooks": [
+    "한 입 먹고 바로 생각난 한마디",
+    "다시 찾게 되는 이유",
+    "이 동네에서 자주 들리는 이유"
+  ]
+}

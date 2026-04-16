@@ -1,0 +1,22 @@
+[project]
+name = "ai65-mvp-api"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "email-validator>=2.2,<3.0",
+  "fastapi>=0.116,<1.0",
+  "uvicorn>=0.35,<1.0",
+  "python-multipart>=0.0.20,<1.0",
+  "pillow>=11.0,<12.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4,<9.0",
+  "httpx>=0.28,<1.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_default_fixture_loop_scope = "function"

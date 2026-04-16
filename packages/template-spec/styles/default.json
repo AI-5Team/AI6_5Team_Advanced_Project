@@ -1,0 +1,28 @@
+{
+  "styleId": "default",
+  "textTone": "direct",
+  "colorPreset": "clean_contrast",
+  "motionPreset": "minimal",
+  "captionLength": "short",
+  "palette": {
+    "background": "#121212",
+    "surface": "#ffffff",
+    "accent": "#f97316",
+    "textPrimary": "#ffffff",
+    "textOnSurface": "#111827"
+  },
+  "typography": {
+    "headlineSize": 72,
+    "bodySize": 40,
+    "ctaSize": 44,
+    "fontFamily": "Malgun Gothic"
+  },
+  "supportedQuickActions": [
+    "highlightPrice",
+    "shorterCopy",
+    "emphasizeRegion",
+    "templateId"
+  ],
+  "allowedEffects": ["fade_in", "fade_out", "light_zoom_in", "quick_cut"],
+  "forbiddenEffects": ["flash_text", "shake_pop"]
+}

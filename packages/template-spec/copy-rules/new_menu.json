@@ -1,0 +1,29 @@
+{
+  "purpose": "new_menu",
+  "structure": ["hook", "product_name", "difference", "cta"],
+  "regionPolicy": {
+    "minSlots": 2,
+    "maxRepeat": 3
+  },
+  "locationPolicy": {
+    "policyId": "strict_all_surfaces",
+    "forbiddenDetailLocationSurfaces": ["hookText", "ctaText", "captions", "hashtags", "sceneText", "subText"]
+  },
+  "templateIds": ["T01"],
+  "supportedQuickActions": [
+    "highlightPrice",
+    "shorterCopy",
+    "emphasizeRegion",
+    "styleOverride",
+    "templateId"
+  ],
+  "captionRules": {
+    "minOptions": 3,
+    "maxLength": 80
+  },
+  "sampleHooks": [
+    "오늘 처음 공개하는 한 잔",
+    "성수동에서 먼저 만나는 신메뉴",
+    "지금 가장 궁금한 오늘의 신메뉴"
+  ]
+}
