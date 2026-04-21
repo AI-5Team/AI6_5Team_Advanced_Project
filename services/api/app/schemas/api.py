@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ApiModel(BaseModel):
@@ -21,13 +21,13 @@ class UserPayload(ApiModel):
 
 
 class RegisterRequest(ApiModel):
-    email: str
+    email: EmailStr
     password: str = Field(min_length=8)
     name: str = Field(min_length=1, max_length=100)
 
 
 class LoginRequest(ApiModel):
-    email: str
+    email: EmailStr
     password: str = Field(min_length=1)
 
 

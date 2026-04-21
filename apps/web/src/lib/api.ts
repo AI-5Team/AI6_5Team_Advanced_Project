@@ -21,7 +21,7 @@ import type {
   RegenerateProjectRequest,
   ApprovedHybridInventoryResponse,
 } from "./contracts";
-import { buildAuthHeaders } from "@/lib/auth";
+import { buildAuthHeaders, clearStoredAuthSession } from "@/lib/auth";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
 
@@ -50,6 +50,10 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredAuthSession();
+      window.location.reload();
+    }
     const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new Error(data?.error?.message ?? `HTTP ${response.status}`);
   }
