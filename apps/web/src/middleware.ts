@@ -10,6 +10,17 @@ const PUBLIC_PATHS = [
   "/password-reset",
 ];
 
+const API_ORIGIN = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
+  if (!raw) return "";
+  try {
+    const { origin } = new URL(raw);
+    return origin;
+  } catch {
+    return "";
+  }
+})();
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
@@ -22,7 +33,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob:",
     "media-src 'self' blob:",
-    "connect-src 'self'",
+    `connect-src 'self'${API_ORIGIN ? ` ${API_ORIGIN}` : ""}`,
     "frame-ancestors 'none'",
   ].join("; "),
 };
