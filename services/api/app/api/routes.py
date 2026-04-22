@@ -219,9 +219,26 @@ def list_assets_route(project_id: str):
     return {"projectId": project_id, "assets": list_assets(project_id)}
 
 
+_MAX_UPLOAD_FILES = 5
+_MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
 @router.post("/projects/{project_id}/assets", response_model=UploadAssetsResponse, status_code=status.HTTP_201_CREATED)
 async def upload_assets_route(project_id: str, files: list[UploadFile] = File(...)):
-    payload = [(file.filename or "upload.png", await file.read(), file.content_type or "image/png") for file in files]
+    if len(files) > _MAX_UPLOAD_FILES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "ASSET_VALIDATION_FAILED", "message": f"파일은 최대 {_MAX_UPLOAD_FILES}개까지 업로드할 수 있습니다."}},
+        )
+    payload = []
+    for file in files:
+        data = await file.read()
+        if len(data) > _MAX_FILE_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": "ASSET_VALIDATION_FAILED", "message": "파일 하나의 크기는 10MB 이하여야 합니다."}},
+            )
+        payload.append((file.filename or "upload.png", data, file.content_type or "image/png"))
     return upload_assets(project_id, payload)
 
 

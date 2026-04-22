@@ -708,6 +708,19 @@ def _image_warnings(image: Image.Image) -> list[str]:
     return warnings
 
 
+_IMAGE_MAGIC: list[tuple[bytes, str]] = [
+    (b"\xff\xd8\xff", "jpeg"),
+    (b"\x89PNG\r\n\x1a\n", "png"),
+]
+
+
+def _check_image_magic(data: bytes) -> None:
+    for magic, _ in _IMAGE_MAGIC:
+        if data[: len(magic)] == magic:
+            return
+    raise api_error(400, "ASSET_VALIDATION_FAILED", "파일 내용이 jpg 또는 png 형식이 아닙니다.")
+
+
 def upload_assets(project_id: str, files: list[tuple[str, bytes, str]]) -> dict[str, Any]:
     settings = _settings()
     with get_connection() as connection:
@@ -720,6 +733,7 @@ def upload_assets(project_id: str, files: list[tuple[str, bytes, str]]) -> dict[
         for file_name, file_bytes, mime_type in files:
             if not file_name.lower().endswith((".jpg", ".jpeg", ".png")):
                 raise api_error(400, "ASSET_VALIDATION_FAILED", "jpg, jpeg, png만 업로드할 수 있습니다.")
+            _check_image_magic(file_bytes)
             asset_id = str(uuid4())
             suffix = Path(file_name).suffix or ".png"
             storage_path = project_root / f"{asset_id}{suffix}"
@@ -1104,6 +1118,7 @@ def list_social_accounts() -> dict[str, Any]:
                     "status": row["status"],
                     "accountName": row["account_name"],
                     "lastSyncedAt": row["last_synced_at"],
+                    "tokenExpiresAt": row["token_expires_at"],
                 }
             )
         return {"items": items}

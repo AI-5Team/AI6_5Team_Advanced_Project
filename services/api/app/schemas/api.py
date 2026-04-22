@@ -274,6 +274,7 @@ class SocialAccountSummary(ApiModel):
     status: str
     accountName: str | None = None
     lastSyncedAt: datetime | None = None
+    tokenExpiresAt: datetime | None = None
 
 
 class SocialAccountsResponse(ApiModel):

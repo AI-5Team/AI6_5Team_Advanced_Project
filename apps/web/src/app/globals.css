@@ -390,6 +390,21 @@ button {
   line-height: 1.5;
 }
 
+.account-row__error {
+  margin: 0;
+  color: var(--danger, #c0392b);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.workspace-note--warn {
+  border-left: 3px solid var(--danger, #c0392b);
+}
+
+.tone-text--danger {
+  color: var(--danger, #c0392b);
+}
+
 .workspace-kpi-grid,
 .workspace-status-grid {
   display: grid;
