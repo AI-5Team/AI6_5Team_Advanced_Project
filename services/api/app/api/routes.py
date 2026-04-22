@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Cookie, File, Header, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, File, HTTPException, Query, Request, Response, UploadFile, status
 
 from app.core.config import get_settings
 from app.core.rate_limit import allow_login, allow_password_reset, allow_register
@@ -61,7 +61,6 @@ from app.services.runtime import (
     logout_user,
     mark_assist_complete,
     me_from_session,
-    me_from_token,
     publish_project,
     register_user,
     regenerate_project,
@@ -76,7 +75,6 @@ from app.services.runtime import (
 
 
 router = APIRouter(prefix="/api")
-AuthorizationHeader = Annotated[str | None, Header(alias="Authorization")]
 SessionCookie = Annotated[str | None, Cookie(alias="session")]
 
 SESSION_COOKIE_MAX_AGE = get_settings().session_ttl_sec
@@ -186,8 +184,9 @@ def account_delete(request: Request, response: Response, session: SessionCookie 
 
 
 @router.get("/me")
-def get_me(authorization: AuthorizationHeader):
-    return me_from_token(authorization)
+def get_me(session: SessionCookie = None):
+    user = me_from_session(session)
+    return {"id": user["id"], "email": user["email"], "name": user["name"]}
 
 
 @router.get("/store-profile", response_model=StoreProfileResponse)

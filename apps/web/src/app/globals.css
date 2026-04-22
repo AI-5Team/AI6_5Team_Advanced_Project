@@ -3099,12 +3099,20 @@ textarea:focus {
 }
 
 .auth-helper {
-  padding-top: 12px;
-  border-top: 1px solid var(--theme-panel-border);
+  padding: 14px 16px;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: var(--radius-xl);
+  background: rgba(17, 17, 17, 0.03);
 }
 
 .auth-helper strong {
-  font-size: 0.92rem;
+  font-size: 0.86rem;
+  letter-spacing: -0.01em;
+}
+
+.auth-helper span {
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .auth-status-bar-wrap {
@@ -3248,21 +3256,42 @@ textarea:focus {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
-  margin: 12px 0;
+  margin: 14px 0 22px;
+  border-top: 1px solid rgba(17, 17, 17, 0.16);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.16);
+  background: #fff;
 }
 
-.legal-table th,
-.legal-table td {
-  padding: 8px 12px;
-  border: 1px solid var(--line);
+.legal-table thead th {
   text-align: left;
-  color: var(--muted);
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text);
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--line);
 }
 
-.legal-table th {
-  background: var(--color-surface-muted);
-  font-weight: 600;
+.legal-table tbody td {
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.legal-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.legal-table tbody tr:hover td {
+  background: rgba(17, 17, 17, 0.02);
+}
+
+.legal-table tbody td:first-child {
   color: var(--text);
+  font-weight: 500;
 }
 
 /* ─── Auth extras ────────────────────────────────────────── */
@@ -3286,9 +3315,40 @@ textarea:focus {
   text-decoration: underline;
 }
 
+.auth-links--split {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.auth-links--split .dot {
+  color: var(--muted);
+}
+
+.auth-feedback {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
 .auth-feedback--error {
-  color: #c0392b;
-  font-size: 0.875rem;
+  color: #a02a35;
+  background: rgba(238, 100, 112, 0.08);
+  border: 1px solid rgba(238, 100, 112, 0.22);
+}
+
+.auth-feedback--info {
+  color: var(--text);
+  background: rgba(17, 17, 17, 0.04);
+  border: 1px solid var(--line);
+}
+
+.auth-feedback--success {
+  color: #1f6a5a;
+  background: rgba(34, 107, 95, 0.08);
+  border: 1px solid rgba(34, 107, 95, 0.22);
 }
 
 .auth-consents {
@@ -3398,5 +3458,4 @@ textarea:focus {
 .button-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
 }

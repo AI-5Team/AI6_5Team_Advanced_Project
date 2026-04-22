@@ -13,22 +13,31 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") ?? "/";
+  const loggedOut = searchParams.get("logged_out") === "true";
 
   const [email, setEmail] = useState(DEMO.email);
   const [password, setPassword] = useState(DEMO.password);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ kind: "info" | "error"; text: string } | null>(
+    loggedOut ? { kind: "info", text: "로그아웃되었습니다." } : null
+  );
+
+  const fillDemo = () => {
+    setEmail(DEMO.email);
+    setPassword(DEMO.password);
+    setFeedback({ kind: "info", text: "데모 계정으로 바로 확인할 수 있습니다." });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setFeedback("");
+    setFeedback(null);
     try {
       const res = await loginUser({ email, password });
-      setStoredAuthSession(res);
+      setStoredAuthSession({ user: res.user });
       router.replace(nextPath);
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+      setFeedback({ kind: "error", text: err instanceof Error ? err.message : "로그인에 실패했습니다." });
     } finally {
       setSubmitting(false);
     }
@@ -50,7 +59,11 @@ export default function LoginPage() {
         <div className="auth-panel__form">
           <div className="auth-copy">
             <strong>로그인</strong>
-            {feedback && <p className="auth-feedback auth-feedback--error">{feedback}</p>}
+            {feedback ? (
+              <p className={`auth-feedback auth-feedback--${feedback.kind}`}>{feedback.text}</p>
+            ) : (
+              <p>기존 계정으로 바로 이어서 사용합니다.</p>
+            )}
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -78,13 +91,17 @@ export default function LoginPage() {
               <button type="submit" className="button button-primary" disabled={submitting}>
                 {submitting ? "확인 중" : "로그인"}
               </button>
+              <button type="button" className="button button-secondary" onClick={fillDemo}>
+                데모 계정 채우기
+              </button>
             </div>
           </form>
 
-          <div className="auth-links">
+          <div className="auth-links auth-links--split">
             <Link href="/password-reset">비밀번호를 잊으셨나요?</Link>
-            <span>·</span>
-            <Link href="/register">회원가입</Link>
+            <span className="dot">·</span>
+            <span style={{ color: "var(--muted)" }}>계정이 없으신가요?</span>
+            <Link href="/register">회원가입 →</Link>
           </div>
 
           <div className="auth-helper">

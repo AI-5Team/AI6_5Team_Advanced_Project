@@ -13,7 +13,7 @@ export default function LogoutPage() {
       .catch(() => undefined)
       .finally(() => {
         clearStoredAuthSession();
-        router.replace("/login");
+        router.replace("/login?logged_out=true");
       });
   }, [router]);
 

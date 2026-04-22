@@ -28,7 +28,7 @@ async function registerUser(payload: {
     const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new Error(data?.error?.message ?? "회원가입에 실패했습니다.");
   }
-  return res.json() as Promise<{ accessToken: string; user: { id: string; email: string; name: string } }>;
+  return res.json() as Promise<{ user: { id: string; email: string; name: string } }>;
 }
 
 export default function RegisterPage() {
@@ -70,7 +70,7 @@ export default function RegisterPage() {
         agreedToAge14: true,
         agreedToOverseasTransfer: true,
       });
-      setStoredAuthSession(res);
+      setStoredAuthSession({ user: res.user });
       router.replace("/");
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : "회원가입에 실패했습니다.");
@@ -197,6 +197,11 @@ export default function RegisterPage() {
               </Link>
             </div>
           </form>
+
+          <div className="auth-links">
+            <span style={{ color: "var(--muted)" }}>이미 계정이 있으신가요?</span>
+            <Link href="/login">로그인</Link>
+          </div>
         </div>
       </section>
     </main>

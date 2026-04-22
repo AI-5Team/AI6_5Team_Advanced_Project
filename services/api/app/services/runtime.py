@@ -14,7 +14,7 @@ from datetime import date
 from app.core.config import get_settings
 from app.core.database import get_connection, utc_now
 from app.core.errors import api_error
-from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.core.security import hash_password, verify_password
 from app.services.audit import log_event
 from app.services.consent import record_signup_consents
 from app.services.crypto import encrypt_token
@@ -356,9 +356,8 @@ def register_user(
         )
     record_signup_consents(user_id=user_id, ip=ip, user_agent=user_agent)
     log_event(event_type="register", user_id=user_id, ip=ip, user_agent=user_agent)
-    token = create_access_token({"id": user_id, "email": email, "name": name})
     session_token = issue_session(user_id=user_id, ip=ip, user_agent=user_agent)
-    return {"accessToken": token, "sessionToken": session_token, "user": {"id": user_id, "email": email, "name": name}}
+    return {"sessionToken": session_token, "user": {"id": user_id, "email": email, "name": name}}
 
 
 def login_user(
@@ -401,6 +400,14 @@ def login_user(
                 "UPDATE users SET failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
                 (utc_now(), row["id"]),
             )
+            # Auto-rehash legacy PBKDF2 → argon2id on successful login
+            if not row["password_hash"].startswith("$argon2"):
+                new_hash = hash_password(password)
+                if new_hash.startswith("$argon2"):
+                    connection.execute(
+                        "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+                        (new_hash, utc_now(), row["id"]),
+                    )
 
     if _failure_event:
         log_event(**_failure_event)
@@ -409,22 +416,10 @@ def login_user(
 
     log_event(event_type="login_success", user_id=row["id"], ip=ip, user_agent=user_agent)
     session_token = issue_session(user_id=row["id"], ip=ip, user_agent=user_agent)
-    token = create_access_token({"id": row["id"], "email": row["email"], "name": row["name"]})
     return {
-        "accessToken": token,
         "sessionToken": session_token,
         "user": {"id": row["id"], "email": row["email"], "name": row["name"]},
     }
-
-
-def me_from_token(authorization: str | None) -> dict[str, Any]:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise api_error(401, "AUTH_REQUIRED", "로그인이 필요합니다.")
-    try:
-        payload = decode_access_token(authorization.removeprefix("Bearer ").strip())
-        return {"id": payload["sub"], "email": payload["email"], "name": payload["name"]}
-    except Exception as exc:  # noqa: BLE001
-        raise api_error(401, "AUTH_REQUIRED", "로그인이 필요합니다.") from exc
 
 
 def me_from_session(session_token: str | None) -> dict[str, Any]:
@@ -500,8 +495,13 @@ def change_password(
             "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
             (hash_password(new_password), utc_now(), user_id),
         )
-    from app.services.session import revoke_all_sessions
-    revoke_all_sessions(user_id, except_session_id=None)
+    from app.services.session import revoke_all_sessions, verify_session
+    except_session_id = None
+    if session_token:
+        session_data = verify_session(session_token)
+        if session_data:
+            except_session_id = session_data["sessionId"]
+    revoke_all_sessions(user_id, except_session_id=except_session_id)
     log_event(event_type="password_change", user_id=user_id)
     return {"changed": True}
 

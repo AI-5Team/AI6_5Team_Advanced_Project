@@ -20,15 +20,8 @@ async def lifespan(_: FastAPI):
 
 
 _CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-_CSRF_PROTECTED_PATHS = {
-    "/api/auth/login",
-    "/api/auth/register",
-    "/api/auth/logout",
-    "/api/auth/password/reset-request",
-    "/api/auth/password/reset-confirm",
-    "/api/auth/password/change",
-    "/api/account/me",
-}
+# Paths called by external parties (webhooks, OAuth redirects) — exempt from CSRF check
+_CSRF_EXEMPT_PREFIXES = ("/api/webhooks/",)
 
 
 app = FastAPI(
@@ -40,23 +33,35 @@ app = FastAPI(
 
 @app.middleware("http")
 async def csrf_origin_check(request: Request, call_next):
-    if request.method not in _CSRF_SAFE_METHODS and request.url.path in _CSRF_PROTECTED_PATHS:
-        origin = request.headers.get("origin") or request.headers.get("referer")
-        if origin:
-            parsed = urlparse(origin)
-            allowed_host = request.url.hostname or ""
-            # Allow same-host and localhost/127.0.0.1 in development
-            if parsed.hostname and parsed.hostname not in (allowed_host, "localhost", "127.0.0.1"):
-                return JSONResponse(
-                    status_code=403,
-                    content={"error": {"code": "CSRF_REJECTED", "message": "요청 출처가 허용되지 않습니다."}},
-                )
+    if request.method not in _CSRF_SAFE_METHODS:
+        path = request.url.path
+        if not any(path.startswith(prefix) for prefix in _CSRF_EXEMPT_PREFIXES):
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            if origin:
+                parsed = urlparse(origin)
+                allowed_host = request.url.hostname or ""
+                if parsed.hostname and parsed.hostname not in (allowed_host, "localhost", "127.0.0.1"):
+                    return JSONResponse(
+                        status_code=403,
+                        content={"error": {"code": "CSRF_REJECTED", "message": "요청 출처가 허용되지 않습니다."}},
+                    )
     return await call_next(request)
 
 
+import os as _os
+import re as _re
+
+def _build_cors(env_val: str | None) -> dict:
+    if env_val:
+        return {"allow_origins": [o.strip() for o in env_val.split(",") if o.strip()]}
+    # Dev default: allow any localhost/127.0.0.1 port
+    return {"allow_origin_regex": r"https?://(localhost|127\.0\.0\.1)(:\d+)?$"}
+
+_cors_kwargs = _build_cors(_os.getenv("APP_CORS_ORIGINS"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    **_cors_kwargs,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

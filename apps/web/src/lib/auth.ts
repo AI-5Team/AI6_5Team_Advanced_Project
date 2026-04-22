@@ -1,10 +1,8 @@
 import type { AuthUser } from "@/lib/contracts";
 
-// 레거시 localStorage 세션 — Bearer 토큰 방식 지원 유지 (기존 호환성)
 const AUTH_STORAGE_KEY = "studio-auth-session";
 
 export interface AuthSession {
-  accessToken: string;
   user: AuthUser;
 }
 
@@ -18,15 +16,10 @@ export function getStoredAuthSession(): AuthSession | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
-    if (
-      typeof parsed.accessToken !== "string" ||
-      !parsed.accessToken ||
-      !parsed.user ||
-      typeof parsed.user.id !== "string"
-    ) {
+    if (!parsed.user || typeof parsed.user.id !== "string") {
       return null;
     }
-    return { accessToken: parsed.accessToken, user: parsed.user };
+    return { user: parsed.user };
   } catch {
     return null;
   }
@@ -42,8 +35,7 @@ export function clearStoredAuthSession() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
+// Cookie-based auth — no Authorization header needed
 export function buildAuthHeaders(): Record<string, string> {
-  const session = getStoredAuthSession();
-  if (!session) return {};
-  return { Authorization: `Bearer ${session.accessToken}` };
+  return {};
 }

@@ -168,6 +168,24 @@ def test_consent_rows_created_on_register(monkeypatch, tmp_path):
     assert all(row["agreed"] == 1 for row in consents)
 
 
+def test_consent_version_stored(monkeypatch, tmp_path):
+    from app.core.database import get_connection
+    from app.services.consent import CURRENT_CONSENT_VERSIONS
+    client = _make_client(monkeypatch, tmp_path)
+    client.post("/api/auth/register", json=VALID_REGISTER)
+    with get_connection() as conn:
+        user = conn.execute("SELECT id FROM users WHERE email = ?",
+                            (VALID_REGISTER["email"],)).fetchone()
+        consents = conn.execute(
+            "SELECT consent_type, version FROM consents WHERE user_id = ?",
+            (user["id"],),
+        ).fetchall()
+    stored = {row["consent_type"]: row["version"] for row in consents}
+    for consent_type, expected_version in CURRENT_CONSENT_VERSIONS.items():
+        assert stored.get(consent_type) == expected_version, \
+            f"{consent_type}: expected version {expected_version!r}, got {stored.get(consent_type)!r}"
+
+
 # ---------------------------------------------------------------------------
 # CryptoService AES-256-GCM
 # ---------------------------------------------------------------------------
