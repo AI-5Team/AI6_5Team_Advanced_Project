@@ -166,8 +166,13 @@ def test_auth_register_login_me_and_invalid_cases(monkeypatch, tmp_path):
         "/api/auth/register",
         json={
             "email": "owner@example.com",
-            "password": "secret123!",
+            "password": "secret123!A",
             "name": "임창현",
+            "birthDate": "1990-01-01",
+            "agreedToTerms": True,
+            "agreedToPrivacy": True,
+            "agreedToAge14": True,
+            "agreedToOverseasTransfer": True,
         },
     )
     assert register_response.status_code == 201
@@ -186,7 +191,7 @@ def test_auth_register_login_me_and_invalid_cases(monkeypatch, tmp_path):
         "/api/auth/login",
         json={
             "email": "owner@example.com",
-            "password": "wrong-password",
+            "password": "wrong-passwordXXX",
         },
     )
     assert invalid_login_response.status_code == 401

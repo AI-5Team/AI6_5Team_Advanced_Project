@@ -357,7 +357,8 @@ def register_user(
     record_signup_consents(user_id=user_id, ip=ip, user_agent=user_agent)
     log_event(event_type="register", user_id=user_id, ip=ip, user_agent=user_agent)
     token = create_access_token({"id": user_id, "email": email, "name": name})
-    return {"accessToken": token, "user": {"id": user_id, "email": email, "name": name}}
+    session_token = issue_session(user_id=user_id, ip=ip, user_agent=user_agent)
+    return {"accessToken": token, "sessionToken": session_token, "user": {"id": user_id, "email": email, "name": name}}
 
 
 def login_user(
@@ -367,20 +368,23 @@ def login_user(
     user_agent: str | None = None,
 ) -> dict[str, Any]:
     ensure_demo_state()
+    _failure_event: dict[str, Any] | None = None
+    _failure_error: Exception | None = None
+    row = None
+
     with get_connection() as connection:
         row = connection.execute(
             "SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", (email,)
         ).fetchone()
         if row is None:
-            log_event(event_type="login_failure", ip=ip, user_agent=user_agent, metadata={"reason": "user_not_found"})
-            raise api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
-
-        # 계정 잠금 확인
-        if row["locked_until"] and row["locked_until"] > utc_now():
-            log_event(event_type="login_failure", user_id=row["id"], ip=ip, metadata={"reason": "account_locked"})
-            raise api_error(423, "ACCOUNT_LOCKED", "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.")
-
-        if not verify_password(password, row["password_hash"]):
+            _failure_event = {"event_type": "login_failure", "ip": ip, "user_agent": user_agent,
+                              "metadata": {"reason": "user_not_found"}}
+            _failure_error = api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
+        elif row["locked_until"] and row["locked_until"] > utc_now():
+            _failure_event = {"event_type": "login_failure", "user_id": row["id"], "ip": ip,
+                              "metadata": {"reason": "account_locked"}}
+            _failure_error = api_error(423, "ACCOUNT_LOCKED", "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.")
+        elif not verify_password(password, row["password_hash"]):
             failed_count = (row["failed_login_count"] or 0) + 1
             locked_until = None
             if failed_count >= 5:
@@ -389,13 +393,19 @@ def login_user(
                 "UPDATE users SET failed_login_count = ?, locked_until = ?, updated_at = ? WHERE id = ?",
                 (failed_count, locked_until, utc_now(), row["id"]),
             )
-            log_event(event_type="login_failure", user_id=row["id"], ip=ip, metadata={"failed_count": failed_count})
-            raise api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
+            _failure_event = {"event_type": "login_failure", "user_id": row["id"], "ip": ip,
+                              "metadata": {"failed_count": failed_count}}
+            _failure_error = api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
+        else:
+            connection.execute(
+                "UPDATE users SET failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
+                (utc_now(), row["id"]),
+            )
 
-        connection.execute(
-            "UPDATE users SET failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
-            (utc_now(), row["id"]),
-        )
+    if _failure_event:
+        log_event(**_failure_event)
+    if _failure_error:
+        raise _failure_error
 
     log_event(event_type="login_success", user_id=row["id"], ip=ip, user_agent=user_agent)
     session_token = issue_session(user_id=row["id"], ip=ip, user_agent=user_agent)
@@ -513,7 +523,7 @@ def delete_account(user_id: str, ip: str = "unknown") -> dict[str, Any]:
     from app.services.session import revoke_all_sessions
     revoke_all_sessions(user_id)
     log_event(event_type="account_deleted", user_id=user_id, ip=ip)
-    return {"deleted": True}
+    return {"deleted": True, "scheduledDeletionAt": hard_delete_at, "message": "회원 탈퇴 신청이 완료되었습니다. 30일 후 데이터가 완전 삭제됩니다."}
 
 
 def get_store_profile() -> dict[str, Any]:

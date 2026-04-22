@@ -65,6 +65,8 @@ class ChangePasswordRequest(ApiModel):
 
 class AccountDeleteResponse(ApiModel):
     deleted: Literal[True]
+    scheduledDeletionAt: str
+    message: str
 
 
 class StoreProfileRequest(ApiModel):

@@ -227,7 +227,7 @@ export function changePassword(payload: { currentPassword: string; newPassword: 
 }
 
 export function deleteMyAccount() {
-  return requestJson<{ message: string; scheduledDeletionAt: string }>("/api/account/me", {
+  return requestJson<{ deleted: true; scheduledDeletionAt: string; message: string }>("/api/account/me", {
     method: "DELETE",
   });
 }
