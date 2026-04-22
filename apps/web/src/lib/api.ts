@@ -218,3 +218,16 @@ export function updateStoreProfile(payload: UpdateStoreProfileRequest) {
     body: JSON.stringify(payload),
   });
 }
+
+export function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  return requestJson<{ message: string }>("/api/auth/password/change", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteMyAccount() {
+  return requestJson<{ message: string; scheduledDeletionAt: string }>("/api/account/me", {
+    method: "DELETE",
+  });
+}

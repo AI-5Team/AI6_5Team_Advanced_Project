@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,11 +19,40 @@ async def lifespan(_: FastAPI):
     yield
 
 
+_CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+_CSRF_PROTECTED_PATHS = {
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/auth/logout",
+    "/api/auth/password/reset-request",
+    "/api/auth/password/reset-confirm",
+    "/api/auth/password/change",
+    "/api/account/me",
+}
+
+
 app = FastAPI(
     title="AI6_5Team Advanced Project API",
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def csrf_origin_check(request: Request, call_next):
+    if request.method not in _CSRF_SAFE_METHODS and request.url.path in _CSRF_PROTECTED_PATHS:
+        origin = request.headers.get("origin") or request.headers.get("referer")
+        if origin:
+            parsed = urlparse(origin)
+            allowed_host = request.url.hostname or ""
+            # Allow same-host and localhost/127.0.0.1 in development
+            if parsed.hostname and parsed.hostname not in (allowed_host, "localhost", "127.0.0.1"):
+                return JSONResponse(
+                    status_code=403,
+                    content={"error": {"code": "CSRF_REJECTED", "message": "요청 출처가 허용되지 않습니다."}},
+                )
+    return await call_next(request)
+
 
 app.add_middleware(
     CORSMiddleware,

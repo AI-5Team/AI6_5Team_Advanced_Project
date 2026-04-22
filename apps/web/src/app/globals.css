@@ -3326,4 +3326,77 @@ textarea:focus {
   color: var(--text);
   text-decoration: underline;
 }
+
+/* Account settings page */
+.account-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  min-height: 100vh;
+}
+
+.account-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-page__header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.account-page__email {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.account-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.account-section h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.account-section--danger h2 {
+  color: #e53e3e;
+}
+
+.account-section__desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+
+.button-danger {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.button-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 }
