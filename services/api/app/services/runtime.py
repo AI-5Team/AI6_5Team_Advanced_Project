@@ -17,6 +17,7 @@ from app.core.errors import api_error
 from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
 from app.services.audit import log_event
 from app.services.consent import record_signup_consents
+from app.services.crypto import encrypt_token
 from app.services.session import issue_session, revoke_session_by_token, verify_session
 from app.services.token_svc import consume_token, issue_email_verify, issue_password_reset
 from services.worker.pipelines.generation import run_generation_job
@@ -1144,7 +1145,7 @@ def callback_social_account(channel: str, code: str | None, state: str | None) -
             """,
             (
                 "demo_store_official" if channel == "instagram" else f"{channel}_demo",
-                f"{channel}-token",
+                encrypt_token(f"{channel}-token"),
                 (_utc_now_dt() + timedelta(days=7)).isoformat(),
                 utc_now(),
                 utc_now(),

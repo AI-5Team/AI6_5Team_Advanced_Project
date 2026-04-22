@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Cookie, File, Header, HTTPExcept
 
 from app.core.config import get_settings
 from app.core.rate_limit import allow_login, allow_password_reset, allow_register
+from app.services.crypto import NotConnectedError, get_valid_access_token
 from app.schemas.api import (
     AccountDeleteResponse,
     ApprovedHybridInventoryResponse,
@@ -289,3 +290,17 @@ def social_connect_route(channel: str):
 @router.get("/social-accounts/{channel}/callback", response_model=SocialAccountCallbackResponse)
 def social_callback_route(channel: str, code: str | None = None, state: str | None = None):
     return callback_social_account(channel, code, state)
+
+
+@router.get("/social-accounts/{channel}/token")
+def social_token_route(channel: str, session: SessionCookie = None):
+    """
+    Return a valid access token for the given channel.
+    Used internally by the automation/worker team — requires an authenticated session.
+    """
+    user = me_from_session(session)
+    try:
+        token = get_valid_access_token(user["id"], channel)
+        return {"channel": channel, "accessToken": token}
+    except NotConnectedError as exc:
+        raise HTTPException(status_code=400, detail={"error": {"code": "NOT_CONNECTED", "message": str(exc)}}) from exc
