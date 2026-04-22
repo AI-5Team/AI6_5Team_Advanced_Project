@@ -3184,3 +3184,146 @@ textarea:focus {
     width: 100%;
   }
 }
+
+/* ─── Legal pages ────────────────────────────────────────── */
+
+.legal-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  min-height: 100vh;
+}
+
+.legal-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.legal-page__back {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.legal-page__back:hover {
+  color: var(--text);
+}
+
+.legal-page__header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.legal-page__date {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.legal-page__body h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 28px 0 10px;
+  color: var(--text);
+}
+
+.legal-page__body p,
+.legal-page__body li {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.legal-page__body ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 12px 0;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+  color: var(--muted);
+}
+
+.legal-table th {
+  background: var(--color-surface-muted);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ─── Auth extras ────────────────────────────────────────── */
+
+.auth-panel--slim .auth-panel__form {
+  max-width: 420px;
+  margin: auto;
+}
+
+.auth-links {
+  display: flex;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.auth-links a {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.auth-feedback--error {
+  color: #c0392b;
+  font-size: 0.875rem;
+}
+
+.auth-consents {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 12px 0;
+}
+
+.auth-field--checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.auth-field--checkbox input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.auth-field--checkbox span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.auth-field--checkbox a {
+  color: var(--text);
+  text-decoration: underline;
+}
+}

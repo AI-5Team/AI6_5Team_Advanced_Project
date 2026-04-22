@@ -32,8 +32,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [feedback, setFeedback] = useState("로그인 후 현재 trunk 기준 화면을 그대로 이어서 사용합니다.");
   const [loginForm, setLoginForm] = useState<LoginRequest>({ ...DEMO_LOGIN });
   const [registerForm, setRegisterForm] = useState<RegisterRequest>(INITIAL_REGISTER_FORM);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const isSceneFrame = pathname?.startsWith("/scene-frame") ?? false;
+  const PUBLIC_PATHS = ["/login", "/register", "/logout", "/terms", "/privacy", "/email-verify", "/password-reset"];
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p || (pathname?.startsWith(p + "/") ?? false));
   const summaryText = useMemo(() => {
     if (!user) return "";
     return `${user.name} · ${user.email}`;
@@ -94,6 +97,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!agreedToTerms) {
+      setFeedback("이용약관과 개인정보처리방침에 동의해야 합니다.");
+      return;
+    }
     setSubmitting(true);
     setFeedback("계정을 만들고 있습니다.");
     try {
@@ -133,6 +140,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   };
 
   if (initializing) {
+    if (isPublicPath) return <>{children}</>;
     return (
       <main className="auth-screen">
         <section className="auth-panel auth-panel--loading">
@@ -144,6 +152,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
+    if (isPublicPath) return <>{children}</>;
     return (
       <main className="auth-screen">
         <section className="auth-panel">
@@ -167,7 +176,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className={mode === "login" ? "auth-toggle__button auth-toggle__button--active" : "auth-toggle__button"}
-                onClick={() => setMode("login")}
+                onClick={() => { setMode("login"); setAgreedToTerms(false); }}
               >
                 로그인
               </button>
@@ -259,11 +268,24 @@ export function AuthGate({ children }: { children: ReactNode }) {
                     required
                   />
                 </label>
+                <label className="auth-field auth-field--checkbox">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  />
+                  <span>
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">이용약관</a>
+                    {" "}및{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">개인정보처리방침</a>
+                    에 동의합니다 [필수]
+                  </span>
+                </label>
                 <div className="auth-actions">
-                  <button type="submit" className="button button-primary" disabled={submitting}>
+                  <button type="submit" className="button button-primary" disabled={submitting || !agreedToTerms}>
                     {submitting ? "등록 중" : "회원가입"}
                   </button>
-                  <button type="button" className="button button-secondary" onClick={() => setMode("login")}>
+                  <button type="button" className="button button-secondary" onClick={() => { setMode("login"); setAgreedToTerms(false); }}>
                     로그인으로 돌아가기
                   </button>
                 </div>

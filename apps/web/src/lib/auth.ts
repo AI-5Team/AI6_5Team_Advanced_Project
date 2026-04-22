@@ -1,5 +1,6 @@
 import type { AuthUser } from "@/lib/contracts";
 
+// 레거시 localStorage 세션 — Bearer 토큰 방식 지원 유지 (기존 호환성)
 const AUTH_STORAGE_KEY = "studio-auth-session";
 
 export interface AuthSession {
@@ -13,26 +14,19 @@ function isBrowser() {
 
 export function getStoredAuthSession(): AuthSession | null {
   if (!isBrowser()) return null;
-
   const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
   if (!raw) return null;
-
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
     if (
       typeof parsed.accessToken !== "string" ||
       !parsed.accessToken ||
       !parsed.user ||
-      typeof parsed.user.id !== "string" ||
-      typeof parsed.user.email !== "string" ||
-      typeof parsed.user.name !== "string"
+      typeof parsed.user.id !== "string"
     ) {
       return null;
     }
-    return {
-      accessToken: parsed.accessToken,
-      user: parsed.user,
-    };
+    return { accessToken: parsed.accessToken, user: parsed.user };
   } catch {
     return null;
   }

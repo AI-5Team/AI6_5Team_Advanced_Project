@@ -9,10 +9,16 @@ from datetime import datetime, timedelta, timezone
 
 from PIL import Image, ImageFilter, ImageStat
 
+from datetime import date
+
 from app.core.config import get_settings
 from app.core.database import get_connection, utc_now
 from app.core.errors import api_error
 from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.services.audit import log_event
+from app.services.consent import record_signup_consents
+from app.services.session import issue_session, revoke_session_by_token, verify_session
+from app.services.token_svc import consume_token, issue_email_verify, issue_password_reset
 from services.worker.pipelines.generation import run_generation_job
 from services.worker.pipelines.publish import run_publish_job
 
@@ -312,32 +318,92 @@ def get_demo_user() -> dict[str, Any]:
         return dict(row)
 
 
-def register_user(email: str, password: str, name: str) -> dict[str, Any]:
+def _validate_age_14(birth_date_str: str) -> None:
+    try:
+        birth = date.fromisoformat(birth_date_str)
+    except ValueError:
+        raise api_error(400, "INVALID_INPUT", "생년월일 형식이 올바르지 않습니다.")
+    today = date.today()
+    age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+    if age < 14:
+        raise api_error(403, "AGE_RESTRICTION", "만 14세 이상만 가입할 수 있습니다.")
+
+
+def register_user(
+    email: str,
+    password: str,
+    name: str,
+    birth_date: str,
+    ip: str = "unknown",
+    user_agent: str | None = None,
+) -> dict[str, Any]:
+    _validate_age_14(birth_date)
     with get_connection() as connection:
-        existing = connection.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        existing = connection.execute(
+            "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", (email,)
+        ).fetchone()
         if existing:
             raise api_error(409, "INVALID_INPUT", "이미 등록된 이메일입니다.")
         user_id = str(uuid4())
         now = utc_now()
         connection.execute(
             """
-            INSERT INTO users (id, email, password_hash, name, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO users (id, email, password_hash, name, birth_date, status, failed_login_count, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'active', 0, ?, ?)
             """,
-            (user_id, email, hash_password(password), name, now, now),
+            (user_id, email, hash_password(password), name, birth_date, now, now),
         )
-        token = create_access_token({"id": user_id, "email": email, "name": name})
-        return {"accessToken": token, "user": {"id": user_id, "email": email, "name": name}}
+    record_signup_consents(user_id=user_id, ip=ip, user_agent=user_agent)
+    log_event(event_type="register", user_id=user_id, ip=ip, user_agent=user_agent)
+    token = create_access_token({"id": user_id, "email": email, "name": name})
+    return {"accessToken": token, "user": {"id": user_id, "email": email, "name": name}}
 
 
-def login_user(email: str, password: str) -> dict[str, Any]:
+def login_user(
+    email: str,
+    password: str,
+    ip: str = "unknown",
+    user_agent: str | None = None,
+) -> dict[str, Any]:
+    ensure_demo_state()
     with get_connection() as connection:
-        ensure_demo_state()
-        row = connection.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if row is None or not verify_password(password, row["password_hash"]):
+        row = connection.execute(
+            "SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", (email,)
+        ).fetchone()
+        if row is None:
+            log_event(event_type="login_failure", ip=ip, user_agent=user_agent, metadata={"reason": "user_not_found"})
             raise api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
-        token = create_access_token({"id": row["id"], "email": row["email"], "name": row["name"]})
-        return {"accessToken": token, "user": {"id": row["id"], "email": row["email"], "name": row["name"]}}
+
+        # 계정 잠금 확인
+        if row["locked_until"] and row["locked_until"] > utc_now():
+            log_event(event_type="login_failure", user_id=row["id"], ip=ip, metadata={"reason": "account_locked"})
+            raise api_error(423, "ACCOUNT_LOCKED", "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.")
+
+        if not verify_password(password, row["password_hash"]):
+            failed_count = (row["failed_login_count"] or 0) + 1
+            locked_until = None
+            if failed_count >= 5:
+                locked_until = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+            connection.execute(
+                "UPDATE users SET failed_login_count = ?, locked_until = ?, updated_at = ? WHERE id = ?",
+                (failed_count, locked_until, utc_now(), row["id"]),
+            )
+            log_event(event_type="login_failure", user_id=row["id"], ip=ip, metadata={"failed_count": failed_count})
+            raise api_error(401, "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.")
+
+        connection.execute(
+            "UPDATE users SET failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
+            (utc_now(), row["id"]),
+        )
+
+    log_event(event_type="login_success", user_id=row["id"], ip=ip, user_agent=user_agent)
+    session_token = issue_session(user_id=row["id"], ip=ip, user_agent=user_agent)
+    token = create_access_token({"id": row["id"], "email": row["email"], "name": row["name"]})
+    return {
+        "accessToken": token,
+        "sessionToken": session_token,
+        "user": {"id": row["id"], "email": row["email"], "name": row["name"]},
+    }
 
 
 def me_from_token(authorization: str | None) -> dict[str, Any]:
@@ -348,6 +414,105 @@ def me_from_token(authorization: str | None) -> dict[str, Any]:
         return {"id": payload["sub"], "email": payload["email"], "name": payload["name"]}
     except Exception as exc:  # noqa: BLE001
         raise api_error(401, "AUTH_REQUIRED", "로그인이 필요합니다.") from exc
+
+
+def me_from_session(session_token: str | None) -> dict[str, Any]:
+    if not session_token:
+        raise api_error(401, "AUTH_REQUIRED", "로그인이 필요합니다.")
+    session = verify_session(session_token)
+    if session is None:
+        raise api_error(401, "AUTH_REQUIRED", "세션이 만료되었습니다. 다시 로그인해 주세요.")
+    return {"id": session["userId"], "email": session["email"], "name": session["name"]}
+
+
+def logout_user(session_token: str | None, user_id: str | None, ip: str = "unknown") -> None:
+    if session_token:
+        revoke_session_by_token(session_token)
+    log_event(event_type="logout", user_id=user_id, ip=ip)
+
+
+def verify_email_token(token: str) -> dict[str, Any]:
+    try:
+        user_id = consume_token(token, "verify_email")
+    except ValueError as exc:
+        raise api_error(400, "INVALID_TOKEN", "유효하지 않은 인증 토큰입니다.") from exc
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE users SET email_verified_at = ?, updated_at = ? WHERE id = ?",
+            (utc_now(), utc_now(), user_id),
+        )
+    log_event(event_type="email_verify", user_id=user_id)
+    return {"verified": True}
+
+
+def request_password_reset(email: str, ip: str = "unknown") -> dict[str, Any]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", (email,)
+        ).fetchone()
+    if row:
+        reset_token = issue_password_reset(row["id"])
+        log_event(event_type="password_reset_request", user_id=row["id"], ip=ip)
+        # 실제 서비스에서는 이메일 발송. 여기서는 토큰 반환 (개발 편의)
+        return {"message": "비밀번호 재설정 이메일을 발송했습니다.", "devToken": reset_token}
+    # 존재하지 않는 이메일도 동일 응답 (이메일 열거 방지)
+    return {"message": "비밀번호 재설정 이메일을 발송했습니다."}
+
+
+def confirm_password_reset(token: str, new_password: str) -> dict[str, Any]:
+    try:
+        user_id = consume_token(token, "reset_password")
+    except ValueError as exc:
+        raise api_error(400, "INVALID_TOKEN", "유효하지 않은 재설정 토큰입니다.") from exc
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE users SET password_hash = ?, failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
+            (hash_password(new_password), utc_now(), user_id),
+        )
+    from app.services.session import revoke_all_sessions
+    revoke_all_sessions(user_id)
+    log_event(event_type="password_reset_complete", user_id=user_id)
+    return {"reset": True}
+
+
+def change_password(
+    user_id: str,
+    current_password: str,
+    new_password: str,
+    session_token: str | None = None,
+) -> dict[str, Any]:
+    with get_connection() as connection:
+        row = connection.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None or not verify_password(current_password, row["password_hash"]):
+            raise api_error(401, "INVALID_CREDENTIALS", "현재 비밀번호가 올바르지 않습니다.")
+        connection.execute(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            (hash_password(new_password), utc_now(), user_id),
+        )
+    from app.services.session import revoke_all_sessions
+    revoke_all_sessions(user_id, except_session_id=None)
+    log_event(event_type="password_change", user_id=user_id)
+    return {"changed": True}
+
+
+def delete_account(user_id: str, ip: str = "unknown") -> dict[str, Any]:
+    now = utc_now()
+    hard_delete_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    anon_email = f"deleted_{user_id}@deleted.local"
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE users
+            SET deleted_at = ?, hard_delete_at = ?, email = ?, status = 'pending_deletion', updated_at = ?
+            WHERE id = ?
+            """,
+            (now, hard_delete_at, anon_email, now, user_id),
+        )
+        connection.execute("DELETE FROM social_accounts WHERE user_id = ?", (user_id,))
+    from app.services.session import revoke_all_sessions
+    revoke_all_sessions(user_id)
+    log_event(event_type="account_deleted", user_id=user_id, ip=ip)
+    return {"deleted": True}
 
 
 def get_store_profile() -> dict[str, Any]:

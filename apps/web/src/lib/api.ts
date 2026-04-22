@@ -46,6 +46,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(urlFor(path), {
     ...init,
     headers: buildRequestHeaders(init),
+    credentials: "include",
     cache: "no-store",
   });
 

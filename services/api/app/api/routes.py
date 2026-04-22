@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, File, Header, Query, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, File, Header, HTTPException, Query, Request, Response, UploadFile, status
 
+from app.core.config import get_settings
+from app.core.rate_limit import allow_login, allow_password_reset, allow_register
 from app.schemas.api import (
+    AccountDeleteResponse,
     ApprovedHybridInventoryResponse,
     AssistCompleteRequest,
     AssistCompleteResponse,
     AuthResponse,
+    ChangePasswordRequest,
     ConnectSocialAccountResponse,
     CreateProjectRequest,
     CreateProjectResponse,
@@ -16,6 +20,8 @@ from app.schemas.api import (
     GenerationRunResponse,
     GenerationStatusResponse,
     LoginRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     ProjectDetailResponse,
     ProjectListResponse,
     ProjectResultResponse,
@@ -23,6 +29,7 @@ from app.schemas.api import (
     PublishResponse,
     RegisterRequest,
     RegenerateRequest,
+    SessionResponse,
     SocialAccountCallbackResponse,
     SocialAccountsResponse,
     StoreProfileRequest,
@@ -30,11 +37,16 @@ from app.schemas.api import (
     UpdateStoreProfileResponse,
     UploadAssetsResponse,
     UploadJobResponse,
+    UserPayload,
+    VerifyEmailRequest,
 )
 from app.services.runtime import (
     callback_social_account,
+    change_password,
+    confirm_password_reset,
     connect_social_account,
     create_project,
+    delete_account,
     get_approved_hybrid_inventory,
     get_generation_status,
     get_project_detail,
@@ -45,36 +57,131 @@ from app.services.runtime import (
     list_projects,
     list_social_accounts,
     login_user,
+    logout_user,
     mark_assist_complete,
+    me_from_session,
     me_from_token,
     publish_project,
     register_user,
     regenerate_project,
+    request_password_reset,
     run_generation_background,
     run_publish_background,
     start_generation,
     update_store_profile,
     upload_assets,
+    verify_email_token,
 )
 
 
 router = APIRouter(prefix="/api")
 AuthorizationHeader = Annotated[str | None, Header(alias="Authorization")]
+SessionCookie = Annotated[str | None, Cookie(alias="session")]
+
+SESSION_COOKIE_MAX_AGE = get_settings().session_ttl_sec
+SESSION_COOKIE_SECURE = get_settings().cookie_secure
+
+
+def _set_session_cookie(response: Response, session_token: str) -> None:
+    response.set_cookie(
+        key="session",
+        value=session_token,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        max_age=SESSION_COOKIE_MAX_AGE,
+        path="/",
+    )
+
+
+def _clear_session_cookie(response: Response) -> None:
+    response.delete_cookie(key="session", path="/")
 
 
 @router.post("/auth/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest):
-    return register_user(payload.email, payload.password, payload.name)
+def register(payload: RegisterRequest, request: Request, response: Response):
+    ip = request.client.host if request.client else "unknown"
+    if not allow_register(ip):
+        raise HTTPException(status_code=429, detail={"error": {"code": "RATE_LIMITED", "message": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."}})
+    ua = request.headers.get("user-agent")
+    result = register_user(
+        email=payload.email,
+        password=payload.password,
+        name=payload.name,
+        birth_date=payload.birthDate,
+        ip=ip,
+        user_agent=ua,
+    )
+    if "sessionToken" in result:
+        _set_session_cookie(response, result.pop("sessionToken"))
+    return result
 
 
 @router.post("/auth/login", response_model=AuthResponse)
-def login(payload: LoginRequest):
-    return login_user(payload.email, payload.password)
+def login(payload: LoginRequest, request: Request, response: Response):
+    ip = request.client.host if request.client else "unknown"
+    if not allow_login(ip, payload.email):
+        raise HTTPException(status_code=429, detail={"error": {"code": "RATE_LIMITED", "message": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."}})
+    ua = request.headers.get("user-agent")
+    result = login_user(email=payload.email, password=payload.password, ip=ip, user_agent=ua)
+    if "sessionToken" in result:
+        _set_session_cookie(response, result.pop("sessionToken"))
+    return result
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout() -> Response:
+def logout(request: Request, response: Response, session: SessionCookie = None) -> Response:
+    ip = request.client.host if request.client else "unknown"
+    user = me_from_session(session) if session else None
+    logout_user(session_token=session, user_id=user["id"] if user else None, ip=ip)
+    _clear_session_cookie(response)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/auth/session", response_model=SessionResponse)
+def get_session(session: SessionCookie = None):
+    user = me_from_session(session)
+    return {"user": {"id": user["id"], "email": user["email"], "name": user["name"]}}
+
+
+@router.post("/auth/verify-email")
+def verify_email(payload: VerifyEmailRequest):
+    return verify_email_token(payload.token)
+
+
+@router.post("/auth/password/reset-request")
+def password_reset_request(payload: PasswordResetRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    if not allow_password_reset(ip, payload.email):
+        raise HTTPException(status_code=429, detail={"error": {"code": "RATE_LIMITED", "message": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."}})
+    return request_password_reset(email=payload.email, ip=ip)
+
+
+@router.post("/auth/password/reset-confirm")
+def password_reset_confirm(payload: PasswordResetConfirmRequest, response: Response):
+    result = confirm_password_reset(token=payload.token, new_password=payload.newPassword)
+    _clear_session_cookie(response)
+    return result
+
+
+@router.post("/auth/password/change")
+def password_change(payload: ChangePasswordRequest, session: SessionCookie = None):
+    user = me_from_session(session)
+    return change_password(
+        user_id=user["id"],
+        current_password=payload.currentPassword,
+        new_password=payload.newPassword,
+        session_token=session,
+    )
+
+
+@router.delete("/account/me", response_model=AccountDeleteResponse)
+def account_delete(request: Request, response: Response, session: SessionCookie = None):
+    user = me_from_session(session)
+    ip = request.client.host if request.client else "unknown"
+    result = delete_account(user_id=user["id"], ip=ip)
+    _clear_session_cookie(response)
+    return result
 
 
 @router.get("/me")

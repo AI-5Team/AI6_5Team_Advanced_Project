@@ -22,8 +22,13 @@ class UserPayload(ApiModel):
 
 class RegisterRequest(ApiModel):
     email: str
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=10, max_length=1024)
     name: str = Field(min_length=1, max_length=100)
+    birthDate: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    agreedToTerms: Literal[True]
+    agreedToPrivacy: Literal[True]
+    agreedToAge14: Literal[True]
+    agreedToOverseasTransfer: Literal[True]
 
 
 class LoginRequest(ApiModel):
@@ -34,6 +39,32 @@ class LoginRequest(ApiModel):
 class AuthResponse(ApiModel):
     accessToken: str
     user: UserPayload
+
+
+class SessionResponse(ApiModel):
+    user: UserPayload
+
+
+class VerifyEmailRequest(ApiModel):
+    token: str
+
+
+class PasswordResetRequest(ApiModel):
+    email: str
+
+
+class PasswordResetConfirmRequest(ApiModel):
+    token: str
+    newPassword: str = Field(min_length=10, max_length=1024)
+
+
+class ChangePasswordRequest(ApiModel):
+    currentPassword: str = Field(min_length=1)
+    newPassword: str = Field(min_length=10, max_length=1024)
+
+
+class AccountDeleteResponse(ApiModel):
+    deleted: Literal[True]
 
 
 class StoreProfileRequest(ApiModel):

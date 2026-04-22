@@ -3,6 +3,7 @@ name = "ai65-mvp-api"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+  "argon2-cffi>=23.1,<24.0",
   "email-validator>=2.2,<3.0",
   "fastapi>=0.116,<1.0",
   "uvicorn>=0.35,<1.0",
