@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,15 +19,49 @@ async def lifespan(_: FastAPI):
     yield
 
 
+_CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+# Paths called by external parties (webhooks, OAuth redirects) — exempt from CSRF check
+_CSRF_EXEMPT_PREFIXES = ("/api/webhooks/",)
+
+
 app = FastAPI(
     title="AI6_5Team Advanced Project API",
     version="0.1.0",
     lifespan=lifespan,
 )
 
+
+@app.middleware("http")
+async def csrf_origin_check(request: Request, call_next):
+    if request.method not in _CSRF_SAFE_METHODS:
+        path = request.url.path
+        if not any(path.startswith(prefix) for prefix in _CSRF_EXEMPT_PREFIXES):
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            if origin:
+                parsed = urlparse(origin)
+                allowed_host = request.url.hostname or ""
+                if parsed.hostname and parsed.hostname not in (allowed_host, "localhost", "127.0.0.1"):
+                    return JSONResponse(
+                        status_code=403,
+                        content={"error": {"code": "CSRF_REJECTED", "message": "요청 출처가 허용되지 않습니다."}},
+                    )
+    return await call_next(request)
+
+
+import os as _os
+import re as _re
+
+def _build_cors(env_val: str | None) -> dict:
+    if env_val:
+        return {"allow_origins": [o.strip() for o in env_val.split(",") if o.strip()]}
+    # Dev default: allow any localhost/127.0.0.1 port
+    return {"allow_origin_regex": r"https?://(localhost|127\.0\.0\.1)(:\d+)?$"}
+
+_cors_kwargs = _build_cors(_os.getenv("APP_CORS_ORIGINS"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    **_cors_kwargs,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

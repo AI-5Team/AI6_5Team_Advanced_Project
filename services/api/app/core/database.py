@@ -17,6 +17,59 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS consents (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  consent_type TEXT NOT NULL,
+  version TEXT NOT NULL,
+  agreed INTEGER NOT NULL,
+  agreed_at TEXT NOT NULL,
+  ip_address TEXT NOT NULL,
+  user_agent TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_consents_user ON consents(user_id);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_token_hash TEXT NOT NULL UNIQUE,
+  ip_address TEXT,
+  user_agent TEXT,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT,
+  last_used_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token_hash);
+
+CREATE TABLE IF NOT EXISTS verification_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  purpose TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_verif_tokens_hash ON verification_tokens(token_hash);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  event_type TEXT NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  metadata TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+
 CREATE TABLE IF NOT EXISTS store_profiles (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
@@ -203,12 +256,31 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+_NEW_USER_COLUMNS: list[tuple[str, str]] = [
+    ("email_verified_at", "TEXT"),
+    ("birth_date", "TEXT"),
+    ("status", "TEXT NOT NULL DEFAULT 'active'"),
+    ("failed_login_count", "INTEGER NOT NULL DEFAULT 0"),
+    ("locked_until", "TEXT"),
+    ("deleted_at", "TEXT"),
+    ("hard_delete_at", "TEXT"),
+]
+
+
+def _migrate_users_columns(connection: sqlite3.Connection) -> None:
+    existing_cols = {row[1] for row in connection.execute("PRAGMA table_info(users)").fetchall()}
+    for col_name, col_def in _NEW_USER_COLUMNS:
+        if col_name not in existing_cols:
+            connection.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_def}")
+
+
 def initialize_database() -> None:
     settings = get_settings()
     settings.runtime_dir.mkdir(parents=True, exist_ok=True)
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(settings.db_path) as connection:
         connection.executescript(SCHEMA_SQL)
+        _migrate_users_columns(connection)
         connection.commit()
 
 

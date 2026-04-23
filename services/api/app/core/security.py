@@ -7,6 +7,14 @@ import secrets
 
 from app.core.config import get_settings
 
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerifyMismatchError, InvalidHashError
+    _ph = PasswordHasher(memory_cost=19456, time_cost=2, parallelism=1)
+    _ARGON2_AVAILABLE = True
+except ImportError:
+    _ARGON2_AVAILABLE = False
+
 
 def _b64_encode(value: bytes) -> str:
     return urlsafe_b64encode(value).rstrip(b"=").decode("utf-8")
@@ -17,26 +25,45 @@ def _b64_decode(value: str) -> bytes:
     return urlsafe_b64decode((value + padding).encode("utf-8"))
 
 
-def hash_password(password: str) -> str:
-    salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac(
+def _hash_pbkdf2(password: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac(
         "sha256",
         password.encode("utf-8"),
         salt.encode("utf-8"),
         120000,
     ).hex()
-    return f"{salt}${digest}"
+
+
+def hash_password(password: str) -> str:
+    if _ARGON2_AVAILABLE:
+        return _ph.hash(password)
+    salt = secrets.token_hex(16)
+    return f"{salt}${_hash_pbkdf2(password, salt)}"
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    salt, expected = password_hash.split("$", 1)
-    digest = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt.encode("utf-8"),
-        120000,
-    ).hex()
+    if password_hash.startswith("$argon2"):
+        if not _ARGON2_AVAILABLE:
+            return False
+        try:
+            return _ph.verify(password_hash, password)
+        except (VerifyMismatchError, InvalidHashError):
+            return False
+    # Legacy PBKDF2 format: "salt$digest"
+    parts = password_hash.split("$", 1)
+    if len(parts) != 2:
+        return False
+    salt, expected = parts
+    digest = _hash_pbkdf2(password, salt)
     return hmac.compare_digest(digest, expected)
+
+
+def generate_session_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def create_access_token(user: dict) -> str:

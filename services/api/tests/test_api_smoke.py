@@ -166,19 +166,23 @@ def test_auth_register_login_me_and_invalid_cases(monkeypatch, tmp_path):
         "/api/auth/register",
         json={
             "email": "owner@example.com",
-            "password": "secret123!",
+            "password": "secret123!A",
             "name": "임창현",
+            "birthDate": "1990-01-01",
+            "agreedToTerms": True,
+            "agreedToPrivacy": True,
+            "agreedToAge14": True,
+            "agreedToOverseasTransfer": True,
         },
     )
     assert register_response.status_code == 201
     register_payload = register_response.json()
     assert register_payload["user"]["email"] == "owner@example.com"
-    assert register_payload["accessToken"]
+    # accessToken is no longer issued — cookie session only
+    assert register_payload.get("accessToken") is None
 
-    me_response = client.get(
-        "/api/me",
-        headers={"Authorization": f"Bearer {register_payload['accessToken']}"},
-    )
+    # /api/me uses session cookie set by register
+    me_response = client.get("/api/me")
     assert me_response.status_code == 200
     assert me_response.json()["name"] == "임창현"
 
@@ -186,18 +190,17 @@ def test_auth_register_login_me_and_invalid_cases(monkeypatch, tmp_path):
         "/api/auth/login",
         json={
             "email": "owner@example.com",
-            "password": "wrong-password",
+            "password": "wrong-passwordXXX",
         },
     )
     assert invalid_login_response.status_code == 401
     assert invalid_login_response.json()["error"]["code"] == "INVALID_CREDENTIALS"
 
-    invalid_token_response = client.get(
-        "/api/me",
-        headers={"Authorization": "Bearer malformed.token"},
-    )
-    assert invalid_token_response.status_code == 401
-    assert invalid_token_response.json()["error"]["code"] == "AUTH_REQUIRED"
+    # Unauthenticated request (no session cookie) must return 401
+    fresh_client = TestClient(app)
+    unauth_response = fresh_client.get("/api/me")
+    assert unauth_response.status_code == 401
+    assert unauth_response.json()["error"]["code"] == "AUTH_REQUIRED"
 
 
 def test_demo_login_available(monkeypatch, tmp_path):
@@ -224,7 +227,8 @@ def test_demo_login_available(monkeypatch, tmp_path):
     assert login_response.status_code == 200
     payload = login_response.json()
     assert payload["user"]["email"] == "demo-owner@example.com"
-    assert payload["accessToken"]
+    # accessToken is no longer issued — cookie session only
+    assert payload.get("accessToken") is None
 
 
 def test_phase1_smoke(monkeypatch, tmp_path):

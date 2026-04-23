@@ -46,6 +46,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(urlFor(path), {
     ...init,
     headers: buildRequestHeaders(init),
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -215,5 +216,18 @@ export function updateStoreProfile(payload: UpdateStoreProfileRequest) {
   return requestJson<StoreProfileResponse>("/api/store-profile", {
     method: "PUT",
     body: JSON.stringify(payload),
+  });
+}
+
+export function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  return requestJson<{ message: string }>("/api/auth/password/change", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteMyAccount() {
+  return requestJson<{ deleted: true; scheduledDeletionAt: string; message: string }>("/api/account/me", {
+    method: "DELETE",
   });
 }

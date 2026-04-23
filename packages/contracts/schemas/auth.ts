@@ -16,7 +16,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  accessToken: string;
+  accessToken?: string;
   user: AuthUser;
 }
 

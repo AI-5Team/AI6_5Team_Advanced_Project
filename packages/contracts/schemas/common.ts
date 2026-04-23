@@ -42,6 +42,7 @@ export interface SocialAccountSummary {
   status: SocialAccountStatus;
   accountName: string | null;
   lastSyncedAt: string | null;
+  tokenExpiresAt?: string | null;
   tier?: ChannelSupportTier;
 }
 

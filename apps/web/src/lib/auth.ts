@@ -3,7 +3,6 @@ import type { AuthUser } from "@/lib/contracts";
 const AUTH_STORAGE_KEY = "studio-auth-session";
 
 export interface AuthSession {
-  accessToken: string;
   user: AuthUser;
 }
 
@@ -13,26 +12,14 @@ function isBrowser() {
 
 export function getStoredAuthSession(): AuthSession | null {
   if (!isBrowser()) return null;
-
   const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
   if (!raw) return null;
-
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
-    if (
-      typeof parsed.accessToken !== "string" ||
-      !parsed.accessToken ||
-      !parsed.user ||
-      typeof parsed.user.id !== "string" ||
-      typeof parsed.user.email !== "string" ||
-      typeof parsed.user.name !== "string"
-    ) {
+    if (!parsed.user || typeof parsed.user.id !== "string") {
       return null;
     }
-    return {
-      accessToken: parsed.accessToken,
-      user: parsed.user,
-    };
+    return { user: parsed.user };
   } catch {
     return null;
   }
@@ -48,8 +35,7 @@ export function clearStoredAuthSession() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
+// Cookie-based auth — no Authorization header needed
 export function buildAuthHeaders(): Record<string, string> {
-  const session = getStoredAuthSession();
-  if (!session) return {};
-  return { Authorization: `Bearer ${session.accessToken}` };
+  return {};
 }

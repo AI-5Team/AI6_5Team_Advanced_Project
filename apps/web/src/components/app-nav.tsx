@@ -20,6 +20,11 @@ const NAV_ITEMS = [
     label: "채널",
     mobileLabel: "채널",
   },
+  {
+    href: "/account",
+    label: "계정",
+    mobileLabel: "계정",
+  },
 ] as const;
 
 export function AppNav() {
