@@ -1,0 +1,45 @@
+services:
+  i2v:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: i2v-motion:dev
+    container_name: i2v-dev
+    # 호스트 UID:GID 로 실행 → bind-mount outputs/ 의 파일 소유권이 호스트 유저와 일치.
+    # `.env` 에 `UID=$(id -u)` `GID=$(id -g)` 를 넣거나, compose 호출 전에 export 하면 자동 적용.
+    # 기본값 1000:1000 은 대다수 단일 유저 리눅스의 첫 사용자.
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /workspace
+    env_file:
+      - ../.env
+    environment:
+      - HF_HOME=/cache/huggingface
+      - TRANSFORMERS_CACHE=/cache/huggingface
+      - TORCH_HOME=/cache/torch
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      # user UID 매핑 상태에서 /root 접근 불가 → HOME/TRITON_CACHE 를 쓰기 가능 경로로
+      - HOME=/tmp
+      - TRITON_CACHE_DIR=/tmp/.triton
+      - XDG_CACHE_HOME=/tmp/.cache
+    volumes:
+      - ..:/workspace
+      - hf_cache:/cache/huggingface
+      - torch_cache:/cache/torch
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "8501:8501"
+    shm_size: "16gb"
+    ipc: host
+    stdin_open: true
+    tty: true
+    command: bash
+
+volumes:
+  hf_cache:
+  torch_cache:

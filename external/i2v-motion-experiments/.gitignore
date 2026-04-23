@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Env
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# HF / model caches & weights
+hf_cache/
+.cache/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+
+# Data & experiment artifacts (heavy / per-user)
+data/raw/
+data/processed/
+data/user_uploads/
+outputs/
+runs/
+wandb/
+mlruns/
+logs/
+experiments/runs/
+
+# Media (allow small reference assets under assets/)
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.gif
+!assets/**/*.mp4
+!assets/**/*.gif
+
+# Sample input images — 개인 사진 노출 방지. 재현 시 각자 준비.
+# (placeholder 구조는 assets/samples/.gitkeep 로 유지)
+assets/samples/*.png
+assets/samples/*.jpg
+assets/samples/*.jpeg
+assets/samples/*.JPG
+assets/samples/*.JPEG
+assets/samples/*.webp
+!assets/samples/.gitkeep
+
+# Meme reference videos/frames — 저작권(외부 크리에이터 원본) + 용량 이슈.
+# 로컬 프롬프트 설계 참고용으로만 보관. 재현 시 scripts/fetch_memes.py 등으로 각자 받기.
+assets/memes/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+Thumbs.db
+
+# Claude local (keep shared skills under .claude/skills/)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
