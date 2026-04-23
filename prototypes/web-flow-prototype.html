@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>소상공인 SNS 콘텐츠 — 웹 플로우 프로토타입</title>
+<style>
+  :root{
+    --bg:#FAF6F0;
+    --ink:#2B2620;
+    --muted:#7A6F62;
+    --line:#E8DFD2;
+    --card:#FFFFFF;
+    --accent:#E87A3E;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#FDEBDE;
+    --ok:#2F8F5C;
+    --warn:#C26A1A;
+    --err:#C0392B;
+    --exp:#8A6FD1;
+    --radius:14px;
+    --shadow:0 2px 10px rgba(40,30,20,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#EFE8DD;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit}
+  /* App shell */
+  .stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 12px}
+  .device{width:100%;max-width:440px;background:var(--bg);border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.18);
+    overflow:hidden;display:flex;flex-direction:column;height:min(92vh, 860px);position:relative}
+  .topbar{padding:14px 18px;display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid var(--line);min-height:56px}
+  .topbar .back{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg);cursor:pointer;font-size:18px}
+  .topbar .back[disabled]{opacity:.3;cursor:default}
+  .topbar h1{margin:0;font-size:16px;font-weight:700;flex:1;text-align:center}
+  .topbar .right{width:36px;text-align:right;color:var(--muted);font-size:13px}
+  .scroll{flex:1;overflow:auto;padding:20px 18px 24px}
+  .footer{padding:12px 18px 18px;background:#fff;border-top:1px solid var(--line)}
+  /* Typography */
+  h2{font-size:22px;margin:4px 0 6px;font-weight:800;letter-spacing:-.01em}
+  .lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .label{font-size:13px;color:var(--muted);margin:12px 0 6px;font-weight:600}
+  /* Buttons */
+  .btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:14px 18px;
+    border-radius:12px;border:1px solid transparent;font-size:17px;font-weight:700;cursor:pointer;transition:transform .05s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .btn-primary[disabled]{background:#D9CDBB;border-color:#D9CDBB;color:#fff;cursor:not-allowed}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn-link{background:transparent;border:none;color:var(--accent);font-weight:700;cursor:pointer;padding:10px;font-size:14px}
+  .row{display:flex;gap:10px}
+  .row .btn{flex:1}
+  /* Inputs */
+  input[type=text],input[type=password],textarea,select{
+    width:100%;padding:14px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;
+    font-size:16px;color:var(--ink);outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .err{font-size:12px;color:var(--err);margin-top:6px;min-height:16px}
+  /* Cards */
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .pick{display:flex;gap:12px;align-items:center;padding:16px;border-radius:var(--radius);background:#fff;
+    border:1.5px solid var(--line);cursor:pointer;margin-bottom:10px;transition:all .12s ease}
+  .pick:hover{border-color:#D7C7B1}
+  .pick.on{border-color:var(--accent);background:var(--accent-soft)}
+  .pick .ico{width:42px;height:42px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .pick.on .ico{background:#fff}
+  .pick .body{flex:1}
+  .pick .t{font-weight:700;font-size:16px}
+  .pick .d{color:var(--muted);font-size:13px;margin-top:2px}
+  .pick .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0}
+  .pick.on .check{background:var(--accent);border-color:var(--accent)}
+  /* Steps indicator */
+  .steps{display:flex;gap:4px;margin-bottom:14px}
+  .steps .dot{flex:1;height:4px;border-radius:2px;background:var(--line)}
+  .steps .dot.on{background:var(--accent)}
+  /* Badges */
+  .badge{display:inline-block;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.02em}
+  .badge-ready{background:#E0F2E8;color:var(--ok)}
+  .badge-exp{background:#EEE6FB;color:var(--exp)}
+  .badge-warn{background:#FBEAD0;color:var(--warn)}
+  .badge-muted{background:#EEE7DB;color:var(--muted)}
+  /* Photo uploader */
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .photo-slot{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:#fff;color:var(--muted);font-size:12px;position:relative;cursor:pointer;overflow:hidden}
+  .photo-slot.filled{border-style:solid;border-color:var(--line)}
+  .photo-slot .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer}
+  .photo-slot img{width:100%;height:100%;object-fit:cover}
+  .guide{background:#FFF7EC;border:1px solid #F5E2C3;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#6B4F2B}
+  .guide ul{margin:6px 0 0 18px;padding:0}
+  /* Progress */
+  .ring{width:90px;height:90px;margin:12px auto 8px;position:relative}
+  .ring svg{transform:rotate(-90deg)}
+  .ring circle{fill:none;stroke-width:8}
+  .ring .track{stroke:var(--line)}
+  .ring .bar{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+  .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+  .step-list{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+  .step-list .s{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:14px}
+  .step-list .s.done{color:var(--muted)}
+  .step-list .s.on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+  .step-list .s .dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex-shrink:0}
+  .step-list .s.done .dot{background:var(--ok)}
+  .step-list .s.on .dot{background:var(--accent)}
+  /* Result screen */
+  .preview{aspect-ratio:9/16;background:linear-gradient(140deg,#F6D9B8,#E87A3E 70%);border-radius:16px;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;color:#fff;padding:18px;position:relative;overflow:hidden;max-height:380px}
+  .preview::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(circle at 30% 30%,rgba(255,255,255,.35),transparent 40%),
+    radial-gradient(circle at 70% 80%,rgba(0,0,0,.15),transparent 50%)}
+  .preview .cap{position:relative;font-size:18px;font-weight:800;text-align:center;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+  .preview .cta{position:relative;background:#fff;color:var(--ink);padding:8px 14px;border-radius:99px;font-weight:700;font-size:13px;margin-top:12px}
+  .chip{display:inline-block;padding:8px 12px;border-radius:99px;background:#fff;border:1.5px solid var(--line);font-size:13px;cursor:pointer;margin:4px 6px 0 0}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .cap-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .cap-list .it{padding:12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-size:14px;cursor:pointer}
+  .cap-list .it.on{border-color:var(--accent);background:var(--accent-soft)}
+  .tags{margin-top:8px;color:#1A5FB4;font-size:13px;word-break:keep-all}
+  /* History list */
+  .hist{display:flex;gap:12px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;cursor:pointer}
+  .hist .thumb{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#F6D9B8,#E87A3E);flex-shrink:0}
+  .hist .meta{flex:1;min-width:0}
+  .hist .meta .t{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hist .meta .sub{color:var(--muted);font-size:12px;margin-top:2px}
+  /* Toast */
+  .toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:#2B2620;color:#fff;padding:10px 16px;
+    border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s ease;white-space:nowrap;max-width:90%}
+  .toast.show{opacity:1}
+  /* Channel rows */
+  .ch{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px;cursor:pointer}
+  .ch.on{border-color:var(--accent);background:var(--accent-soft)}
+  .ch .ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+  .ch .ico.ig{background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)}
+  .ch .ico.yt{background:#FF0000}
+  .ch .ico.tt{background:#000}
+  .ch .body{flex:1;min-width:0}
+  .ch .t{font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px}
+  .ch .d{color:var(--muted);font-size:12px;margin-top:2px}
+  /* Toggle */
+  .toggle{display:flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;margin-top:6px}
+  .toggle button{flex:1;padding:12px;border:none;background:transparent;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted)}
+  .toggle button.on{background:var(--accent-soft);color:var(--accent)}
+  /* Misc */
+  .divider{height:1px;background:var(--line);margin:16px 0}
+  .kv{display:flex;justify-content:space-between;font-size:14px;padding:8px 0}
+  .kv .k{color:var(--muted)}
+  .warnbox{background:#FFF4F0;border:1px solid #F5C6B5;color:#8C3A1E;padding:12px;border-radius:12px;font-size:13px;margin-top:8px}
+  .okbox{background:#EEF7F1;border:1px solid #C1E1CF;color:#1F5F3A;padding:12px;border-radius:12px;font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="device" id="device">
+    <header class="topbar">
+      <button class="back" id="backBtn" aria-label="뒤로">←</button>
+      <h1 id="topTitle">로그인</h1>
+      <div class="right" id="topRight"></div>
+    </header>
+    <main class="scroll" id="view"></main>
+    <footer class="footer" id="footer"></footer>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+/* ============ state ============ */
+const S = {
+  view: "login",
+  history: [],
+  user: null,
+  draft: null,        // project-in-progress
+  connections: { instagram:"not_connected", youtube_shorts:"not_connected", tiktok:"not_connected" },
+  genTimer: null,
+};
+
+/* ============ helpers ============ */
+const $ = (sel) => document.querySelector(sel);
+const h = (html) => { const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; };
+const toast = (msg) => {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._id); toast._id = setTimeout(()=>t.classList.remove("show"), 1800);
+};
+const newDraft = () => ({
+  id: "prj_"+Math.random().toString(36).slice(2,8),
+  createdAt: Date.now(),
+  businessType: null,
+  regionName: "",
+  detailLocation: "",
+  purpose: null,
+  style: null,
+  channels: [],
+  photos: [],
+  status: "drafting",
+  stepProgress: 0,
+  result: null,
+  publishMode: "auto",
+  captionChoice: 0,
+  hashtagsOn: true,
+});
+
+/* ============ navigation ============ */
+function go(view, opts={}){ S.view = view; if (opts.draft) S.draft = opts.draft; render(); }
+
+const backMap = {
+  login:null, home:"login",
+  "step/business":"home",
+  "step/location":"step/business",
+  "step/purpose":"step/location",
+  "step/style":"step/purpose",
+  "step/channels":"step/style",
+  "step/photos":"step/channels",
+  "step/generating":"step/photos",
+  "step/result":"step/generating",
+  "step/quickedit":"step/result",
+  "step/publish":"step/result",
+  history:"home",
+  "history/detail":"history",
+  connect:"home",
+};
+
+/* ============ views ============ */
+function render(){
+  const $view = $("#view");
+  const $footer = $("#footer");
+  const $back = $("#backBtn");
+  const $title = $("#topTitle");
+  const $right = $("#topRight");
+  $view.innerHTML = ""; $footer.innerHTML = ""; $right.textContent = "";
+
+  const back = backMap[S.view];
+  $back.disabled = !back;
+  $back.onclick = () => back && go(back);
+
+  const v = views[S.view];
+  if (!v) { $view.textContent = "알 수 없는 화면: "+S.view; return; }
+  $title.textContent = v.title;
+  if (v.right) $right.textContent = v.right();
+  v.render($view, $footer);
+}
+
+const views = {
+
+  /* ---------- SC-01 로그인 ---------- */
+  login: {
+    title: "로그인",
+    render(view, footer){
+      view.appendChild(h(`
+        <div>
+          <h2>안녕하세요</h2>
+          <p class="lead">우리 가게 홍보 콘텐츠를 쉽게 만들어 드려요.</p>
+          <div class="label">아이디</div>
+          <input id="id" type="text" placeholder="아이디 또는 이메일" autocomplete="username"/>
+          <div class="label">비밀번호</div>
+          <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password"/>
+          <div class="err" id="err"></div>
+          <button class="btn-link" id="signup">계정이 없으신가요? 회원가입</button>
+        </div>`));
+      const primary = h(`<button class="btn btn-primary">로그인</button>`);
+      primary.onclick = () => {
+        const id = view.querySelector("#id").value.trim();
+        const pw = view.querySelector("#pw").value;
+        if (!id || !pw) { view.querySelector("#err").textContent = "아이디와 비밀번호를 모두 입력해 주세요."; return; }
+        S.user = { id, name: id.split("@")[0] || id };
+        go("home");
+      };
+      footer.appendChild(primary);
+      view.querySelector("#signup").onclick = ()=>toast("프로토타입에서는 로그인만 지원합니다.");
+    }
+  },
+
+  /* ---------- SC-02 홈 ---------- */
+  home: {
+    title: "홈",
+    right(){ return S.user ? S.user.name : ""; },
+    render(view, footer){
+      view.appendChild(h(`
+        <div>
+          <h2>${S.user?.name || ""} 사장님, 오늘도 화이팅이에요</h2>
+          <p class="lead">한 화면씩 간단하게 고르면 콘텐츠가 완성돼요.</p>
+        </div>`));
+      const newBtn = h(`
+        <div class="card" style="display:flex;align-items:center;gap:14px;padding:18px;cursor:pointer;border-color:var(--accent);background:var(--accent-soft)">
+          <div style="width:48px;height:48px;border-radius:14px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800">+</div>
+          <div style="flex:1"><div style="font-weight:800;font-size:17px">새 콘텐츠 만들기</div>
+            <div style="color:var(--muted);font-size:13px">사진 1~5장이면 됩니다</div></div>
+          <div style="color:var(--accent);font-size:22px">›</div>
+        </div>`);
+      newBtn.onclick = ()=>{ S.draft = newDraft(); go("step/business"); };
+      view.appendChild(newBtn);
+
+      view.appendChild(h(`<div class="label" style="margin-top:18px">최근 이력</div>`));
+      if (S.history.length === 0){
+        view.appendChild(h(`<div class="card" style="text-align:center;color:var(--muted);font-size:14px">아직 만든 콘텐츠가 없어요.</div>`));
+      } else {
+        S.history.slice(0,3).forEach(p=>view.appendChild(histCard(p)));
+        const more = h(`<button class="btn-link" style="width:100%;margin-top:4px">이력 전체 보기 →</button>`);
+        more.onclick = ()=>go("history");
+        view.appendChild(more);
+      }
+      view.appendChild(h(`<div class="label" style="margin-top:18px">SNS 계정</div>`));
+      const conn = h(`<div class="card" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+        <div><div style="font-weight:700">인스타그램 연동</div>
+        <div style="color:var(--muted);font-size:13px">${connLabel(S.connections.instagram)}</div></div>
+        <div style="color:var(--accent)">설정 ›</div></div>`);
+      conn.onclick = ()=>go("connect");
+      view.appendChild(conn);
+    }
+  },
+
+  /* ---------- SC-03 업종 선택 ---------- */
+  "step/business": {
+    title: "1. 업종 선택",
+    render(view, footer){
+      stepIndicator(view, 1);
+      view.appendChild(h(`<h2>어떤 가게를 운영하세요?</h2><p class="lead">업종에 맞게 문구와 영상 스타일이 달라져요.</p>`));
+      const opts = [
+        { v:"cafe", t:"카페", d:"음료, 디저트, 베이커리", ico:"☕" },
+        { v:"restaurant", t:"식당", d:"한식, 분식, 양식, 일식 등", ico:"🍽" },
+      ];
+      opts.forEach(o => {
+        const el = h(`<div class="pick ${S.draft.businessType===o.v?"on":""}">
+          <div class="ico">${o.ico}</div>
+          <div class="body"><div class="t">${o.t}</div><div class="d">${o.d}</div></div>
+          <div class="check">✓</div></div>`);
+        el.onclick = ()=>{ S.draft.businessType = o.v; render(); };
+        view.appendChild(el);
+      });
+      const next = h(`<button class="btn btn-primary" ${S.draft.businessType?"":"disabled"}>다음</button>`);
+      next.onclick = ()=>S.draft.businessType && go("step/location");
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-04 위치 입력 ---------- */
+  "step/location": {
+    title: "2. 위치",
+    render(view, footer){
+      stepIndicator(view, 2);
+      view.appendChild(h(`<h2>가게가 어디 있어요?</h2><p class="lead">위치가 들어가면 지역 손님에게 더 잘 보여요.</p>`));
+      const form = h(`<div>
+        <div class="label">지역명 (필수, 2~20자)</div>
+        <input id="rn" type="text" placeholder="예: 성수동, 망원동" value="${S.draft.regionName||""}"/>
+        <div class="label">상세 위치 (선택, 최대 30자)</div>
+        <input id="dl" type="text" placeholder="예: 성수역 3번 출구" value="${S.draft.detailLocation||""}"/>
+        <div class="err" id="err"></div>
+      </div>`);
+      view.appendChild(form);
+      const next = h(`<button class="btn btn-primary">다음</button>`);
+      next.onclick = ()=>{
+        const rn = view.querySelector("#rn").value.trim();
+        const dl = view.querySelector("#dl").value.trim();
+        const err = view.querySelector("#err");
+        if (rn.length < 2 || rn.length > 20){ err.textContent="지역명은 2~20자로 입력해 주세요."; return; }
+        if (/[!@#$%^&*()]{2,}/.test(rn)){ err.textContent="특수문자를 연속으로 쓸 수 없어요."; return; }
+        if (dl.length > 30){ err.textContent="상세 위치는 30자 이내로 입력해 주세요."; return; }
+        S.draft.regionName = rn; S.draft.detailLocation = dl; go("step/purpose");
+      };
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-05 목적 ---------- */
+  "step/purpose": {
+    title: "3. 홍보 목적",
+    render(view, footer){
+      stepIndicator(view, 3);
+      view.appendChild(h(`<h2>무엇을 알리고 싶어요?</h2><p class="lead">목적에 맞게 문구 톤이 정해져요.</p>`));
+      const opts = [
+        { v:"new_menu", t:"신메뉴 소개", d:"새로운 메뉴를 알릴 때", ico:"🆕"},
+        { v:"promotion", t:"할인/이벤트", d:"타임 세일, 오픈 이벤트 등", ico:"🎁"},
+        { v:"review", t:"후기/분위기", d:"가게 분위기와 손님 반응", ico:"💬"},
+        { v:"location_push", t:"지역 홍보", d:"근처 손님 유입 중심", ico:"📍"},
+      ];
+      opts.forEach(o=>{
+        const el = h(`<div class="pick ${S.draft.purpose===o.v?"on":""}">
+          <div class="ico">${o.ico}</div>
+          <div class="body"><div class="t">${o.t}</div><div class="d">${o.d}</div></div>
+          <div class="check">✓</div></div>`);
+        el.onclick = ()=>{ S.draft.purpose = o.v; render(); };
+        view.appendChild(el);
+      });
+      const next = h(`<button class="btn btn-primary" ${S.draft.purpose?"":"disabled"}>다음</button>`);
+      next.onclick = ()=>S.draft.purpose && go("step/style");
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-06 스타일 ---------- */
+  "step/style": {
+    title: "4. 스타일",
+    render(view, footer){
+      stepIndicator(view, 4);
+      view.appendChild(h(`<h2>어떤 느낌이 좋을까요?</h2><p class="lead">카드의 예시 문구가 실제로 나올 톤이에요.</p>`));
+      const opts = [
+        { v:"default", t:"기본 (깔끔)", d:"예: “성수동에서 만나는 든든한 한 끼”", ico:"✨"},
+        { v:"friendly", t:"친근 (다정)", d:"예: “오늘도 고생 많으셨어요, 따뜻한 라떼 한 잔 어떠세요?”", ico:"🤗"},
+        { v:"b_grade_fun", t:"B급 재미", d:"예: “사장님이 직접 반죽함. 근손실 유발 주의.”", ico:"🎭"},
+      ];
+      opts.forEach(o=>{
+        const el = h(`<div class="pick ${S.draft.style===o.v?"on":""}">
+          <div class="ico">${o.ico}</div>
+          <div class="body"><div class="t">${o.t}</div><div class="d">${o.d}</div></div>
+          <div class="check">✓</div></div>`);
+        el.onclick=()=>{ S.draft.style=o.v; render(); };
+        view.appendChild(el);
+      });
+      const next = h(`<button class="btn btn-primary" ${S.draft.style?"":"disabled"}>다음</button>`);
+      next.onclick = ()=>S.draft.style && go("step/channels");
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-07 채널 ---------- */
+  "step/channels": {
+    title: "5. 채널",
+    render(view, footer){
+      stepIndicator(view, 5);
+      view.appendChild(h(`<h2>어디에 올릴 거예요?</h2><p class="lead">여러 곳을 동시에 선택할 수 있어요.</p>`));
+      const chans = [
+        { v:"instagram", t:"인스타그램", d:"숏폼 + 게시글 자동 업로드 가능", badge:`<span class="badge badge-ready">자동 업로드 가능</span>`, ico:"ig", ab:"IG"},
+        { v:"youtube_shorts", t:"유튜브 쇼츠", d:"실험 단계: 결과 다운로드 후 업로드 보조", badge:`<span class="badge badge-exp">실험</span>`, ico:"yt", ab:"YT"},
+        { v:"tiktok", t:"틱톡", d:"실험 단계: 결과 다운로드 후 업로드 보조", badge:`<span class="badge badge-exp">실험</span>`, ico:"tt", ab:"TT"},
+      ];
+      chans.forEach(c=>{
+        const on = S.draft.channels.includes(c.v);
+        const el = h(`<div class="ch ${on?"on":""}">
+          <div class="ico ${c.ico}">${c.ab}</div>
+          <div class="body"><div class="t">${c.t} ${c.badge}</div><div class="d">${c.d}</div></div>
+          <div class="check" style="border:2px solid var(--line);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;${on?"background:var(--accent);border-color:var(--accent)":""}">✓</div>
+        </div>`);
+        el.onclick = ()=>{
+          const i = S.draft.channels.indexOf(c.v);
+          if (i>=0) S.draft.channels.splice(i,1); else S.draft.channels.push(c.v);
+          render();
+        };
+        view.appendChild(el);
+      });
+      if (S.draft.channels.length === 0){
+        view.appendChild(h(`<div class="hint">※ 최소 1개 이상 선택해 주세요.</div>`));
+      }
+      const next = h(`<button class="btn btn-primary" ${S.draft.channels.length?"":"disabled"}>다음</button>`);
+      next.onclick = ()=>S.draft.channels.length && go("step/photos");
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-08 사진 업로드 ---------- */
+  "step/photos": {
+    title: "6. 사진",
+    render(view, footer){
+      stepIndicator(view, 6);
+      view.appendChild(h(`<h2>사진 1~5장을 올려주세요</h2>`));
+      view.appendChild(h(`<div class="guide">
+        <b>더 잘 나오는 촬영 팁</b>
+        <ul><li>제품을 가운데에 두세요</li><li>배경은 단순하게 정리해 주세요</li><li>흔들리지 않게 밝은 곳에서 찍어주세요</li></ul>
+      </div>`));
+      const grid = h(`<div class="photo-grid" id="grid"></div>`);
+      view.appendChild(grid);
+
+      const renderGrid = () => {
+        grid.innerHTML = "";
+        S.draft.photos.forEach((p, i) => {
+          const slot = h(`<div class="photo-slot filled"><img src="${p.url}"/><span class="x" title="삭제">✕</span></div>`);
+          slot.querySelector(".x").onclick = (e)=>{ e.stopPropagation(); URL.revokeObjectURL(p.url); S.draft.photos.splice(i,1); renderGrid(); refreshNext(); };
+          grid.appendChild(slot);
+        });
+        if (S.draft.photos.length < 5){
+          const add = h(`<label class="photo-slot" style="cursor:pointer">＋ 사진 추가<input type="file" accept="image/png,image/jpeg" style="display:none" multiple/></label>`);
+          const input = add.querySelector("input");
+          input.onchange = (e)=>{
+            const files = Array.from(e.target.files || []);
+            for (const f of files){
+              if (S.draft.photos.length >= 5){ toast("최대 5장까지 올릴 수 있어요."); break; }
+              if (!/^image\/(jpeg|png)$/.test(f.type)){ toast("jpg 또는 png 형식만 지원해요."); continue; }
+              if (f.size > 10 * 1024 * 1024){ toast("10MB 이하 사진만 올릴 수 있어요."); continue; }
+              S.draft.photos.push({ url: URL.createObjectURL(f), name: f.name, size: f.size });
+            }
+            renderGrid(); refreshNext();
+          };
+          grid.appendChild(add);
+        }
+      };
+      renderGrid();
+
+      const warn = h(`<div class="hint" id="warn" style="margin-top:10px"></div>`);
+      view.appendChild(warn);
+      // Mock a "warning, not block" for the first image
+      const refreshNext = () => {
+        const n = S.draft.photos.length;
+        warn.textContent = n >= 1 ? `※ 첫 번째 사진이 약간 어두워 보여요. 그대로 진행해도 괜찮아요.` : "";
+        const btn = footer.querySelector(".btn-primary");
+        if (btn) btn.disabled = n < 1;
+      };
+
+      const next = h(`<button class="btn btn-primary" disabled>생성 시작</button>`);
+      next.onclick = ()=>{
+        if (S.draft.photos.length < 1) return;
+        startGenerate();
+      };
+      footer.appendChild(next);
+      refreshNext();
+    }
+  },
+
+  /* ---------- SC-09 생성 진행 ---------- */
+  "step/generating": {
+    title: "콘텐츠 만드는 중",
+    render(view, footer){
+      const steps = [
+        ["preprocessing","사진을 더 보기 좋게 다듬는 중입니다"],
+        ["copy_generation","가게에 맞는 문구를 작성하는 중입니다"],
+        ["video_rendering","숏폼 영상을 조합하는 중입니다"],
+        ["post_rendering","게시글 이미지를 정리하는 중입니다"],
+        ["packaging","업로드용 결과를 묶는 중입니다"],
+      ];
+      const pct = Math.round(S.draft.stepProgress * 100 / steps.length);
+      const R = 40, C = 2 * Math.PI * R;
+      const off = C * (1 - Math.min(1, S.draft.stepProgress / steps.length));
+      const current = Math.min(S.draft.stepProgress, steps.length - 1);
+      const msg = S.draft.status === "generated" ? "완성됐어요!" :
+                  S.draft.status === "failed" ? "생성에 실패했어요" : steps[current][1];
+      view.appendChild(h(`
+        <div style="text-align:center">
+          <div class="ring">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle class="track" cx="45" cy="45" r="${R}"/>
+              <circle class="bar" cx="45" cy="45" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${off}"/>
+            </svg>
+            <div class="pct">${pct}%</div>
+          </div>
+          <div style="font-weight:800;font-size:17px;margin-top:4px">${msg}</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">잠깐만 기다려주세요. 평균 20초 정도 걸려요.</div>
+        </div>`));
+      const list = h(`<div class="step-list"></div>`);
+      steps.forEach(([key,label], i)=>{
+        const cls = i < S.draft.stepProgress ? "done" : (i === S.draft.stepProgress && S.draft.status!=="generated" ? "on" : "");
+        list.appendChild(h(`<div class="s ${cls}"><span class="dot"></span><span>${label}</span></div>`));
+      });
+      view.appendChild(list);
+
+      if (S.draft.status === "failed"){
+        view.appendChild(h(`<div class="warnbox" style="margin-top:16px"><b>잠시 문제가 있었어요.</b><br/>네트워크 상태를 확인하고 다시 시도해 주세요.</div>`));
+        const retry = h(`<button class="btn btn-primary">다시 시도</button>`);
+        retry.onclick = ()=>{ S.draft.status="generating"; S.draft.stepProgress=0; startGenerate(); };
+        footer.appendChild(retry);
+      } else if (S.draft.status === "generated"){
+        const go1 = h(`<button class="btn btn-primary">결과 보기</button>`);
+        go1.onclick = ()=>go("step/result");
+        footer.appendChild(go1);
+      } else {
+        footer.appendChild(h(`<button class="btn btn-ghost" disabled>생성 중…</button>`));
+      }
+    }
+  },
+
+  /* ---------- SC-10 결과 확인 ---------- */
+  "step/result": {
+    title: "생성 결과",
+    render(view, footer){
+      const r = S.draft.result;
+      const cap = r.captions[S.draft.captionChoice];
+      view.appendChild(h(`
+        <div class="preview">
+          <div class="cap">${cap}</div>
+          <div class="cta">${r.cta}</div>
+        </div>`));
+      view.appendChild(h(`<div class="label" style="margin-top:14px">캡션 후보 · 눌러서 선택</div>`));
+      const capList = h(`<div class="cap-list"></div>`);
+      r.captions.forEach((c,i)=>{
+        const it = h(`<div class="it ${i===S.draft.captionChoice?"on":""}">${c}</div>`);
+        it.onclick = ()=>{ S.draft.captionChoice=i; render(); };
+        capList.appendChild(it);
+      });
+      view.appendChild(capList);
+      view.appendChild(h(`<div class="label" style="margin-top:14px">해시태그</div>
+        <div class="tags">${r.hashtags.map(t=>"#"+t).join(" ")}</div>`));
+      view.appendChild(h(`<div class="divider"></div>`));
+      const qe = h(`<button class="btn btn-ghost">✎ 빠른 수정</button>`);
+      qe.onclick = ()=>go("step/quickedit");
+      view.appendChild(qe);
+
+      const row = h(`<div class="row" style="margin-top:8px"></div>`);
+      const assist = h(`<button class="btn btn-ghost">업로드 보조</button>`);
+      assist.onclick = ()=>{ S.draft.publishMode="assist"; go("step/publish"); };
+      const up = h(`<button class="btn btn-primary">즉시 업로드</button>`);
+      up.onclick = ()=>{ S.draft.publishMode="auto"; go("step/publish"); };
+      row.appendChild(assist); row.appendChild(up);
+      view.appendChild(row);
+    }
+  },
+
+  /* ---------- SC-11 빠른 수정 ---------- */
+  "step/quickedit": {
+    title: "빠른 수정",
+    render(view, footer){
+      view.appendChild(h(`<h2>어떻게 고쳐볼까요?</h2><p class="lead">여러 개 고르면 한 번에 반영돼요.</p>`));
+      const acts = ["가격 더 크게","문구 더 짧게","지역명 강조","더 친근하게","더 웃기게","다른 템플릿으로"];
+      const sel = new Set();
+      const box = h(`<div></div>`);
+      acts.forEach(a=>{
+        const c = h(`<span class="chip">${a}</span>`);
+        c.onclick = ()=>{ if (sel.has(a)){ sel.delete(a); c.classList.remove("on"); } else { sel.add(a); c.classList.add("on"); } };
+        box.appendChild(c);
+      });
+      view.appendChild(box);
+      const next = h(`<button class="btn btn-primary">재생성</button>`);
+      next.onclick = ()=>{
+        if (sel.size === 0){ toast("수정 항목을 하나 이상 골라주세요."); return; }
+        // Mock: just re-run the generation animation and tweak the caption
+        S.draft.status="generating"; S.draft.stepProgress=0;
+        const tweak = Array.from(sel).join(" · ");
+        S.draft.result = null;
+        startGenerate(tweak);
+      };
+      footer.appendChild(next);
+    }
+  },
+
+  /* ---------- SC-12 업로드 / 예약 ---------- */
+  "step/publish": {
+    title: "업로드",
+    render(view, footer){
+      const d = S.draft;
+      const autoAllowed = d.channels.includes("instagram");
+      if (d.publishMode === "auto" && !autoAllowed){
+        d.publishMode = "assist"; // Phase 1 rule: only instagram supports auto
+      }
+      view.appendChild(h(`<h2>어떻게 올릴까요?</h2>`));
+      const toggle = h(`<div class="toggle">
+        <button data-m="auto" class="${d.publishMode==="auto"?"on":""}">자동 업로드</button>
+        <button data-m="assist" class="${d.publishMode==="assist"?"on":""}">업로드 보조</button>
+      </div>`);
+      toggle.querySelectorAll("button").forEach(b=>{
+        b.onclick = ()=>{
+          if (b.dataset.m==="auto" && !autoAllowed){ toast("자동 업로드는 인스타그램에서만 지원돼요."); return; }
+          d.publishMode = b.dataset.m; render();
+        };
+      });
+      view.appendChild(toggle);
+
+      if (d.publishMode === "auto"){
+        const ig = S.connections.instagram;
+        if (ig === "not_connected" || ig === "expired"){
+          view.appendChild(h(`<div class="warnbox">
+            <b>인스타그램 계정이 ${ig==="expired"?"만료":"연결 안 됨"} 상태예요.</b><br/>
+            자동 업로드를 하려면 먼저 계정을 연결해 주세요.
+          </div>`));
+          const conn = h(`<button class="btn btn-ghost" style="margin-top:10px">계정 연결하기</button>`);
+          conn.onclick = ()=>go("connect");
+          view.appendChild(conn);
+        } else {
+          view.appendChild(h(`<div class="okbox">✓ 인스타그램 계정 연결됨 · 바로 게시할 수 있어요.</div>`));
+        }
+      } else {
+        view.appendChild(h(`<div class="guide" style="margin-top:12px">
+          <b>업로드 보조 모드</b>
+          <ul><li>영상 파일과 캡션을 내려받을 수 있어요</li><li>직접 앱을 열어 업로드하면 돼요</li><li>완료하면 아래 버튼을 눌러 이력에 기록해 주세요</li></ul>
+        </div>`));
+      }
+
+      view.appendChild(h(`<div class="label" style="margin-top:14px">캡션 확인</div>`));
+      const ta = h(`<textarea rows="4">${d.result.captions[d.captionChoice]}</textarea>`);
+      view.appendChild(ta);
+      view.appendChild(h(`<div class="label" style="margin-top:10px">올릴 채널</div>`));
+      view.appendChild(h(`<div>${d.channels.map(c=>`<span class="chip on">${channelLabel(c)}</span>`).join("")}</div>`));
+
+      if (d.publishMode === "auto"){
+        const go1 = h(`<button class="btn btn-primary">지금 게시하기</button>`);
+        const ready = S.connections.instagram === "connected";
+        go1.disabled = !ready;
+        go1.onclick = ()=>{ publishAuto(); };
+        footer.appendChild(go1);
+      } else {
+        const row = h(`<div class="row"></div>`);
+        const dl = h(`<button class="btn btn-ghost">파일/캡션 받기</button>`);
+        dl.onclick = ()=>toast("시연용: 실제로는 zip 다운로드가 시작돼요.");
+        const done = h(`<button class="btn btn-primary">업로드 완료 확인</button>`);
+        done.onclick = ()=>publishAssist();
+        row.appendChild(dl); row.appendChild(done);
+        footer.appendChild(row);
+      }
+    }
+  },
+
+  /* ---------- SC-13 계정 연동 ---------- */
+  connect: {
+    title: "SNS 계정 연동",
+    render(view, footer){
+      const conns = [
+        { k:"instagram", t:"인스타그램", d:"자동 게시 · Phase 1 필수", ab:"IG", ico:"ig", req:true },
+        { k:"youtube_shorts", t:"유튜브 쇼츠", d:"실험 단계", ab:"YT", ico:"yt" },
+        { k:"tiktok", t:"틱톡", d:"실험 단계", ab:"TT", ico:"tt" },
+      ];
+      view.appendChild(h(`<p class="lead">자동 업로드가 필요한 채널만 연결하면 돼요.</p>`));
+      conns.forEach(c=>{
+        const st = S.connections[c.k];
+        const row = h(`<div class="ch">
+          <div class="ico ${c.ico}">${c.ab}</div>
+          <div class="body"><div class="t">${c.t} ${c.req?`<span class="badge badge-warn">필수</span>`:`<span class="badge badge-exp">실험</span>`}</div>
+            <div class="d">${connLabel(st)}</div></div>
+          <button class="btn-link">${st==="connected"?"다시 연결":"연결하기"}</button>
+        </div>`);
+        row.querySelector(".btn-link").onclick = ()=>{
+          S.connections[c.k] = "connecting"; render();
+          setTimeout(()=>{ S.connections[c.k] = "connected"; toast(`${c.t} 연결 완료`); render(); }, 900);
+        };
+        view.appendChild(row);
+      });
+      const done = h(`<button class="btn btn-primary">완료</button>`);
+      done.onclick = ()=>go(S.draft ? "step/publish" : "home");
+      footer.appendChild(done);
+    }
+  },
+
+  /* ---------- SC-14 이력 ---------- */
+  history: {
+    title: "생성 이력",
+    render(view, footer){
+      if (S.history.length === 0){
+        view.appendChild(h(`<div class="card" style="text-align:center;color:var(--muted)">아직 만든 콘텐츠가 없어요.</div>`));
+      } else {
+        S.history.forEach(p => view.appendChild(histCard(p)));
+      }
+      const back = h(`<button class="btn btn-ghost">홈으로</button>`);
+      back.onclick = ()=>go("home");
+      footer.appendChild(back);
+    }
+  },
+
+  /* ---------- 이력 상세 ---------- */
+  "history/detail": {
+    title: "이력 상세",
+    render(view, footer){
+      const p = S.draft;
+      view.appendChild(h(`
+        <div class="preview" style="max-height:280px">
+          <div class="cap">${p.result.captions[p.captionChoice]}</div>
+          <div class="cta">${p.result.cta}</div>
+        </div>
+        <div class="kv"><span class="k">업종</span><span>${businessLabel(p.businessType)}</span></div>
+        <div class="kv"><span class="k">지역</span><span>${p.regionName}${p.detailLocation?" · "+p.detailLocation:""}</span></div>
+        <div class="kv"><span class="k">목적</span><span>${purposeLabel(p.purpose)}</span></div>
+        <div class="kv"><span class="k">스타일</span><span>${styleLabel(p.style)}</span></div>
+        <div class="kv"><span class="k">채널</span><span>${p.channels.map(channelLabel).join(", ")}</span></div>
+        <div class="kv"><span class="k">상태</span><span>${statusLabel(p.status)}</span></div>
+      `));
+      const regen = h(`<button class="btn btn-ghost">빠른 수정으로 재생성</button>`);
+      regen.onclick = ()=>go("step/quickedit");
+      const rep = h(`<button class="btn btn-primary">다시 업로드</button>`);
+      rep.onclick = ()=>go("step/publish");
+      const row = h(`<div class="row"></div>`);
+      row.appendChild(regen); row.appendChild(rep);
+      footer.appendChild(row);
+    }
+  },
+};
+
+/* ============ helpers for display ============ */
+function stepIndicator(view, idx){
+  const total = 6;
+  const wrap = h(`<div class="steps"></div>`);
+  for (let i=1;i<=total;i++) wrap.appendChild(h(`<div class="dot ${i<=idx?"on":""}"></div>`));
+  view.appendChild(wrap);
+}
+function histCard(p){
+  const el = h(`<div class="hist">
+    <div class="thumb"></div>
+    <div class="meta"><div class="t">${(p.result?.captions?.[p.captionChoice])||"생성 중"}</div>
+      <div class="sub">${businessLabel(p.businessType)} · ${p.regionName||"-"} · ${statusLabel(p.status)}</div></div>
+    <div style="align-self:center;color:var(--muted)">›</div>
+  </div>`);
+  el.onclick = ()=>{ S.draft = p; go("history/detail"); };
+  return el;
+}
+function channelLabel(v){ return {instagram:"인스타그램",youtube_shorts:"유튜브 쇼츠",tiktok:"틱톡"}[v]||v; }
+function businessLabel(v){ return {cafe:"카페",restaurant:"식당"}[v]||"-"; }
+function purposeLabel(v){ return {new_menu:"신메뉴",promotion:"할인/이벤트",review:"후기/분위기",location_push:"지역 홍보"}[v]||"-"; }
+function styleLabel(v){ return {default:"기본",friendly:"친근",b_grade_fun:"B급 재미"}[v]||"-"; }
+function statusLabel(v){ return {drafting:"작성 중",queued:"대기",preprocessing:"전처리",generating:"생성 중",generated:"완성",failed:"실패",published:"게시 완료",upload_assist:"보조 업로드"}[v]||v; }
+function connLabel(v){ return {not_connected:"연결 안 됨",connecting:"연결하는 중…",connected:"연결됨",expired:"만료됨 — 다시 연결 필요",permission_error:"권한 오류"}[v]||v; }
+
+/* ============ mock generator ============ */
+function startGenerate(tweak){
+  go("step/generating");
+  S.draft.status = "generating";
+  S.draft.stepProgress = 0;
+  clearInterval(S.genTimer);
+  S.genTimer = setInterval(()=>{
+    S.draft.stepProgress++;
+    if (S.draft.stepProgress >= 5){
+      clearInterval(S.genTimer);
+      S.draft.status = "generated";
+      S.draft.result = mockResult(S.draft, tweak);
+      if (!S.history.find(x=>x.id===S.draft.id)) S.history.unshift(S.draft);
+    }
+    render();
+  }, 900);
+}
+function mockResult(d, tweak){
+  const loc = d.regionName + (d.detailLocation ? ` ${d.detailLocation}` : "");
+  const biz = businessLabel(d.businessType);
+  const purposes = {
+    new_menu: { cta:"신메뉴 보러 가기", caps:[
+      `${loc} ${biz} 신메뉴, 오늘 처음 공개해요`,
+      `사장님이 직접 만든 신메뉴, ${loc}에서 만나요`,
+      `새로운 맛, ${loc} ${biz}에서 시작됐어요`,
+    ]},
+    promotion: { cta:"이벤트 참여하기", caps:[
+      `이번 주만, ${loc} ${biz} 특별 할인`,
+      `오늘 오픈한 분들께 드리는 작은 선물`,
+      `${loc} 단골 감사 이벤트 — 놓치지 마세요`,
+    ]},
+    review: { cta:"가게 자세히 보기", caps:[
+      `“또 오고 싶다”는 말, 제일 듣기 좋은 말이에요`,
+      `${loc} ${biz}, 오늘도 좋은 시간이었어요`,
+      `사람 냄새 나는 동네 가게, ${loc}에서`,
+    ]},
+    location_push: { cta:"지금 바로 가기", caps:[
+      `${loc} 근처라면, 오늘 저녁은 여기 어때요?`,
+      `걸어서 5분, ${biz} 하나 딱 있습니다`,
+      `${loc} 주민만 아는 작은 가게`,
+    ]},
+  };
+  const base = purposes[d.purpose] || purposes.new_menu;
+  let caps = [...base.caps];
+  if (tweak){
+    if (/짧게/.test(tweak)) caps = caps.map(c => c.split(",")[0]);
+    if (/웃기/.test(tweak)) caps = caps.map(c => c + " 🤣");
+    if (/친근/.test(tweak)) caps = caps.map(c => c.replace(/요\.?$/,"요 😊"));
+    if (/지역명/.test(tweak)) caps = caps.map(c => c.replace(loc, `⭐${loc}⭐`));
+  }
+  return {
+    cta: base.cta,
+    captions: caps,
+    hashtags: [d.regionName, biz, purposeLabel(d.purpose), "동네가게", "오늘의추천"].filter(Boolean),
+  };
+}
+
+/* ============ publishing ============ */
+function publishAuto(){
+  S.draft.status = "publishing"; render();
+  setTimeout(()=>{
+    S.draft.status = "published";
+    toast("인스타그램에 게시했어요");
+    // reset draft, back to home
+    S.draft = null;
+    go("home");
+  }, 800);
+}
+function publishAssist(){
+  S.draft.status = "upload_assist";
+  toast("이력에 업로드 보조로 기록했어요");
+  S.draft = null;
+  go("home");
+}
+
+/* ============ boot ============ */
+render();
+</script>
+</body>
+</html>
