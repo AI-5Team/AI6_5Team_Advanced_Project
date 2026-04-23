@@ -16,9 +16,9 @@
 
 이 프로젝트는 한 사람이 처음부터 끝까지 만든 저장소가 아니라, 팀원별 강점을 하나의 trunk로 정리한 결과물입니다.
 
-- 임창현: 기준선 통합, 실제 동작 검증, 발표용 문서와 자산 정리
+- 임창현: 기준 문서 작성/배포, trunk 기준선 설계, 선택 통합 리드, 실제 동작 검증, 발표용 문서와 자산 정리
 - 신유철: 모델 실험 축과 Wan2.1-VACE 연구 근거
-- 이진석: 모바일 앱형 화면 톤과 사용자 흐름 방향
+- 이진석: 모바일 앱형 화면 톤, 인증/보안 강화, 채널 연동 UX 개선
 - 최무영: 로그인/인증/API 기본 흐름
 - 서유종: worker 구조 경계와 UX 프로토타입 흐름
 
@@ -26,14 +26,22 @@
 
 ## 임창현
 
-임창현 작업은 크게 두 갈래입니다. 하나는 trunk를 실제로 돌아가는 기준선으로 묶는 일이고, 다른 하나는 어떤 방향을 채택하고 어떤 방향을 보류할지 판단하는 실험 기록입니다.
+임창현 작업은 크게 세 갈래입니다. 첫째는 팀이 같은 목표와 경계를 공유하도록 기준 문서를 먼저 고정한 일, 둘째는 trunk를 실제로 돌아가는 기준선으로 묶는 통합 리드 역할, 셋째는 어떤 방향을 채택하고 어떤 방향을 보류할지 판단하는 실험 기록입니다.
 
 현재 저장소에 바로 남아 있는 근거는 아래입니다.
 
+- [docs/planning/01_SERVICE_PROJECT_PLAN.md](../docs/planning/01_SERVICE_PROJECT_PLAN.md)
+- [docs/planning/02_USER_FLOW_AND_SCREEN_POLICY.md](../docs/planning/02_USER_FLOW_AND_SCREEN_POLICY.md)
+- [docs/planning/03_CONTENT_PIPELINE_AND_TEMPLATE_SPEC.md](../docs/planning/03_CONTENT_PIPELINE_AND_TEMPLATE_SPEC.md)
+- [docs/planning/04_API_CONTRACT.md](../docs/planning/04_API_CONTRACT.md)
+- [docs/planning/05_DATA_ARCHITECTURE_AND_REPO_STRUCTURE.md](../docs/planning/05_DATA_ARCHITECTURE_AND_REPO_STRUCTURE.md)
+- [docs/planning/06_EVALUATION_TEST_AND_OPERATIONS.md](../docs/planning/06_EVALUATION_TEST_AND_OPERATIONS.md)
 - [docs/daily/2026-04-23-codex.md](../docs/daily/2026-04-23-codex.md)
 - [docs/testing/test-scenario-186-root-selective-integration-freeze.md](../docs/testing/test-scenario-186-root-selective-integration-freeze.md)
 - [docs/presentation/assets/app](../docs/presentation/assets/app)
 - [scripts/dev-api.mjs](../scripts/dev-api.mjs)
+
+이 여섯 개 planning 문서는 제품 범위, 화면 정책, 생성 파이프라인, API 계약, 데이터 구조, 평가/운영 기준을 팀 공통 기준으로 먼저 고정한 문서입니다. 실제 협업은 이 문서를 먼저 배포한 뒤, 팀원별 구현을 그 기준에 맞춰 나누는 방식으로 시작했습니다.
 
 또 하나 중요한 축이 [docs/experiments](../docs/experiments)입니다. 이 경로에는 prompt/copy 실험, B급 레이아웃 실험, scene preview 구조, hybrid source selection, manual review 흐름 같은 방향 검토가 남아 있습니다.
 
@@ -73,21 +81,28 @@
 
 ## 이진석
 
-이진석 작업은 디자인과 사용자 흐름 쪽의 기준점 역할을 합니다. 원본 Vite 앱 전체를 trunk에 넣은 것은 아니지만, 현재 `apps/web`에 남아 있는 모바일 앱형 톤과 흐름 정리에는 이진석 방향이 반영되어 있습니다.
+이진석 작업은 디자인과 사용자 흐름만이 아니라, 보안과 인증 강화 쪽에서도 비중이 있습니다. 원본 Vite 앱 전체를 trunk에 넣은 것은 아니지만, 현재 `apps/web`에 남아 있는 모바일 앱형 톤과 흐름, 그리고 `main`에 반영된 인증/보안 강화에는 이진석 작업이 직접 연결됩니다.
 
 현재 저장소에서 확인 가능한 대표 근거는 아래입니다.
 
 - [apps/web/src/components/simple-workbench.tsx](../apps/web/src/components/simple-workbench.tsx)
 - [apps/web/src/components/app-nav.tsx](../apps/web/src/components/app-nav.tsx)
 - [apps/web/src/app/login/page.tsx](../apps/web/src/app/login/page.tsx)
+- [apps/web/src/app/account/page.tsx](../apps/web/src/app/account/page.tsx)
+- [apps/web/src/components/account-center.tsx](../apps/web/src/components/account-center.tsx)
 - [apps/web/src/app/globals.css](../apps/web/src/app/globals.css)
+- [apps/web/src/middleware.ts](../apps/web/src/middleware.ts)
+- [services/api/app/main.py](../services/api/app/main.py)
+- [services/api/app/core/rate_limit.py](../services/api/app/core/rate_limit.py)
+- [services/api/app/services/crypto.py](../services/api/app/services/crypto.py)
 - [docs/daily/2026-04-23-codex.md](../docs/daily/2026-04-23-codex.md)
 
 발표에서는 이렇게 설명하시면 자연스럽습니다.
 
 - 원본 앱 전체를 가져온 것은 아니다.
 - 다만 메인 화면, 로그인 화면, 하단 탭 구조처럼 사용자가 처음 만나는 톤은 이진석이 잡아 둔 방향을 기준으로 정리했다.
-- 즉 "원본 구현 보존"보다 "현재 앱에 남은 방향성 반영"이 핵심이다.
+- 동시에 쿠키 인증, CSRF, rate limit, OAuth 토큰 암호화, 토큰 만료 UX 같은 보안 강화도 이진석 브랜치에서 들어와 현재 trunk에 반영됐다.
+- 즉 이 축은 "디자인만 담당"이 아니라, **사용자-facing 화면과 보안 강화를 같이 밀어 올린 작업**으로 보는 편이 맞다.
 
 ## 최무영
 
