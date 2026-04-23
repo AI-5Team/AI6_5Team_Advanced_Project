@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { loginUser } from "@/lib/api";
@@ -9,7 +9,7 @@ import { setStoredAuthSession } from "@/lib/auth";
 
 const DEMO = { email: "demo-owner@example.com", password: "secret123!" };
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") ?? "/";
@@ -112,5 +112,21 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={(
+        <main className="auth-screen">
+          <section className="auth-panel auth-panel--loading">
+            <strong>로그인 화면을 준비 중입니다...</strong>
+          </section>
+        </main>
+      )}
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

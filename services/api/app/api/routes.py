@@ -190,32 +190,38 @@ def get_me(session: SessionCookie = None):
 
 
 @router.get("/store-profile", response_model=StoreProfileResponse)
-def store_profile():
-    return get_store_profile()
+def store_profile(session: SessionCookie = None):
+    user = me_from_session(session)
+    return get_store_profile(user["id"])
 
 
 @router.put("/store-profile", response_model=UpdateStoreProfileResponse)
-def save_store_profile(payload: StoreProfileRequest):
-    return update_store_profile(payload.model_dump())
+def save_store_profile(payload: StoreProfileRequest, session: SessionCookie = None):
+    user = me_from_session(session)
+    return update_store_profile(payload.model_dump(), user["id"])
 
 
 @router.post("/projects", response_model=CreateProjectResponse, status_code=status.HTTP_201_CREATED)
-def create_project_route(payload: CreateProjectRequest):
-    return create_project(payload.model_dump())
+def create_project_route(payload: CreateProjectRequest, session: SessionCookie = None):
+    user = me_from_session(session)
+    return create_project(payload.model_dump(), user["id"])
 
 
 @router.get("/projects", response_model=ProjectListResponse)
-def list_projects_route(status: str | None = None):
-    return list_projects(status)
+def list_projects_route(status: str | None = None, session: SessionCookie = None):
+    user = me_from_session(session)
+    return list_projects(user["id"], status)
 
 
 @router.get("/projects/{project_id}", response_model=ProjectDetailResponse)
-def get_project_route(project_id: str):
-    return get_project_detail(project_id)
+def get_project_route(project_id: str, session: SessionCookie = None):
+    user = me_from_session(session)
+    return get_project_detail(project_id, user["id"])
 
 
 @router.get("/projects/{project_id}/assets", response_model=UploadAssetsResponse)
-def list_assets_route(project_id: str):
+def list_assets_route(project_id: str, session: SessionCookie = None):
+    me_from_session(session)
     return {"projectId": project_id, "assets": list_assets(project_id)}
 
 
@@ -224,7 +230,8 @@ _MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 @router.post("/projects/{project_id}/assets", response_model=UploadAssetsResponse, status_code=status.HTTP_201_CREATED)
-async def upload_assets_route(project_id: str, files: list[UploadFile] = File(...)):
+async def upload_assets_route(project_id: str, files: list[UploadFile] = File(...), session: SessionCookie = None):
+    me_from_session(session)
     if len(files) > _MAX_UPLOAD_FILES:
         raise HTTPException(
             status_code=400,
@@ -243,26 +250,30 @@ async def upload_assets_route(project_id: str, files: list[UploadFile] = File(..
 
 
 @router.post("/projects/{project_id}/generate", response_model=GenerationRunResponse, status_code=status.HTTP_202_ACCEPTED)
-def generate_route(project_id: str, payload: GenerateRequest, background_tasks: BackgroundTasks):
+def generate_route(project_id: str, payload: GenerateRequest, background_tasks: BackgroundTasks, session: SessionCookie = None):
+    me_from_session(session)
     result = start_generation(project_id, payload.model_dump())
     background_tasks.add_task(run_generation_background, project_id, result["generationRunId"])
     return result
 
 
 @router.post("/projects/{project_id}/regenerate", response_model=GenerationRunResponse, status_code=status.HTTP_202_ACCEPTED)
-def regenerate_route(project_id: str, payload: RegenerateRequest, background_tasks: BackgroundTasks):
+def regenerate_route(project_id: str, payload: RegenerateRequest, background_tasks: BackgroundTasks, session: SessionCookie = None):
+    me_from_session(session)
     result = regenerate_project(project_id, payload.model_dump())
     background_tasks.add_task(run_generation_background, project_id, result["generationRunId"])
     return result
 
 
 @router.get("/projects/{project_id}/status", response_model=GenerationStatusResponse)
-def generation_status_route(project_id: str):
+def generation_status_route(project_id: str, session: SessionCookie = None):
+    me_from_session(session)
     return get_generation_status(project_id)
 
 
 @router.get("/projects/{project_id}/result", response_model=ProjectResultResponse)
-def result_route(project_id: str):
+def result_route(project_id: str, session: SessionCookie = None):
+    me_from_session(session)
     return get_project_result(project_id)
 
 
@@ -275,37 +286,43 @@ def approved_hybrid_candidates_route(
 
 
 @router.post("/projects/{project_id}/publish", response_model=PublishResponse, status_code=status.HTTP_202_ACCEPTED)
-def publish_route(project_id: str, payload: PublishRequest, background_tasks: BackgroundTasks):
-    result = publish_project(project_id, payload.model_dump())
+def publish_route(project_id: str, payload: PublishRequest, background_tasks: BackgroundTasks, session: SessionCookie = None):
+    user = me_from_session(session)
+    result = publish_project(project_id, payload.model_dump(), user["id"])
     if result["status"] == "queued":
         background_tasks.add_task(run_publish_background, result["uploadJobId"])
     return result
 
 
 @router.get("/upload-jobs/{job_id}", response_model=UploadJobResponse)
-def upload_job_route(job_id: str):
+def upload_job_route(job_id: str, session: SessionCookie = None):
+    me_from_session(session)
     return get_upload_job(job_id)
 
 
 @router.post("/upload-jobs/{job_id}/assist-complete", response_model=AssistCompleteResponse)
-def assist_complete_route(job_id: str, payload: AssistCompleteRequest | None = None):
+def assist_complete_route(job_id: str, payload: AssistCompleteRequest | None = None, session: SessionCookie = None):
+    me_from_session(session)
     completed_at = payload.completedAt.isoformat() if payload else None
     return mark_assist_complete(job_id, completed_at)
 
 
 @router.get("/social-accounts", response_model=SocialAccountsResponse)
-def social_accounts_route():
-    return list_social_accounts()
+def social_accounts_route(session: SessionCookie = None):
+    user = me_from_session(session)
+    return list_social_accounts(user["id"])
 
 
 @router.post("/social-accounts/{channel}/connect", response_model=ConnectSocialAccountResponse)
-def social_connect_route(channel: str):
-    return connect_social_account(channel)
+def social_connect_route(channel: str, session: SessionCookie = None):
+    user = me_from_session(session)
+    return connect_social_account(channel, user["id"])
 
 
 @router.get("/social-accounts/{channel}/callback", response_model=SocialAccountCallbackResponse)
-def social_callback_route(channel: str, code: str | None = None, state: str | None = None):
-    return callback_social_account(channel, code, state)
+def social_callback_route(channel: str, code: str | None = None, state: str | None = None, session: SessionCookie = None):
+    user = me_from_session(session)
+    return callback_social_account(channel, code, state, user["id"])
 
 
 @router.get("/social-accounts/{channel}/token")

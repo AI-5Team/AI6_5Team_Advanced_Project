@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -21,7 +21,7 @@ async function confirmReset(token: string, newPassword: string) {
   return res.json();
 }
 
-export default function PasswordResetConfirmPage() {
+function PasswordResetConfirmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -101,5 +101,21 @@ export default function PasswordResetConfirmPage() {
         </form>
       </section>
     </main>
+  );
+}
+
+export default function PasswordResetConfirmPage() {
+  return (
+    <Suspense
+      fallback={(
+        <main className="auth-screen">
+          <section className="auth-panel auth-panel--loading">
+            <strong>비밀번호 재설정 화면을 준비 중입니다...</strong>
+          </section>
+        </main>
+      )}
+    >
+      <PasswordResetConfirmContent />
+    </Suspense>
   );
 }

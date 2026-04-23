@@ -354,6 +354,17 @@ def register_user(
             """,
             (user_id, email, hash_password(password), name, birth_date, now, now),
         )
+        for channel in CHANNEL_TIERS:
+            connection.execute(
+                """
+                INSERT INTO social_accounts (
+                    id, user_id, channel, account_name, status, access_token_ref,
+                    refresh_token_ref, token_expires_at, last_synced_at, created_at, updated_at
+                )
+                VALUES (?, ?, ?, NULL, 'not_connected', NULL, NULL, NULL, NULL, ?, ?)
+                """,
+                (str(uuid4()), user_id, channel, now, now),
+            )
     record_signup_consents(user_id=user_id, ip=ip, user_agent=user_agent)
     log_event(event_type="register", user_id=user_id, ip=ip, user_agent=user_agent)
     session_token = issue_session(user_id=user_id, ip=ip, user_agent=user_agent)
@@ -526,11 +537,17 @@ def delete_account(user_id: str, ip: str = "unknown") -> dict[str, Any]:
     return {"deleted": True, "scheduledDeletionAt": hard_delete_at, "message": "회원 탈퇴 신청이 완료되었습니다. 30일 후 데이터가 완전 삭제됩니다."}
 
 
-def get_store_profile() -> dict[str, Any]:
+def get_store_profile(user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         row = connection.execute("SELECT * FROM store_profiles WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", (user_id,)).fetchone()
+        if row is None:
+            return {
+                "storeProfileId": None,
+                "businessType": None,
+                "regionName": None,
+                "detailLocation": None,
+                "defaultStyle": None,
+            }
         return {
             "storeProfileId": row["id"],
             "businessType": row["business_type"],
@@ -540,10 +557,8 @@ def get_store_profile() -> dict[str, Any]:
         }
 
 
-def update_store_profile(payload: dict[str, Any]) -> dict[str, Any]:
+def update_store_profile(payload: dict[str, Any], user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         row = connection.execute("SELECT * FROM store_profiles WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", (user_id,)).fetchone()
         now = utc_now()
         if row is None:
@@ -584,10 +599,8 @@ def update_store_profile(payload: dict[str, Any]) -> dict[str, Any]:
         return {"storeProfileId": profile_id, "updated": True}
 
 
-def list_projects(status: str | None = None) -> dict[str, Any]:
+def list_projects(user_id: str, status: str | None = None) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         query = "SELECT * FROM content_projects WHERE user_id = ?"
         params: list[Any] = [user_id]
         if status:
@@ -609,10 +622,8 @@ def list_projects(status: str | None = None) -> dict[str, Any]:
         return {"items": items, "nextCursor": None, "hasNext": False}
 
 
-def create_project(payload: dict[str, Any]) -> dict[str, Any]:
+def create_project(payload: dict[str, Any], user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         project_id = str(uuid4())
         now = utc_now()
         connection.execute(
@@ -639,9 +650,12 @@ def create_project(payload: dict[str, Any]) -> dict[str, Any]:
         return {"projectId": project_id, "status": "draft", "createdAt": now}
 
 
-def get_project_detail(project_id: str) -> dict[str, Any]:
+def get_project_detail(project_id: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        row = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
+        row = connection.execute(
+            "SELECT * FROM content_projects WHERE id = ? AND user_id = ?",
+            (project_id, user_id),
+        ).fetchone()
         if row is None:
             raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
         asset_count = connection.execute("SELECT COUNT(*) AS count FROM project_assets WHERE project_id = ?", (project_id,)).fetchone()["count"]
@@ -979,9 +993,12 @@ def _build_assist_package(connection, variant_id: str, payload: dict[str, Any]) 
     }
 
 
-def publish_project(project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def publish_project(project_id: str, payload: dict[str, Any], user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        project = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
+        project = connection.execute(
+            "SELECT * FROM content_projects WHERE id = ? AND user_id = ?",
+            (project_id, user_id),
+        ).fetchone()
         if project is None:
             raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
         latest_generation_run_id = project["latest_generation_run_id"]
@@ -998,7 +1015,6 @@ def publish_project(project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         if variant is None:
             raise api_error(422, "INVALID_STATE_TRANSITION", "게시할 결과물을 찾을 수 없습니다.")
         _supported_channel(payload["channel"])
-        user_id = _demo_user_id(connection)
         account = _get_social_account(connection, user_id, payload["channel"])
         assist_required = (
             payload["publishMode"] == "assist"
@@ -1105,10 +1121,8 @@ def mark_assist_complete(job_id: str, completed_at: str | None) -> dict[str, Any
         return {"uploadJobId": job_id, "status": "assisted_completed"}
 
 
-def list_social_accounts() -> dict[str, Any]:
+def list_social_accounts(user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         rows = [_get_social_account(connection, user_id, channel) for channel in sorted(CHANNEL_TIERS.keys())]
         items = []
         for row in rows:
@@ -1124,10 +1138,8 @@ def list_social_accounts() -> dict[str, Any]:
         return {"items": items}
 
 
-def connect_social_account(channel: str) -> dict[str, Any]:
+def connect_social_account(channel: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         _supported_channel(channel)
         now = utc_now()
         state = str(uuid4())
@@ -1142,10 +1154,8 @@ def connect_social_account(channel: str) -> dict[str, Any]:
         return {"channel": channel, "status": "connecting", "redirectUrl": f"/api/social-accounts/{channel}/callback?code=demo-code&state={state}"}
 
 
-def callback_social_account(channel: str, code: str | None, state: str | None) -> dict[str, Any]:
+def callback_social_account(channel: str, code: str | None, state: str | None, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        ensure_demo_state()
-        user_id = _demo_user_id(connection)
         row = _get_social_account(connection, user_id, channel)
         if not code or not state or row["refresh_token_ref"] != state:
             raise api_error(400, "OAUTH_CALLBACK_INVALID", "OAuth 콜백 검증에 실패했습니다.")

@@ -9,8 +9,9 @@
     "build:web": "npm --workspace apps/web run build",
     "dev:web": "npm --workspace apps/web run dev",
     "lint:web": "npm --workspace apps/web run lint",
-    "api:test": "uv run --project services/api pytest services/api/tests",
-    "worker:test": "uv run --project services/worker pytest services/worker/tests",
+    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn app.main:app --app-dir services/api --host 127.0.0.1 --port 8000 --reload",
+    "api:test": "uv run --project services/api --extra dev python -m pytest services/api/tests",
+    "worker:test": "uv run --project services/worker --extra dev python -m pytest services/worker/tests",
     "check": "npm run api:test && npm run worker:test && npm run lint:web && npm run build:web"
   }
 }

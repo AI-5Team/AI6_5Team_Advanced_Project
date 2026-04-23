@@ -224,6 +224,8 @@ def test_oauth_token_stored_encrypted_after_callback(monkeypatch, tmp_path):
     from app.services.crypto import decrypt_token
 
     client = _make_client(monkeypatch, tmp_path)
+    register_resp = client.post("/api/auth/register", json=VALID_REGISTER)
+    assert register_resp.status_code == 201
 
     connect_resp = client.post("/api/social-accounts/instagram/connect")
     assert connect_resp.status_code == 200

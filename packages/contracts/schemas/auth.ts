@@ -8,6 +8,11 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
+  birthDate: string;
+  agreedToTerms: true;
+  agreedToPrivacy: true;
+  agreedToAge14: true;
+  agreedToOverseasTransfer: true;
 }
 
 export interface LoginRequest {
@@ -17,6 +22,10 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   accessToken?: string;
+  user: AuthUser;
+}
+
+export interface SessionResponse {
   user: AuthUser;
 }
 

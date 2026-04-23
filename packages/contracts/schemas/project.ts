@@ -36,9 +36,9 @@ export interface GetProjectResponse {
 }
 
 export interface StoreProfileResponse {
-  storeProfileId: string;
-  businessType: BusinessType;
-  regionName: string;
+  storeProfileId: string | null;
+  businessType: BusinessType | null;
+  regionName: string | null;
   detailLocation: string | null;
   defaultStyle: Style | null;
 }

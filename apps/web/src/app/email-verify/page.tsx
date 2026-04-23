@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -20,7 +20,7 @@ async function verifyEmailToken(token: string) {
   return res.json();
 }
 
-export default function EmailVerifyPage() {
+function EmailVerifyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const [status, setStatus] = useState<"pending" | "success" | "error">("pending");
@@ -60,5 +60,21 @@ export default function EmailVerifyPage() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function EmailVerifyPage() {
+  return (
+    <Suspense
+      fallback={(
+        <main className="auth-screen">
+          <section className="auth-panel auth-panel--loading">
+            <strong>이메일 인증 중입니다...</strong>
+          </section>
+        </main>
+      )}
+    >
+      <EmailVerifyContent />
+    </Suspense>
   );
 }

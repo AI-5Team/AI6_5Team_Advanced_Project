@@ -103,6 +103,29 @@ def create_approved_hybrid_inventory_report(base_dir: Path) -> Path:
     return report_path
 
 
+def register_authenticated_user(
+    client: TestClient,
+    *,
+    email: str = "owner@example.com",
+    name: str = "임창현",
+) -> dict:
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "email": email,
+            "password": "secret123!A",
+            "name": name,
+            "birthDate": "1990-01-01",
+            "agreedToTerms": True,
+            "agreedToPrivacy": True,
+            "agreedToAge14": True,
+            "agreedToOverseasTransfer": True,
+        },
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
 def create_generated_project(client: TestClient) -> tuple[str, dict]:
     create_response = client.post(
         "/api/projects",
@@ -244,6 +267,7 @@ def test_phase1_smoke(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
     project_id, result_payload = create_generated_project(client)
 
     status_response = client.get(f"/api/projects/{project_id}/status")
@@ -287,6 +311,15 @@ def test_phase1_smoke(monkeypatch, tmp_path):
     assert result_payload["rendererSummary"]["framingMode"] == "preprocessed_vertical"
     assert result_payload["rendererSummary"]["durationStrategy"] is None
 
+    connect_response = client.post("/api/social-accounts/instagram/connect")
+    assert connect_response.status_code == 200
+    parsed = urlparse(connect_response.json()["redirectUrl"])
+    query = parse_qs(parsed.query)
+    callback_response = client.get(
+        f"/api/social-accounts/instagram/callback?code={query['code'][0]}&state={query['state'][0]}"
+    )
+    assert callback_response.status_code == 200
+
     publish_response = client.post(
         f"/api/projects/{project_id}/publish",
         json={
@@ -325,6 +358,7 @@ def test_generate_with_approved_hybrid_source_candidate(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
 
     create_response = client.post(
         "/api/projects",
@@ -427,6 +461,7 @@ def test_social_callback_validation_and_expired_publish(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
 
     invalid_callback = client.get("/api/social-accounts/instagram/callback?code=demo-code&state=wrong-state")
     assert invalid_callback.status_code == 400
@@ -491,6 +526,7 @@ def test_publish_assist_flow_and_permission_error(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
     project_id, result_payload = create_generated_project(client)
 
     youtube_connect_response = client.post("/api/social-accounts/youtube_shorts/connect")
@@ -576,6 +612,7 @@ def test_publish_rejects_stale_variant_after_regenerate(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
     project_id, baseline_result = create_generated_project(client)
 
     regenerate_response = client.post(
@@ -629,6 +666,7 @@ def test_publish_rejects_cross_project_variant(monkeypatch, tmp_path):
     from app.main import app
 
     client = TestClient(app)
+    register_authenticated_user(client)
     project_id_1, result_payload_1 = create_generated_project(client)
     project_id_2, result_payload_2 = create_generated_project(client)
 

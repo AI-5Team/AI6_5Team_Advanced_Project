@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ApiModel(BaseModel):
@@ -21,7 +21,7 @@ class UserPayload(ApiModel):
 
 
 class RegisterRequest(ApiModel):
-    email: str
+    email: EmailStr
     password: str = Field(min_length=10, max_length=1024)
     name: str = Field(min_length=1, max_length=100)
     birthDate: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
@@ -32,7 +32,7 @@ class RegisterRequest(ApiModel):
 
 
 class LoginRequest(ApiModel):
-    email: str
+    email: EmailStr
     password: str = Field(min_length=1)
 
 
@@ -77,9 +77,9 @@ class StoreProfileRequest(ApiModel):
 
 
 class StoreProfileResponse(ApiModel):
-    storeProfileId: str
-    businessType: Literal["cafe", "restaurant"]
-    regionName: str
+    storeProfileId: str | None = None
+    businessType: Literal["cafe", "restaurant"] | None = None
+    regionName: str | None = None
     detailLocation: str | None = None
     defaultStyle: Literal["default", "friendly", "b_grade_fun"] | None = None
 
