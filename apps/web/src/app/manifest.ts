@@ -39,7 +39,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "계정 연동",
         short_name: "계정",
-        url: "/accounts",
+        url: "/channels",
       },
     ],
   };

@@ -10,10 +10,10 @@
 ### 실행
 
 ```bash
-open "prototypes/web-flow-prototype.html"
+open "docs/prototypes/web-flow-prototype.html"
 # 또는 루트에서 간단한 정적 서버
 python3 -m http.server 8000
-# http://localhost:8000/prototypes/web-flow-prototype.html
+# http://localhost:8000/docs/prototypes/web-flow-prototype.html
 ```
 
 ### 포함 화면

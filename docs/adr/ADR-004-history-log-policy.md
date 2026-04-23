@@ -1,4 +1,4 @@
-# ADR-004 누적 작업 히스토리는 루트 `HISTORY.md`로 관리
+# ADR-004 누적 작업 히스토리는 `docs/archive/HISTORY.md`로 관리
 
 - 상태: 승인
 - 날짜: 2026-04-08
@@ -12,15 +12,15 @@
 
 ## 결정
 
-1. 저장소 루트에 `HISTORY.md`를 추가합니다.
-2. 모든 작업 세션은 종료 전에 반드시 `HISTORY.md`를 갱신합니다.
-3. `HISTORY.md`는 누적 요약 전용이며, 세부 내용은 기존 문서 체계를 그대로 사용합니다.
+1. 누적 히스토리 문서는 `docs/archive/HISTORY.md`에 둡니다.
+2. 모든 작업 세션은 종료 전에 반드시 `docs/archive/HISTORY.md`를 갱신합니다.
+3. `docs/archive/HISTORY.md`는 누적 요약 전용이며, 세부 내용은 기존 문서 체계를 그대로 사용합니다.
    - 구현 세부: `docs/daily/`
    - 테스트: `docs/testing/`
    - 실험: `docs/experiments/`
    - 기준선 변경: `docs/adr/`
-4. 새 채팅에서 작업을 시작할 때는 최근 `HISTORY.md` 항목을 먼저 읽고 현재 기준선을 파악합니다.
-5. 실험 세션은 `HISTORY.md` 요약과 `docs/experiments/` 실제 로그를 함께 남기는 방식으로 운영합니다.
+4. 새 채팅에서 작업을 시작할 때는 최근 `docs/archive/HISTORY.md` 항목을 먼저 읽고 현재 기준선을 파악합니다.
+5. 실험 세션은 `docs/archive/HISTORY.md` 요약과 `docs/experiments/` 실제 로그를 함께 남기는 방식으로 운영합니다.
 
 ## 근거
 
@@ -30,6 +30,6 @@
 
 ## 결과
 
-1. 앞으로 완료 보고는 `HISTORY.md`와 세부 로그를 함께 갱신한 상태를 기준으로 합니다.
-2. 실험/구현/문서화가 여러 세션에 나뉘어도, 루트 `HISTORY.md`를 보면 현재 위치를 빠르게 파악할 수 있습니다.
+1. 앞으로 완료 보고는 `docs/archive/HISTORY.md`와 세부 로그를 함께 갱신한 상태를 기준으로 합니다.
+2. 실험/구현/문서화가 여러 세션에 나뉘어도, `docs/archive/HISTORY.md`를 보면 현재 위치를 빠르게 파악할 수 있습니다.
 3. 누적 히스토리 갱신이 누락되면 세션 완료로 보지 않습니다.

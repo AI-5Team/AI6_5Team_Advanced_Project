@@ -1,127 +1,169 @@
 # AI6_5Team_Advanced_Project
 
-이 저장소는 **팀 최종 trunk**이자, 팀원 작업물을 선별 통합한 뒤 다시 업무를 재분배하기 위한 **기준선 저장소**입니다.
+매장 사진 몇 장과 몇 번의 선택만으로, 소상공인이 SNS용 숏폼 광고 초안을 만들고 게시 직전 단계까지 이어갈 수 있게 하는 팀 프로젝트입니다.
 
-현재 상태는 다음 두 가지 성격을 함께 가집니다.
+이 저장소는 발표용으로 급히 묶은 임시 폴더가 아니라, 팀원 작업을 하나의 서비스 흐름으로 정리한 **최종 통합 기준선**입니다.
 
-1. **통합 기준선**
-   - `services/api/app`
-   - `apps/web`
-   - `packages/contracts`
-   - `docs/planning`
-2. **가이드 구현 상태**
-   - 팀원 작업물을 어떻게 trunk에 흡수할지 보여주는 예시 구현이 일부 반영되어 있습니다.
-   - 따라서 지금 코드는 “최종 확정본”이라기보다, **이 방향으로 통합한다는 기준과 샘플**로 보시면 됩니다.
+## 프로젝트가 다루는 문제
 
----
+소상공인이 직접 SNS 홍보를 하려면 보통 아래 일을 따로 해야 합니다.
 
-## 1. 현재 trunk 원칙
+- 사진 촬영
+- 문구 작성
+- 영상 편집
+- 채널별 규격 정리
+- 업로드 준비
 
-- 기준선은 **현재 루트 저장소**입니다.
-- 통합은 **폴더 통째 병합이 아니라 기능 단위 선별 이식**으로 진행합니다.
-- 프로덕션 웹 앱은 **`apps/web` 하나만 유지**합니다.
-- 공용 타입과 계약의 source of truth는 **`packages/contracts` + `docs/planning`**입니다.
-- 실험 저장소는 제품 런타임을 직접 대체하지 않고, 필요한 경우 **메인 레포 안 스냅샷 + adapter 경계**로 연결합니다.
+이 과정은 생각보다 손이 많이 갑니다.  
+특히 "무엇을 써야 할지 모르겠다", "영상까지 만들기는 부담스럽다", "채널별로 어떻게 올려야 할지 헷갈린다"는 문제가 반복됩니다.
 
----
+이 프로젝트는 그 과정을 **선택형 입력 -> 결과 생성 -> 업로드 보조** 흐름으로 줄이는 데 초점을 맞췄습니다.
 
-## 2. 지금 반영된 가이드성 구현
+## 무엇을 만들었는가
 
-현재 trunk에는 아래 항목이 **가이드 격으로 이미 반영**되어 있습니다.
+현재 버전은 사용자가 자유 프롬프트를 길게 쓰는 방식이 아니라, 아래 순서로 바로 결과를 확인하는 구조입니다.
 
-### Web
+1. 로그인
+2. 업종, 위치, 홍보 목적, 톤, 채널 선택
+3. 이미지 업로드
+4. 숏폼 결과 생성
+5. 게시 이미지 / 캡션 / 해시태그 확인
+6. 업로드 보조 패키지 확인
+7. 최근 작업 이력에서 다시 열기
 
-- `apps/web`를 메인 웹 앱으로 유지
-- `register/login/me` 계약을 기준으로 한 auth gate 연결
-- 기존 만들기 / 이력 / 채널 화면을 보호 화면으로 유지
+즉, 이 프로젝트의 핵심은 "영상 한 편을 잘 만드는 도구"보다, **홍보 작업 전체를 끝까지 이어 주는 서비스 흐름**에 있습니다.
 
-### API
+## 현재 데모 범위
 
-- `services/api/app` 구조 유지
-- DB access는 현재 raw `sqlite3` 기준선 유지
-- `/api/auth/register`, `/api/auth/login`, `/api/me` 기준 인증 흐름 정리
-- `me`는 Bearer token이 없거나 위조된 경우 `401 AUTH_REQUIRED`
+데모 기준으로 다루는 범위는 아래와 같습니다.
 
-### Worker
-
-- `services/worker/adapters`, `pipelines`, `renderers` 구조 유지
-- `Wan2.1-VACE`는 실험 저장소를 직접 import하지 않고
-  `adapter_wan2_vace` 경계를 통해 subprocess 기반으로 연결
-- 신유철 실험 저장소는 `external/i2v-motion-experiments`에 **코드 스냅샷**으로 보존
-
-이 구현들은 지금 당장 완전한 업무 완료물이라기보다,
-**팀원별 후속 작업이 어디에 붙어야 하는지 보여주는 trunk 기준선**입니다.
-
----
-
-## 3. 팀원 작업물 통합 기준
-
-| 대상 | trunk 반영 원칙 |
+| 항목 | 범위 |
 |---|---|
-| 루트 저장소 | source of truth 유지 |
-| 신유철 작업물 | GitHub 실험 저장소를 `external/i2v-motion-experiments`에 코드 스냅샷으로 보존하고, trunk 런타임은 worker adapter 경계로만 연결 |
-| 이진석 작업물 | Vite 앱 전체 채택이 아니라 화면 흐름/디자인 자산/상태 설계만 `apps/web`에 포팅 |
-| 최무영 작업물 | Redis/RQ 큐 패턴은 비교 후 운영 이점이 확인될 때만 선택 채택 |
-| 서유종 작업물 | worker 내부 `adapters / pipelines / renderers` 경계 개선에 적극 반영 |
+| 업종 | `카페`, `음식점` |
+| 목적 | `신메뉴`, `할인/행사`, `후기`, `방문 유도` |
+| 톤 | `기본`, `친근함`, `하찮고 웃김` |
+| 채널 | `Instagram`, `YouTube Shorts`, `TikTok` |
+| 업로드 방식 | `Instagram` 중심, 나머지는 업로드 보조 fallback |
 
-### 외부 모델 실험 스냅샷
+앱에서 실제 돌아가는 생성 엔진은 trunk 내부 `Pillow + ffmpeg` 렌더러이며, `Wan2.1-VACE`는 별도 GPU 환경의 연구 스냅샷으로 보존했습니다.
 
-- 원본 저장소: `https://github.com/youuuchul/i2v-motion-experiments`
-- trunk 반입 위치: `external/i2v-motion-experiments`
-- 반입 기준 commit: `6ea9ffc060655b2eadf394e5b98e85dc89aaec8e`
-- 반입 범위: 코드, config, docker, 문서, 테스트
-- 제외 범위: `.git`, 모델 weight/cache, 개인 샘플 이미지, outputs/logs, Drive 산출물
+## 핵심 사용자 흐름
 
-이 스냅샷은 **발표/인수인계/재현 근거 보존용**입니다. 제품 웹/API가 이 경로를 직접 import 하지는 않고,
-`services/worker/adapters/adapter_wan2_vace.py`가 `--config` 기반 subprocess 경계로만 호출합니다.
-
-### 통합 시 금지
-
-- 폴더 통째 복사
-- `node_modules`, `.env`, 실행 로그, 산출 영상/이미지, 임시 업로드, 로컬 DB/캐시 반입
-- `packages/contracts`를 거치지 않는 public contract 임의 변경
-
----
-
-## 4. 업무 재분배 기준선
-
-| 업무 | 주담당 | 범위 |
-|---|---|---|
-| 모델 개선 | 신유철 | 모델 선택, 실험, 추론 설정, benchmark, worker adapter 개선 |
-| 보안 기능 | 이진석 | 업로드 검증, 외부 연동 권한 흐름, 토큰/채널 상태 UX, rate limit, 오류 처리 정책 |
-| 로그인 + 관련 보안 | 최무영 | register/login/me 연결, 보호 라우트, 토큰 처리, 인증 예외 정리 |
-| UI/UX 개선 | 서유종(구현) + 이진석(디자인 리뷰) | `apps/web` 단계형 화면 구조 정리 |
-| 최종 종합 + 발표 | 임창현 | 통합 승인, freeze, 발표 기준선 확정 |
-
----
-
-## 5. 디렉토리 가이드
-
-```text
-apps/web              Next.js 기반 메인 웹 앱
-services/api/app      FastAPI API 기준 구현
-services/worker       worker / adapter / pipeline 기준 구현
-packages/contracts    공용 계약과 타입
-external/i2v-motion-experiments  신유철 모델 실험 코드 스냅샷
-docs/planning         canonical 기획 문서
-docs/adr              주요 구조 의사결정 기록
-docs/testing          freeze 전 테스트 시나리오
-docs/daily            작업 기록
-팀원들 구현           비교/선별 대상 작업물
+```mermaid
+flowchart LR
+    A["로그인"] --> B["가게 정보 선택"]
+    B --> C["사진 업로드"]
+    C --> D["프로젝트 생성"]
+    D --> E["결과 생성"]
+    E --> F["영상 / 게시 이미지 / 캡션 확인"]
+    F --> G["업로드 보조 또는 재생성"]
+    G --> H["최근 작업 이력 저장"]
 ```
 
-### 실무 해석
+## 화면 예시
 
-- 새로운 UI 작업은 `apps/web` 기준으로 붙입니다.
-- 새로운 API 계약은 먼저 `packages/contracts`와 `docs/planning`을 확인합니다.
-- API DB 변경은 먼저 `services/api/app/core/database.py` 기준선과 planning 문서를 확인합니다.
-- 모델 실험은 외부 실험 저장소 또는 별도 실험 경로에서 진행하고, trunk에는 adapter 경계만 반영합니다.
+### 메인 생성 화면
 
----
+![메인 화면](docs/presentation/assets/app/home-vm-samples-loaded.png)
 
-## 6. 실행 명령어
+### 로그인 화면
 
-루트 기준 명령어입니다.
+![로그인 화면](docs/presentation/assets/app/login-page-redesign.png)
+
+### 생성 결과 예시
+
+![생성 결과 이미지](docs/presentation/assets/app/generated-post.png)
+
+## 시스템 구성
+
+```mermaid
+flowchart TD
+    W["apps/web<br/>Next.js web app"] --> A["services/api/app<br/>FastAPI API"]
+    A --> R["SQLite runtime data"]
+    A --> K["packages/contracts<br/>shared contracts"]
+    A --> WK["services/worker<br/>generation / render / packaging"]
+    WK --> O["generated video / post / caption package"]
+    WK -. research boundary .-> X["external/i2v-motion-experiments<br/>Wan2.1-VACE snapshot"]
+```
+
+### 현재 실제 생성 경로
+
+지금 앱에서 실제로 돌고 있는 생성은 trunk 내부 렌더러입니다.
+
+- [services/worker/pipelines/generation.py](services/worker/pipelines/generation.py)
+- [services/worker/renderers/media.py](services/worker/renderers/media.py)
+
+신유철의 Wan2.1-VACE 실험은 현재 저장소에 **스냅샷과 연동 경계**로 보존되어 있습니다.
+
+- [external/i2v-motion-experiments](external/i2v-motion-experiments)
+- [external/i2v-motion-experiments/TRUNK_SNAPSHOT.md](external/i2v-motion-experiments/TRUNK_SNAPSHOT.md)
+- [services/worker/adapters/adapter_wan2_vace.py](services/worker/adapters/adapter_wan2_vace.py)
+- [docs/testing/shin-vm-origin-verification-and-backup.md](docs/testing/shin-vm-origin-verification-and-backup.md)
+
+즉, README만 보고도 아래를 구분해서 이해하시면 됩니다.
+
+- 앱에서 실제로 검증한 것: 통합 서비스 흐름
+- 모델 연구 축으로 보존한 것: Wan2 실험 저장소와 연동 경계
+
+## 기술 스택
+
+| 영역 | 사용 기술 |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| Backend | FastAPI, SQLite |
+| Auth | Session cookie, token helper |
+| Worker | Python, Pillow, ffmpeg / ffprobe |
+| Contracts | workspace 내부 타입 표면과 shared schema |
+| Research lane | Wan2.1-VACE experiment snapshot |
+
+## 이번 버전에서 확인한 것
+
+발표 기준으로 아래는 직접 검증했습니다.
+
+- 회원가입 / 로그인 / `me`
+- 프로젝트 생성
+- 이미지 업로드
+- 생성 요청 후 `generated` 상태 도달
+- 결과 영상 / 게시 이미지 / 캡션 조회
+- 업로드 보조 패키지 확인
+- 웹 lint / build 통과
+- API / worker 테스트 통과
+
+관련 근거 문서는 아래에 있습니다.
+
+- [docs/testing/test-scenario-186-root-selective-integration-freeze.md](docs/testing/test-scenario-186-root-selective-integration-freeze.md)
+- [docs/testing/shin-vm-origin-verification-and-backup.md](docs/testing/shin-vm-origin-verification-and-backup.md)
+- [docs/presentation/assets/README.md](docs/presentation/assets/README.md)
+- [docs/daily/2026-04-23-codex.md](docs/daily/2026-04-23-codex.md)
+
+## 아직 남아 있는 한계
+
+이 프로젝트를 설명할 때 아래는 분명히 선을 그어야 합니다.
+
+1. 신유철 Wan2 실험이 앱 런타임에 직접 붙어 실시간 추론하는 상태는 아닙니다.
+2. 모든 SNS 채널 자동 업로드가 상용 수준으로 안정화된 상태는 아닙니다.
+3. 운영용 queue / infra 구조는 최종 확정 상태가 아닙니다.
+4. 일부 데이터와 흐름은 데모 기준선을 포함합니다.
+
+즉, 현재 결과물은 **실제로 시연 가능한 MVP 기준선**이지, 운영형 완성 서비스라고 보는 것은 맞지 않습니다.
+
+## 실행 방법
+
+루트에서 아래 명령으로 실행할 수 있습니다.
+
+```bash
+npm run dev:api
+npm run dev:web
+```
+
+Windows에서 바로 띄워 볼 때는 편의용 스크립트도 남겨 두었습니다.
+
+```bat
+start-api.bat
+start-web.bat
+```
+
+검증은 아래 명령으로 돌립니다.
 
 ```bash
 npm run api:test
@@ -131,45 +173,50 @@ npm run build:web
 npm run check
 ```
 
-웹 개발 서버:
+### 데모 계정
 
-```bash
-npm run dev:web
+- 이메일: `demo-owner@example.com`
+- 비밀번호: `secret123!`
+
+## 저장소 구조
+
+```text
+apps/web                         Next.js 웹 앱
+services/api/app                 FastAPI API
+services/worker                  생성 / 렌더링 / 업로드 보조 파이프라인
+packages/contracts               공용 계약과 타입
+external/i2v-motion-experiments  신유철 모델 실험 스냅샷
+docs/prototypes                  UX 프로토타입
+docs/archive                     보관용 문서와 이전 이력
+docs                             발표 / 검증 / 실험 기록
 ```
 
----
+## 팀 작업 정리
 
-## 7. 먼저 읽어야 할 문서
+이 저장소는 팀원별 작업을 그대로 모아 둔 아카이브가 아닙니다.  
+각 축에서 실제로 남길 부분을 통합한 결과입니다.
 
-### planning
+- 임창현: 통합 기준선 정리, 런타임 검증, 문서/발표 자산 정리
+- 신유철: Wan2.1-VACE 모델 실험 축
+- 이진석: 모바일 앱형 UI 방향과 화면 톤
+- 최무영: 로그인/인증/API 기본선
+- 서유종: worker 구조 경계와 UX 프로토타입 흐름
 
-- `docs/planning/04_API_CONTRACT.md`
-- `docs/planning/07_TEAM_RACI_AND_ROADMAP.md`
-- `docs/planning/10_ROOT_TRUNK_SELECTIVE_INTEGRATION_PLAN.md`
+상세 정리는 [docs/team-contributions-and-experiments.md](docs/team-contributions-and-experiments.md)에 따로 두었습니다.
 
-### architecture
+## 문서 안내
 
-- `docs/adr/ADR-010-root-trunk-selective-integration.md`
+문서 전체 색인은 [docs/README.md](docs/README.md)에 있습니다.
 
-### test / 기록
+처음 보는 분이라면 아래 순서로 보시는 편이 빠릅니다.
 
-- `docs/testing/test-scenario-186-root-selective-integration-freeze.md`
-- `docs/daily/2026-04-16-selective-integration.md`
+1. 이 README
+2. [docs/presentation/demo-checklist.md](docs/presentation/demo-checklist.md)
+3. [docs/presentation/assets/README.md](docs/presentation/assets/README.md)
+4. [docs/testing/README.md](docs/testing/README.md)
+5. [docs/team-contributions-and-experiments.md](docs/team-contributions-and-experiments.md)
 
----
+## 요약
 
-## 8. 현재 남은 리스크
-
-1. 인증 UI와 `me` 검증은 연결됐지만, 프로젝트/채널/프로필 데이터는 아직 demo-state 중심입니다.
-2. `Wan2.1-VACE` 실험 스냅샷은 trunk 안에 보존됐지만, 실제 실행에는 별도 GPU 환경, HF 토큰, 샘플 자산이 필요합니다.
-3. Redis/RQ 큐 패턴은 아직 비교 단계라 trunk 채택이 확정되지 않았습니다.
-4. `repos/`는 아직 미사용이며, post-freeze에만 분리 대상으로 봅니다.
-
----
-
-## 9. 운영 메모
-
-- 지금 trunk는 “무조건 확정된 완성본”이 아니라 **통합 기준선 + 구현 가이드**입니다.
-- 따라서 이후 팀원 작업은 trunk를 기준으로 이어가되, 중복 구현을 다시 들여오기보다 **현재 구조에 맞춰 흡수**하는 방식으로 진행해야 합니다.
-- 연구/실험/비교 작업은 과정과 결과를 반드시 문서화해야 합니다.
-- 외부 모델 실험은 `external/i2v-motion-experiments` 스냅샷을 기준으로 설명하고, VM 경로나 개인 계정 상태를 기준선으로 삼지 않습니다.
+이 프로젝트는 소상공인용 SNS 광고 제작 흐름을 대상으로,  
+로그인 -> 입력 선택 -> 생성 -> 결과 확인 -> 업로드 보조까지 이어지는 경험을 실제로 시연할 수 있도록 정리한 팀 프로젝트 기준선입니다.

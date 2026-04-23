@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_ITEMS = [
   {
@@ -16,7 +15,7 @@ const NAV_ITEMS = [
     mobileLabel: "이력",
   },
   {
-    href: "/accounts",
+    href: "/channels",
     label: "채널",
     mobileLabel: "채널",
   },
@@ -33,36 +32,37 @@ export function AppNav() {
     return null;
   }
 
+  const activeItem =
+    NAV_ITEMS.find((item) => pathname === item.href) ??
+    NAV_ITEMS[0];
+
   return (
     <>
       <header className="shell-nav-wrap">
         <div className="shell-nav">
           <Link href="/" className="shell-nav__brand" aria-label="가게 숏폼 스튜디오 홈">
-            <strong>가게 숏폼 스튜디오</strong>
+            <strong>AVS</strong>
+            <span>{activeItem.label}</span>
           </Link>
 
-          <div className="shell-nav__actions">
-            <ThemeToggle />
-
-            <nav className="shell-nav__links" aria-label="주요 화면">
-              {NAV_ITEMS.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={
-                      active
-                        ? "shell-nav__link shell-nav__link--active"
-                        : "shell-nav__link"
-                    }
-                  >
-                    <strong>{item.label}</strong>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+          <nav className="shell-nav__links" aria-label="주요 화면">
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={
+                    active
+                      ? "shell-nav__link shell-nav__link--active"
+                      : "shell-nav__link"
+                  }
+                >
+                  <strong>{item.label}</strong>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </header>
 

@@ -1,5 +1,5 @@
-import { AccountCenter } from "@/components/account-center";
+import { redirect } from "next/navigation";
 
-export default function AccountsPage() {
-  return <AccountCenter />;
+export default function AccountsRedirectPage() {
+  redirect("/channels");
 }

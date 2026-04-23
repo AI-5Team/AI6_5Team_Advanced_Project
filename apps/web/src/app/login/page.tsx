@@ -58,6 +58,7 @@ function LoginContent() {
 
         <div className="auth-panel__form">
           <div className="auth-copy">
+            <span className="auth-copy__eyebrow">AVS</span>
             <strong>로그인</strong>
             {feedback ? (
               <p className={`auth-feedback auth-feedback--${feedback.kind}`}>{feedback.text}</p>

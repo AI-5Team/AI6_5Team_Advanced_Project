@@ -3,17 +3,20 @@
 ## 목적
 
 - 발표 중 데모 실패 가능성을 줄이고, 보여줄 흐름을 짧고 안정적으로 고정합니다.
-- 제품 앱(`apps/web`)을 기준 데모로 사용하고, 필요 시 `prototypes/`를 백업 시나리오로 사용합니다.
+- 제품 앱(`apps/web`)을 기준 데모로 사용하고, 필요 시 `docs/prototypes/`를 백업 시나리오로 사용합니다.
 
 ## 발표 직전 확인
 
 1. 메인 브랜치가 최신인지 확인합니다.
-2. `.env.local` 기준 API 주소가 맞는지 확인합니다.
-3. 브라우저에서 기존 세션이 꼬였으면 로그아웃 후 다시 로그인합니다.
-4. 발표용 계정 정보를 준비합니다.
+2. 현재 로컬 실행 환경의 API 주소가 맞는지 확인합니다.
+3. 발표용 자산 폴더가 준비됐는지 확인합니다.
+   - `docs/presentation/assets/app`
+   - `docs/presentation/assets/model`
+4. 브라우저에서 기존 세션이 꼬였으면 로그아웃 후 다시 로그인합니다.
+5. 발표용 계정 정보를 준비합니다.
    - 이메일: `demo-owner@example.com`
    - 비밀번호: `secret123!`
-5. 네트워크 상태가 불안하면 `prototypes/web-flow-prototype.html`도 바로 열 수 있게 준비합니다.
+6. 네트워크 상태가 불안하면 `docs/prototypes/web-flow-prototype.html`도 바로 열 수 있게 준비합니다.
 
 ## 메인 데모 시나리오
 
@@ -35,6 +38,7 @@
 - 게시용 이미지
 - 캡션 후보와 해시태그
 - 빠른 수정 옵션
+- 필요하면 `docs/presentation/assets/app/generated-video.mp4`를 백업 증거물로 사용
 
 위 4가지를 짧게 보여줍니다.
 
@@ -59,7 +63,8 @@
 
 1. 일부 도메인 데이터는 아직 demo-state 중심입니다.
 2. 모델 실험은 trunk 안에 스냅샷으로 보존했지만, 실제 고성능 추론은 별도 GPU 환경이 필요합니다.
-3. 외부 SNS 자동 게시 전부를 상용 수준으로 보장하는 단계는 아닙니다.
+3. 현재 앱에서 돌아가는 생성은 trunk 내부 가이드 렌더러 기준이며, Shin VM 추론 런타임 연동은 후속 과제입니다.
+4. 외부 SNS 자동 게시 전부를 상용 수준으로 보장하는 단계는 아닙니다.
 
 ## 백업 시나리오
 
@@ -71,7 +76,7 @@
 
 ### 백업 2: 독립 프로토타입 사용
 
-- `prototypes/web-flow-prototype.html`
+- `docs/prototypes/web-flow-prototype.html`
 - SC-01 ~ SC-14 전 화면 흐름 설명용
 - 실제 API 연동이 아니라 UX 구조 설명용이라고 명확히 말합니다.
 

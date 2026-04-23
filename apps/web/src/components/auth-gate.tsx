@@ -127,6 +127,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
           <div className="auth-panel__form">
             <div className="auth-copy">
+              <span className="auth-copy__eyebrow">AVS</span>
               <strong>기존 계정으로 시작</strong>
               <p>{feedback || "로그인 후 작업을 바로 이어서 사용할 수 있습니다."}</p>
             </div>
