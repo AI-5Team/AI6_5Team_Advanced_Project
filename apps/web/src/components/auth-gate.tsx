@@ -41,7 +41,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setUser(me);
         setStoredAuthSession({ user: me });
-        setFeedback("인증이 확인되어 trunk 기준 화면을 바로 이어서 엽니다.");
+        setFeedback("로그인 상태가 확인되어 바로 이어서 사용할 수 있습니다.");
       } catch {
         clearStoredAuthSession();
       } finally {
@@ -98,8 +98,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <main className="auth-screen">
         <section className="auth-panel auth-panel--loading">
-          <strong>세션을 확인하고 있습니다.</strong>
-          <p>기존 작업 기준선과 인증 상태를 함께 불러옵니다.</p>
+          <strong>로그인 상태를 확인하고 있습니다.</strong>
+          <p>잠시만 기다리시면 바로 작업 화면으로 이어집니다.</p>
         </section>
       </main>
     );
@@ -114,13 +114,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
             <img src="/sample-assets/beer.jpg" alt="" />
             <div className="auth-panel__shade" />
             <div className="auth-panel__copy">
-              <span>Root Trunk</span>
-              <h1>한 기준선에서 다시 이어갑니다.</h1>
-              <p>로그인 후 만들기, 이력, 채널 화면을 같은 계약과 같은 trunk에서 확인합니다.</p>
+              <span>SNS 콘텐츠 제작</span>
+              <h1>로그인 후 바로 이어서 작업하세요.</h1>
+              <p>만들기, 결과 확인, 채널 연결 화면을 한곳에서 이어서 사용할 수 있습니다.</p>
               <div className="auth-panel__meta">
-                <span>API 계약 유지</span>
-                <span>Next.js 화면 유지</span>
-                <span>worker adapter 경계 유지</span>
+                <span>빠른 제작 흐름</span>
+                <span>결과 확인</span>
+                <span>채널 연결</span>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <div className="auth-panel__form">
             <div className="auth-copy">
               <strong>기존 계정으로 시작</strong>
-              <p>{feedback || "로그인 후 현재 trunk 기준 화면을 그대로 이어서 사용합니다."}</p>
+              <p>{feedback || "로그인 후 작업을 바로 이어서 사용할 수 있습니다."}</p>
             </div>
 
             <form className="auth-form" onSubmit={handleLogin}>
