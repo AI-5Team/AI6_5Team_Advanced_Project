@@ -54,7 +54,7 @@ def test_register_sets_session_cookie(monkeypatch, tmp_path):
         "HttpOnly session cookie must be set on register"
     body = resp.json()
     assert body["user"]["email"] == VALID_REGISTER["email"]
-    assert "accessToken" in body
+    assert "accessToken" not in body, "Bearer 토큰은 발급하지 않음 — 쿠키 세션 단일화"
 
 
 def test_register_missing_consent_rejected(monkeypatch, tmp_path):

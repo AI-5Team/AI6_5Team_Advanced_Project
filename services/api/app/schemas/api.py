@@ -37,7 +37,6 @@ class LoginRequest(ApiModel):
 
 
 class AuthResponse(ApiModel):
-    accessToken: str | None = None
     user: UserPayload
 
 

@@ -103,7 +103,7 @@ def get_valid_access_token(user_id: str, provider: str) -> str:
     if _is_expiring_soon(row["token_expires_at"]):
         if not row["refresh_token_ref"]:
             raise NotConnectedError(f"{provider} 토큰이 만료되었고 갱신 토큰이 없습니다.")
-        # 운영 전환 시에는 user+provider 기준 분산 락이 필요하지만, 현재 데모 범위에서는 단일 프로세스 갱신으로 유지합니다.
+        # TODO: Redis distributed lock here (운영 전환 시) — 동시 refresh 충돌 방지
         try:
             refresh_token = decrypt_token(row["refresh_token_ref"])
             refreshed = _simulate_token_refresh(provider, refresh_token)
