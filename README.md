@@ -93,7 +93,7 @@ flowchart TD
 - [services/worker/pipelines/generation.py](services/worker/pipelines/generation.py)
 - [services/worker/renderers/media.py](services/worker/renderers/media.py)
 
-신유철의 Wan2.1-VACE 실험은 현재 저장소에 **스냅샷과 연동 경계**로 보존되어 있습니다.
+Wan2.1-VACE 연구 축은 현재 저장소에 **스냅샷과 연동 경계**로 보존되어 있습니다.
 
 - [external/i2v-motion-experiments](external/i2v-motion-experiments)
 - [external/i2v-motion-experiments/TRUNK_SNAPSHOT.md](external/i2v-motion-experiments/TRUNK_SNAPSHOT.md)
@@ -140,7 +140,7 @@ flowchart TD
 
 이 프로젝트를 설명할 때 아래는 분명히 선을 그어야 합니다.
 
-1. 신유철 Wan2 실험이 앱 런타임에 직접 붙어 실시간 추론하는 상태는 아닙니다.
+1. Wan2 연구 축은 스냅샷 보존과 VM 원본 검증까지 마쳤지만, 앱의 기본 생성 런타임을 직접 대체한 상태는 아닙니다.
 2. 모든 SNS 채널 자동 업로드가 상용 수준으로 안정화된 상태는 아닙니다.
 3. 운영용 queue / infra 구조는 최종 확정 상태가 아닙니다.
 4. 일부 데이터와 흐름은 데모 기준선을 포함합니다.
@@ -185,7 +185,7 @@ apps/web                         Next.js 웹 앱
 services/api/app                 FastAPI API
 services/worker                  생성 / 렌더링 / 업로드 보조 파이프라인
 packages/contracts               공용 계약과 타입
-external/i2v-motion-experiments  신유철 모델 실험 스냅샷
+external/i2v-motion-experiments  Wan2.1-VACE 연구 스냅샷
 docs/prototypes                  UX 프로토타입
 docs/archive                     보관용 문서와 이전 이력
 docs                             발표 / 검증 / 실험 기록
@@ -222,10 +222,11 @@ docs                             발표 / 검증 / 실험 기록
 처음 보는 분이라면 아래 순서로 보시는 편이 빠릅니다.
 
 1. 이 README
-2. [docs/presentation/demo-checklist.md](docs/presentation/demo-checklist.md)
-3. [docs/presentation/assets/README.md](docs/presentation/assets/README.md)
-4. [docs/testing/README.md](docs/testing/README.md)
-5. [docs/team-contributions-and-experiments.md](docs/team-contributions-and-experiments.md)
+2. [docs/presentation/Project-report.md](docs/presentation/Project-report.md)
+3. [docs/presentation/demo-checklist.md](docs/presentation/demo-checklist.md)
+4. [docs/presentation/assets/README.md](docs/presentation/assets/README.md)
+5. [docs/testing/README.md](docs/testing/README.md)
+6. [docs/team-contributions-and-experiments.md](docs/team-contributions-and-experiments.md)
 
 ## 요약
 

@@ -7,9 +7,10 @@
 
 ### 발표 직전
 
-1. [presentation/demo-checklist.md](presentation/demo-checklist.md)
-2. [presentation/assets/README.md](presentation/assets/README.md)
-3. [daily/2026-04-23-codex.md](daily/2026-04-23-codex.md)
+1. [presentation/Project-report.md](presentation/Project-report.md)
+2. [presentation/demo-checklist.md](presentation/demo-checklist.md)
+3. [presentation/assets/README.md](presentation/assets/README.md)
+4. [daily/2026-04-24-codex.md](daily/2026-04-24-codex.md)
 
 ### trunk 기준 이해
 
@@ -63,11 +64,13 @@
 - 통합/샘플/실험 반영 내역
 
 가장 최신 상태는 [daily/2026-04-23-codex.md](daily/2026-04-23-codex.md)를 보시면 됩니다.
+보고서/발표 준비를 다시 정리한 최신 작업은 [daily/2026-04-24-codex.md](daily/2026-04-24-codex.md)에도 남겨 두었습니다.
 
 ### `presentation/`
 
 - 발표 대본 보조 문서
 - 발표용 자산 묶음
+- 프로젝트 보고서
 
 슬라이드에 바로 넣을 이미지/영상은 [presentation/assets](presentation/assets) 아래에 있습니다.
 
