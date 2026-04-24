@@ -652,12 +652,7 @@ def create_project(payload: dict[str, Any], user_id: str) -> dict[str, Any]:
 
 def get_project_detail(project_id: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        row = connection.execute(
-            "SELECT * FROM content_projects WHERE id = ? AND user_id = ?",
-            (project_id, user_id),
-        ).fetchone()
-        if row is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        row = _get_project_for_user(connection, project_id, user_id)
         asset_count = connection.execute("SELECT COUNT(*) AS count FROM project_assets WHERE project_id = ?", (project_id,)).fetchone()["count"]
         return {
             "projectId": row["id"],
@@ -672,11 +667,19 @@ def get_project_detail(project_id: str, user_id: str) -> dict[str, Any]:
         }
 
 
-def list_assets(project_id: str) -> list[dict[str, Any]]:
+def _get_project_for_user(connection, project_id: str, user_id: str):
+    row = connection.execute(
+        "SELECT * FROM content_projects WHERE id = ? AND user_id = ?",
+        (project_id, user_id),
+    ).fetchone()
+    if row is None:
+        raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+    return row
+
+
+def list_assets(project_id: str, user_id: str) -> list[dict[str, Any]]:
     with get_connection() as connection:
-        project = connection.execute("SELECT id FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        _get_project_for_user(connection, project_id, user_id)
         rows = connection.execute("SELECT * FROM project_assets WHERE project_id = ? ORDER BY created_at ASC", (project_id,)).fetchall()
         return [
             {
@@ -735,12 +738,10 @@ def _check_image_magic(data: bytes) -> None:
     raise api_error(400, "ASSET_VALIDATION_FAILED", "파일 내용이 jpg 또는 png 형식이 아닙니다.")
 
 
-def upload_assets(project_id: str, files: list[tuple[str, bytes, str]]) -> dict[str, Any]:
+def upload_assets(project_id: str, files: list[tuple[str, bytes, str]], user_id: str) -> dict[str, Any]:
     settings = _settings()
     with get_connection() as connection:
-        project = connection.execute("SELECT id FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        _get_project_for_user(connection, project_id, user_id)
         project_root = settings.storage_dir / "projects" / project_id / "raw"
         project_root.mkdir(parents=True, exist_ok=True)
         uploaded = []
@@ -780,6 +781,19 @@ def upload_assets(project_id: str, files: list[tuple[str, bytes, str]]) -> dict[
         return {"projectId": project_id, "assets": uploaded}
 
 
+def _ensure_assets_belong_to_project(connection, project_id: str, asset_ids: list[str]) -> None:
+    if not asset_ids:
+        return
+    placeholders = ",".join("?" for _ in asset_ids)
+    rows = connection.execute(
+        f"SELECT id FROM project_assets WHERE project_id = ? AND id IN ({placeholders})",
+        [project_id, *asset_ids],
+    ).fetchall()
+    found_ids = {row["id"] for row in rows}
+    if found_ids != set(asset_ids):
+        raise api_error(422, "INVALID_STATE_TRANSITION", "프로젝트에 속하지 않는 자산이 포함되어 있습니다.")
+
+
 def _ensure_template_supported(project: dict[str, Any], template_id: str) -> None:
     manifest_path = _settings().template_spec_dir / "manifests" / "template-map.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -790,11 +804,17 @@ def _ensure_template_supported(project: dict[str, Any], template_id: str) -> Non
         raise api_error(422, "INVALID_STATE_TRANSITION", "선택한 템플릿이 현재 프로젝트와 호환되지 않습니다.")
 
 
-def _create_generation_run(project_id: str, template_id: str, input_snapshot: dict[str, Any], quick_options: dict[str, Any], run_type: str) -> dict[str, Any]:
+def _create_generation_run(
+    project_id: str,
+    template_id: str,
+    input_snapshot: dict[str, Any],
+    quick_options: dict[str, Any],
+    run_type: str,
+    user_id: str,
+) -> dict[str, Any]:
     with get_connection() as connection:
-        project_row = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project_row is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        project_row = _get_project_for_user(connection, project_id, user_id)
+        _ensure_assets_belong_to_project(connection, project_id, input_snapshot.get("assetIds", []))
         project = {"purpose": project_row["purpose"], "style": project_row["style"]}
         _ensure_template_supported(project, template_id)
         run_id = str(uuid4())
@@ -826,27 +846,25 @@ def _create_generation_run(project_id: str, template_id: str, input_snapshot: di
         return {"generationRunId": run_id, "projectId": project_id, "status": "queued"}
 
 
-def start_generation(project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def start_generation(project_id: str, payload: dict[str, Any], user_id: str) -> dict[str, Any]:
     if not payload["assetIds"]:
         raise api_error(400, "INVALID_INPUT", "최소 1개의 자산이 필요합니다.")
     input_snapshot = {"assetIds": payload["assetIds"], "templateId": payload["templateId"]}
     approved_candidate_key = payload.get("approvedHybridSourceCandidateKey")
     if isinstance(approved_candidate_key, str) and approved_candidate_key:
         input_snapshot["approvedHybridSourceCandidateKey"] = approved_candidate_key
-    return _create_generation_run(project_id, payload["templateId"], input_snapshot, payload.get("quickOptions") or {}, "initial")
+    return _create_generation_run(project_id, payload["templateId"], input_snapshot, payload.get("quickOptions") or {}, "initial", user_id)
 
 
-def regenerate_project(project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def regenerate_project(project_id: str, payload: dict[str, Any], user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        project_row = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project_row is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        project_row = _get_project_for_user(connection, project_id, user_id)
         assets = connection.execute("SELECT id FROM project_assets WHERE project_id = ? ORDER BY created_at ASC", (project_id,)).fetchall()
         latest_run_id = project_row["latest_generation_run_id"]
         template_row = connection.execute("SELECT template_id FROM generation_runs WHERE id = ?", (latest_run_id,)).fetchone() if latest_run_id else None
         template_id = payload["changeSet"].get("templateId") or (template_row["template_id"] if template_row else "T01")
         input_snapshot = {"assetIds": [asset["id"] for asset in assets], "templateId": template_id, **payload["changeSet"]}
-    return _create_generation_run(project_id, template_id, input_snapshot, payload["changeSet"], "regenerate")
+    return _create_generation_run(project_id, template_id, input_snapshot, payload["changeSet"], "regenerate", user_id)
 
 
 def run_generation_background(project_id: str, generation_run_id: str) -> None:
@@ -854,11 +872,9 @@ def run_generation_background(project_id: str, generation_run_id: str) -> None:
     run_generation_job(settings.db_path, settings.storage_dir, settings.template_spec_dir, project_id, generation_run_id)
 
 
-def get_generation_status(project_id: str) -> dict[str, Any]:
+def get_generation_status(project_id: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        project = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        project = _get_project_for_user(connection, project_id, user_id)
         run_id = project["latest_generation_run_id"]
         if not run_id:
             return {"projectId": project_id, "projectStatus": project["current_status"], "steps": [], "error": None}
@@ -902,11 +918,9 @@ def get_generation_status(project_id: str) -> dict[str, Any]:
         }
 
 
-def get_project_result(project_id: str) -> dict[str, Any]:
+def get_project_result(project_id: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        project = connection.execute("SELECT * FROM content_projects WHERE id = ?", (project_id,)).fetchone()
-        if project is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.")
+        project = _get_project_for_user(connection, project_id, user_id)
         run_id = project["latest_generation_run_id"]
         variant = connection.execute(
             """
@@ -1075,36 +1089,71 @@ def run_publish_background(upload_job_id: str) -> None:
     run_publish_job(settings.db_path, settings.storage_dir, settings.template_spec_dir, upload_job_id)
 
 
-def get_upload_job(job_id: str) -> dict[str, Any]:
-    with get_connection() as connection:
-        row = connection.execute("SELECT * FROM upload_jobs WHERE id = ?", (job_id,)).fetchone()
-        if row is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "업로드 작업을 찾을 수 없습니다.")
-        payload = _json_loads(row["request_payload_snapshot_json"]) or {}
-        assist_package = _build_assist_package(connection, row["variant_id"], payload) if row["status"] == "assist_required" else None
-        error = None
-        if row["error_code"]:
-            message = "업로드 보조 모드로 전환되었습니다."
-            if row["error_code"] == "AUTH_REQUIRED":
-                message = "계정 연동이 필요해 업로드 보조 모드로 전환되었습니다."
-            elif row["error_code"] == "SOCIAL_TOKEN_EXPIRED":
-                message = "토큰이 만료되어 재연동 또는 업로드 보조가 필요합니다."
-            error = {"code": row["error_code"], "message": message}
-        return {
-            "uploadJobId": row["id"],
-            "projectId": row["project_id"],
-            "channel": row["channel"],
-            "status": row["status"],
-            "assistPackage": assist_package,
-            "error": error,
-        }
+def _get_upload_job_for_user(connection, job_id: str, user_id: str):
+    row = connection.execute(
+        """
+        SELECT uj.*
+        FROM upload_jobs uj
+        JOIN content_projects cp ON cp.id = uj.project_id
+        WHERE uj.id = ? AND cp.user_id = ?
+        """,
+        (job_id, user_id),
+    ).fetchone()
+    if row is None:
+        raise api_error(404, "PROJECT_NOT_FOUND", "업로드 작업을 찾을 수 없습니다.")
+    return row
 
 
-def mark_assist_complete(job_id: str, completed_at: str | None) -> dict[str, Any]:
+def _upload_job_response(connection, row) -> dict[str, Any]:
+    payload = _json_loads(row["request_payload_snapshot_json"]) or {}
+    assist_package = _build_assist_package(connection, row["variant_id"], payload) if row["status"] == "assist_required" else None
+    error = None
+    if row["error_code"]:
+        message = "업로드 보조 모드로 전환되었습니다."
+        if row["error_code"] == "AUTH_REQUIRED":
+            message = "계정 연동이 필요해 업로드 보조 모드로 전환되었습니다."
+        elif row["error_code"] == "SOCIAL_TOKEN_EXPIRED":
+            message = "토큰이 만료되어 재연동 또는 업로드 보조가 필요합니다."
+        error = {"code": row["error_code"], "message": message}
+    return {
+        "uploadJobId": row["id"],
+        "projectId": row["project_id"],
+        "channel": row["channel"],
+        "status": row["status"],
+        "assistPackage": assist_package,
+        "error": error,
+    }
+
+
+def get_upload_job(job_id: str, user_id: str) -> dict[str, Any]:
     with get_connection() as connection:
-        row = connection.execute("SELECT * FROM upload_jobs WHERE id = ?", (job_id,)).fetchone()
-        if row is None:
-            raise api_error(404, "PROJECT_NOT_FOUND", "업로드 작업을 찾을 수 없습니다.")
+        row = _get_upload_job_for_user(connection, job_id, user_id)
+        return _upload_job_response(connection, row)
+
+
+def list_project_upload_jobs(project_id: str, user_id: str) -> list[dict[str, Any]]:
+    with get_connection() as connection:
+        _get_project_for_user(connection, project_id, user_id)
+        rows = connection.execute(
+            "SELECT * FROM upload_jobs WHERE project_id = ? ORDER BY updated_at DESC, created_at DESC",
+            (project_id,),
+        ).fetchall()
+        return [_upload_job_response(connection, row) for row in rows]
+
+
+def get_latest_upload_job(project_id: str, user_id: str) -> dict[str, Any] | None:
+    with get_connection() as connection:
+        _get_project_for_user(connection, project_id, user_id)
+        row = connection.execute(
+            "SELECT * FROM upload_jobs WHERE project_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
+            (project_id,),
+        ).fetchone()
+        return _upload_job_response(connection, row) if row else None
+
+
+def mark_assist_complete(job_id: str, completed_at: str | None, user_id: str) -> dict[str, Any]:
+    with get_connection() as connection:
+        row = _get_upload_job_for_user(connection, job_id, user_id)
         when = completed_at or utc_now()
         connection.execute(
             """

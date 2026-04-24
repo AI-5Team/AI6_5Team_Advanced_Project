@@ -45,7 +45,7 @@
 | 채널 | `Instagram`, `YouTube Shorts`, `TikTok` |
 | 업로드 방식 | `Instagram` 중심, 나머지는 업로드 보조 fallback |
 
-앱에서 실제 돌아가는 생성 엔진은 trunk 내부 `Pillow + ffmpeg` 렌더러이며, `Wan2.1-VACE`는 별도 GPU 환경의 연구 스냅샷으로 보존했습니다.
+FastAPI에 연결한 데모 기준 실제 생성 엔진은 trunk 내부 `Pillow + ffmpeg` 렌더러이며, `Wan2.1-VACE`는 별도 GPU 환경의 연구 스냅샷으로 보존했습니다.
 
 ## 핵심 사용자 흐름
 
@@ -62,17 +62,15 @@ flowchart LR
 
 ## 화면 예시
 
-### 메인 생성 화면
+아래는 로그인, 입력 선택, 결과 확인, 생성 이미지를 README용으로 줄여 담은 요약 화면입니다.
 
-![메인 화면](docs/presentation/assets/app/home-vm-samples-loaded.png)
-
-### 로그인 화면
-
-![로그인 화면](docs/presentation/assets/app/login-page-redesign.png)
+![앱 흐름과 생성 결과 요약](docs/presentation/assets/app/readme-overview.png)
 
 ### 생성 결과 예시
 
-![생성 결과 이미지](docs/presentation/assets/app/generated-post.png)
+<img src="docs/presentation/assets/app/generated-post.png" alt="텍스트 오버레이 없는 생성 결과 이미지" width="420" />
+
+생성 이미지는 이미지 위에 홍보 문구를 직접 태우지 않고, 캡션 / 해시태그 / CTA를 결과 데이터로 따로 제공하는 기준입니다.
 
 ## 시스템 구성
 
@@ -88,7 +86,7 @@ flowchart TD
 
 ### 현재 실제 생성 경로
 
-지금 앱에서 실제로 돌고 있는 생성은 trunk 내부 렌더러입니다.
+`apps/web`이 `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`로 FastAPI에 연결된 상태에서 실제로 돌고 있는 생성은 trunk 내부 렌더러입니다.
 
 - [services/worker/pipelines/generation.py](services/worker/pipelines/generation.py)
 - [services/worker/renderers/media.py](services/worker/renderers/media.py)
@@ -126,6 +124,7 @@ Wan2.1-VACE 연구 축은 현재 저장소에 **스냅샷과 연동 경계**로 
 - 생성 요청 후 `generated` 상태 도달
 - 결과 영상 / 게시 이미지 / 캡션 조회
 - 업로드 보조 패키지 확인
+- 프로젝트 / 업로드 작업의 사용자 소유권 경계
 - 웹 lint / build 통과
 - API / worker 테스트 통과
 
@@ -155,6 +154,15 @@ Wan2.1-VACE 연구 축은 현재 저장소에 **스냅샷과 연동 경계**로 
 npm run dev:api
 npm run dev:web
 ```
+
+FastAPI 기준 실제 생성 경로를 보려면 웹 환경 변수도 아래처럼 맞춥니다.
+
+```bash
+# apps/web/.env.local
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+이 값을 비워 두면 `apps/web` 안의 Next.js demo-store API로 동작할 수 있으므로, 발표 데모에서는 FastAPI 연결 상태를 먼저 확인해야 합니다.
 
 Windows에서 바로 띄워 볼 때는 편의용 스크립트도 남겨 두었습니다.
 
@@ -218,6 +226,13 @@ docs                             발표 / 검증 / 실험 기록
 ## 문서 안내
 
 문서 전체 색인은 [docs/README.md](docs/README.md)에 있습니다.
+
+발표와 제출용으로 바로 확인할 수 있는 파일은 아래에 따로 저장했습니다.
+
+- 발표자료 PPTX: [docs/presentation/pptx/output.pptx](docs/presentation/pptx/output.pptx)
+- 발표자료 PDF: [docs/presentation/pptx/output.pdf](docs/presentation/pptx/output.pdf)
+- 발표용 보고서 Markdown: [docs/presentation/Project-report.md](docs/presentation/Project-report.md)
+- 발표용 보고서 PDF: [docs/presentation/Project-report.pdf](docs/presentation/Project-report.pdf)
 
 처음 보는 분이라면 아래 순서로 보시는 편이 빠릅니다.
 

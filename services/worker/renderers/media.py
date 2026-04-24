@@ -2,22 +2,15 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
-import textwrap
 from pathlib import Path
 
-from PIL import Image, ImageColor, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
-from services.worker.utils.runtime import ensure_dir, load_font
+from services.worker.utils.runtime import ensure_dir
 
 
 CANVAS_SIZE = (720, 1280)
 POST_SIZE = (1080, 1080)
-
-STYLE_COLORS = {
-    "default": {"accent": "#F3A531", "panel": "#121826", "text": "#FFFFFF", "subtext": "#E5E7EB"},
-    "friendly": {"accent": "#F2A65A", "panel": "#6C4F3D", "text": "#FFF8F1", "subtext": "#FCEBD4"},
-    "b_grade_fun": {"accent": "#FFF100", "panel": "#2B1654", "text": "#FFFFFF", "subtext": "#FF95D5"},
-}
 
 MOTION_PRESET_EXPRESSIONS = {
     "push_in_center": {
@@ -36,25 +29,6 @@ MOTION_PRESET_EXPRESSIONS = {
         "y": "ih*0.62-(ih/zoom/2)",
     },
 }
-
-
-def wrap_text(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> list[str]:
-    words = text.split()
-    lines: list[str] = []
-    current = ""
-    for word in words:
-        candidate = word if not current else f"{current} {word}"
-        width = draw.textbbox((0, 0), candidate, font=font)[2]
-        if width <= max_width or not current:
-            current = candidate
-        else:
-            lines.append(current)
-            current = word
-    if current:
-        lines.append(current)
-    if not lines:
-        return textwrap.wrap(text, width=12) or [text]
-    return lines
 
 
 def preprocess_asset(source_path: Path, processed_dir: Path, asset_id: str) -> dict[str, Path]:
@@ -81,103 +55,21 @@ class ImageEnhancer:
 
 
 def create_scene_image(output_path: Path, base_image_path: Path, primary_text: str, secondary_text: str, style_id: str, badge_text: str | None = None) -> None:
-    colors = STYLE_COLORS[style_id]
     base = Image.open(base_image_path).convert("RGB").resize(CANVAS_SIZE, Image.Resampling.LANCZOS)
-    overlay = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    panel_color = ImageColor.getrgb(colors["panel"]) + (190,)
-    accent_color = ImageColor.getrgb(colors["accent"])
-    text_color = ImageColor.getrgb(colors["text"])
-    subtext_color = ImageColor.getrgb(colors["subtext"])
-
-    draw.rectangle((0, 870, CANVAS_SIZE[0], CANVAS_SIZE[1]), fill=(0, 0, 0, 90))
-    draw.rounded_rectangle((42, 898, CANVAS_SIZE[0] - 42, CANVAS_SIZE[1] - 78), radius=28, fill=panel_color)
-
-    title_font = load_font(58, bold=True)
-    body_font = load_font(34)
-    lines = wrap_text(draw, primary_text, title_font, CANVAS_SIZE[0] - 150)
-    y = 948
-    for line in lines:
-        draw.text((76, y), line, font=title_font, fill=text_color)
-        y += 72
-
-    body_lines = wrap_text(draw, secondary_text, body_font, CANVAS_SIZE[0] - 150)
-    for line in body_lines:
-        draw.text((76, y + 8), line, font=body_font, fill=subtext_color)
-        y += 44
-
-    if badge_text:
-        draw.rounded_rectangle((58, 64, 260, 132), radius=24, fill=accent_color + (255,))
-        draw.text((84, 82), badge_text, font=load_font(28, bold=True), fill=(20, 20, 20))
-
-    merged = Image.alpha_composite(base.convert("RGBA"), overlay)
     ensure_dir(output_path.parent)
-    merged.convert("RGB").save(output_path)
+    base.save(output_path)
 
 
 def create_scene_overlay_image(output_path: Path, primary_text: str, secondary_text: str, style_id: str, badge_text: str | None = None) -> None:
-    colors = STYLE_COLORS[style_id]
     overlay = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    panel_color = ImageColor.getrgb(colors["panel"]) + (190,)
-    accent_color = ImageColor.getrgb(colors["accent"])
-    text_color = ImageColor.getrgb(colors["text"])
-    subtext_color = ImageColor.getrgb(colors["subtext"])
-
-    draw.rectangle((0, 870, CANVAS_SIZE[0], CANVAS_SIZE[1]), fill=(0, 0, 0, 90))
-    draw.rounded_rectangle((42, 898, CANVAS_SIZE[0] - 42, CANVAS_SIZE[1] - 78), radius=28, fill=panel_color)
-
-    title_font = load_font(58, bold=True)
-    body_font = load_font(34)
-    lines = wrap_text(draw, primary_text, title_font, CANVAS_SIZE[0] - 150)
-    y = 948
-    for line in lines:
-        draw.text((76, y), line, font=title_font, fill=text_color)
-        y += 72
-
-    body_lines = wrap_text(draw, secondary_text, body_font, CANVAS_SIZE[0] - 150)
-    for line in body_lines:
-        draw.text((76, y + 8), line, font=body_font, fill=subtext_color)
-        y += 44
-
-    if badge_text:
-        draw.rounded_rectangle((58, 64, 260, 132), radius=24, fill=accent_color + (255,))
-        draw.text((84, 82), badge_text, font=load_font(28, bold=True), fill=(20, 20, 20))
-
     ensure_dir(output_path.parent)
     overlay.save(output_path)
 
 
 def create_post_image(output_path: Path, base_image_path: Path, headline: str, body: str, cta_text: str, style_id: str) -> None:
-    colors = STYLE_COLORS[style_id]
     base = Image.open(base_image_path).convert("RGB").resize(POST_SIZE, Image.Resampling.LANCZOS)
-    overlay = Image.new("RGBA", POST_SIZE, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    accent = ImageColor.getrgb(colors["accent"])
-    panel = ImageColor.getrgb(colors["panel"]) + (205,)
-    text_color = ImageColor.getrgb(colors["text"])
-    subtext_color = ImageColor.getrgb(colors["subtext"])
-
-    draw.rectangle((0, 690, POST_SIZE[0], POST_SIZE[1]), fill=(0, 0, 0, 100))
-    draw.rounded_rectangle((52, 720, POST_SIZE[0] - 52, POST_SIZE[1] - 52), radius=32, fill=panel)
-    draw.rounded_rectangle((70, 74, 250, 142), radius=24, fill=accent + (255,))
-    draw.text((96, 92), "POST", font=load_font(28, bold=True), fill=(20, 20, 20))
-
-    title_font = load_font(62, bold=True)
-    body_font = load_font(38)
-    cta_font = load_font(30, bold=True)
-    y = 770
-    for line in wrap_text(draw, headline, title_font, POST_SIZE[0] - 160):
-        draw.text((88, y), line, font=title_font, fill=text_color)
-        y += 74
-    for line in wrap_text(draw, body, body_font, POST_SIZE[0] - 160):
-        draw.text((88, y + 4), line, font=body_font, fill=subtext_color)
-        y += 48
-    draw.rounded_rectangle((88, 922, 420, 992), radius=24, fill=accent + (255,))
-    draw.text((118, 941), cta_text, font=cta_font, fill=(20, 20, 20))
-
     ensure_dir(output_path.parent)
-    Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB").save(output_path)
+    base.save(output_path)
 
 
 def _run_ffmpeg(command: list[str], error_message: str) -> None:

@@ -9,6 +9,8 @@
 
 1. 메인 브랜치가 최신인지 확인합니다.
 2. 현재 로컬 실행 환경의 API 주소가 맞는지 확인합니다.
+   - FastAPI 기준 실제 생성 데모: `apps/web/.env.local`의 `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`
+   - 이 값이 비어 있으면 Next.js 내부 demo-store 경로가 섞일 수 있습니다.
 3. 발표용 자산 폴더가 준비됐는지 확인합니다.
    - `docs/presentation/assets/app`
    - `docs/presentation/assets/model`

@@ -342,6 +342,76 @@ def test_phase1_smoke(monkeypatch, tmp_path):
     assert any(path.name == "post.png" for path in media_root.rglob("post.png"))
 
 
+def test_project_and_upload_job_access_is_scoped_to_owner(monkeypatch, tmp_path):
+    runtime_dir = tmp_path / ".runtime"
+    monkeypatch.setenv("APP_RUNTIME_DIR", str(runtime_dir))
+    monkeypatch.setenv("APP_STORAGE_DIR", str(runtime_dir / "storage"))
+    monkeypatch.setenv("APP_DB_PATH", str(runtime_dir / "app.sqlite3"))
+
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+
+    from app.main import app
+
+    owner_client = TestClient(app)
+    intruder_client = TestClient(app)
+    register_authenticated_user(owner_client, email="owner-scope@example.com")
+    project_id, result_payload = create_generated_project(owner_client)
+
+    owner_assets_response = owner_client.get(f"/api/projects/{project_id}/assets")
+    assert owner_assets_response.status_code == 200
+    asset_id = owner_assets_response.json()["assets"][0]["assetId"]
+
+    publish_response = owner_client.post(
+        f"/api/projects/{project_id}/publish",
+        json={
+            "variantId": result_payload["variantId"],
+            "channel": "youtube_shorts",
+            "publishMode": "assist",
+            "captionOverride": result_payload["copySet"]["captions"][0],
+            "hashtags": result_payload["copySet"]["hashtags"],
+        },
+    )
+    assert publish_response.status_code == 202
+    upload_job_id = publish_response.json()["uploadJobId"]
+
+    register_authenticated_user(intruder_client, email="intruder-scope@example.com", name="다른 사용자")
+
+    list_response = intruder_client.get("/api/projects")
+    assert list_response.status_code == 200
+    assert all(item["projectId"] != project_id for item in list_response.json()["items"])
+
+    assert intruder_client.get(f"/api/projects/{project_id}").status_code == 404
+    assert intruder_client.get(f"/api/projects/{project_id}/assets").status_code == 404
+    assert intruder_client.get(f"/api/projects/{project_id}/status").status_code == 404
+    assert intruder_client.get(f"/api/projects/{project_id}/result").status_code == 404
+    assert intruder_client.get(f"/api/projects/{project_id}/latest-upload-job").status_code == 404
+    assert intruder_client.get(f"/api/projects/{project_id}/upload-jobs").status_code == 404
+    assert intruder_client.get(f"/api/upload-jobs/{upload_job_id}").status_code == 404
+
+    upload_response = intruder_client.post(
+        f"/api/projects/{project_id}/assets",
+        files=[("files", ("asset.png", make_png_bytes((20, 40, 80)), "image/png"))],
+    )
+    assert upload_response.status_code == 404
+
+    generate_response = intruder_client.post(
+        f"/api/projects/{project_id}/generate",
+        json={"assetIds": [asset_id], "templateId": "T01", "quickOptions": {}},
+    )
+    assert generate_response.status_code == 404
+
+    regenerate_response = intruder_client.post(
+        f"/api/projects/{project_id}/regenerate",
+        json={"changeSet": {"shorterCopy": True}},
+    )
+    assert regenerate_response.status_code == 404
+
+    assist_complete_response = intruder_client.post(f"/api/upload-jobs/{upload_job_id}/assist-complete")
+    assert assist_complete_response.status_code == 404
+
+
 def test_generate_with_approved_hybrid_source_candidate(monkeypatch, tmp_path):
     runtime_dir = tmp_path / ".runtime"
     decisions_root, candidate_key = create_promoted_hybrid_decision_artifacts(tmp_path)

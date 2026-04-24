@@ -259,6 +259,10 @@ class UploadJobResponse(ApiModel):
     error: dict[str, Any] | None = None
 
 
+class UploadJobListResponse(ApiModel):
+    items: list[UploadJobResponse]
+
+
 class AssistCompleteRequest(ApiModel):
     confirmedByUser: Literal[True]
     completedAt: datetime

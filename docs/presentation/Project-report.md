@@ -42,8 +42,8 @@ AI6_5Team_Advanced_Project는 소상공인이 매장 사진 몇 장과 간단한
 이 보고서를 짧게 요약하면 아래 다섯 줄로 설명할 수 있습니다.
 
 - 현재 trunk는 `로그인 -> 선택형 입력 -> 생성 -> 결과 확인 -> 업로드 보조 -> 이력 재진입`까지 실제로 시연 가능한 MVP 흐름입니다.
-- 앱에서 실제로 동작하는 생성 엔진은 trunk 내부 `Pillow + ffmpeg` 렌더러입니다.
-- 검증 근거는 API 테스트 26개, worker 테스트 85개, clean clone 기준 `npm run check` 통과까지 확보했습니다.
+- FastAPI 연결 기준 실제 생성 엔진은 trunk 내부 `Pillow + ffmpeg` 렌더러입니다.
+- 검증 근거는 API 테스트 27개, worker 테스트 85개, clean clone 기준 `npm run check` 통과까지 확보했습니다.
 - Wan2.1-VACE는 앱 런타임 직접 추론이 아니라 연구 스냅샷과 VM 원본 검증 형태로 보존했습니다.
 - 협업은 `planning 01~06 기준 문서 배포 -> 분산 개발 -> 기능 단위 선택 통합 -> 재검증` 순서로 진행했습니다.
 
@@ -114,7 +114,7 @@ flowchart LR
     H --> I["Publish / Schedule"]
 ```
 
-현재 trunk에서 실제로 돌아가는 생성 엔진은 `Pillow + ffmpeg` 기반의 내부 렌더러입니다. 즉, 앱은 실제로 결과를 생성할 수 있지만, 그 생성 경로는 별도 GPU 모델이 아니라 현재 저장소 안에 있는 로컬 렌더링 파이프라인입니다.
+현재 trunk에서 FastAPI에 연결해 실제로 돌아가는 생성 엔진은 `Pillow + ffmpeg` 기반의 내부 렌더러입니다. 즉, 앱은 실제로 결과를 생성할 수 있지만, 그 생성 경로는 별도 GPU 모델이 아니라 현재 저장소 안에 있는 로컬 렌더링 파이프라인입니다.
 
 대표 구현 파일:
 
@@ -157,6 +157,7 @@ planning 문서는 팀이 향해야 할 구조와 계약을 먼저 고정한 문
 | 데이터 저장 | SQLite runtime data | PostgreSQL + Object Storage + Redis 목표 구조 |
 | 생성 엔진 | trunk 내부 `Pillow + ffmpeg` 렌더러 | 외부 모델 lane 포함 확장 구조 |
 | 게시/연동 | 상태 전이 + 업로드 보조 중심 | 실서비스 외부 연동 확장 전제 |
+| 웹 API 연결 | `NEXT_PUBLIC_API_BASE_URL`로 FastAPI 연결 시 실제 API/worker 사용 | 환경 변수가 비어 있으면 Next.js demo-store 경로가 동작할 수 있음 |
 
 즉, 보고서 본문에서는 **현재 구현**을 먼저 설명하고, planning 문서는 **설계 의도와 목표 구조**를 보조 근거로 쓰는 편이 정확합니다.
 
@@ -214,7 +215,7 @@ planning 문서는 팀이 향해야 할 구조와 계약을 먼저 고정한 문
 - [security.py](../../services/api/app/core/security.py)
 - [main.py](../../services/api/app/main.py)
 
-현재 API 라우트 수는 `29개`이며, 이 안에 인증, 프로젝트, 업로드, 생성, 게시, 채널 연결 흐름이 들어 있습니다.
+현재 API 라우트 수는 `31개`이며, 이 안에 인증, 프로젝트, 업로드, 생성, 게시, 채널 연결 흐름이 들어 있습니다.
 
 ### 6-3. worker
 
@@ -293,6 +294,7 @@ planning 문서는 팀이 향해야 할 구조와 계약을 먼저 고정한 문
 - 계정 보호: 비밀번호 해시, 로그인 실패 잠금, 연령/동의 검증
 - 저장 보호: OAuth 토큰 AES-256-GCM 암호화, soft-delete / hard-delete 배치
 - 요청 보호: unsafe method에 대한 origin / referer 기반 CSRF 차단, 로그인/회원가입/비밀번호 재설정 rate limit
+- 소유권 경계: 프로젝트 자산, 생성/재생성, 상태/결과 조회, 업로드 작업 조회/완료 처리의 사용자 소유권 검증
 
 다만 아래 표현은 조심해야 합니다.
 
@@ -328,9 +330,9 @@ Wan2.1-VACE 연구 축은 현재 앱 런타임과 직접 결합된 상태가 아
 
 현재 보고서에서 강하게 말할 수 있는 검증 범위는 아래와 같습니다.
 
-- API 테스트 함수 26개
+- API 테스트 함수 27개
 - worker 테스트 함수 85개
-- 총 111개 테스트 함수
+- 총 112개 테스트 함수
 - 최신 clean clone 기준 `npm ci` 후 `npm run check` 통과
 - 실제 앱 생성 경로에서 `generated` 상태까지 도달 확인
 - 발표 자산 6개 정리 완료

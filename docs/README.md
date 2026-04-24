@@ -63,8 +63,8 @@
 - 검증 결과
 - 통합/샘플/실험 반영 내역
 
-가장 최신 상태는 [daily/2026-04-23-codex.md](daily/2026-04-23-codex.md)를 보시면 됩니다.
-보고서/발표 준비를 다시 정리한 최신 작업은 [daily/2026-04-24-codex.md](daily/2026-04-24-codex.md)에도 남겨 두었습니다.
+실행과 VM 검증 기준은 [daily/2026-04-23-codex.md](daily/2026-04-23-codex.md)에 정리되어 있습니다.
+보고서/발표 준비와 마지막 문서 정리 흐름은 [daily/2026-04-24-codex.md](daily/2026-04-24-codex.md)를 함께 보시면 됩니다.
 
 ### `presentation/`
 

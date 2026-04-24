@@ -22,3 +22,12 @@
   copy/prompt/video 방향 실험과 세부 정책 검토가 중심입니다.
 
 즉, 발표 관점에서는 `186 + shin-vm + 185-user-test`만 읽어도 현재 기준선 설명에는 충분합니다.
+
+## 발표 기준 검증 분류
+
+| 구분 | 현재 말할 수 있는 범위 | 대표 근거 |
+|---|---|---|
+| 자동화 검증 | API 테스트 27개, worker 테스트 85개, web typecheck/build 통과 | 루트 `npm run check`, `services/api/tests`, `services/worker/tests` |
+| 수동 리허설 | 로그인, 생성, 결과 확인, 업로드 보조, 이력 재진입 흐름 확인 | `test-scenario-186`, `test-scenario-185-user-test` |
+| 외부 VM 실험 근거 | Wan2.1-VACE 원본 VM, trunk 스냅샷 커밋 일치, 대표 산출물/로그 존재 확인 | `shin-vm-origin-verification-and-backup.md` |
+| 보류 리스크 | 운영 인프라, 전체 SNS 자동 게시, Wan2.1-VACE 앱 기본 런타임 직접 대체는 후속 과제 | `test-scenario-186`, `Project-report.md` |

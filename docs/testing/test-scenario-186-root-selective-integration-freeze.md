@@ -46,10 +46,11 @@
 | 잘못된 비밀번호/위조 토큰 | 통과 | API smoke auth test 추가 |
 | trunk auth UI 연결 | 통과 | `apps/web` auth gate 추가 |
 | worker Wan adapter 경계 | 통과 | worker adapter unit test 추가 |
-| 프로젝트/채널 데이터의 완전한 사용자 분리 | 보류 | 현재 demo-state 기반 흐름 유지 |
+| 프로젝트/업로드 작업 사용자 소유권 경계 | 통과 | API ownership scope test 추가 |
+| demo seed/state 제거 | 보류 | 현재 demo-state 기반 흐름 일부 유지 |
 
 ## 남은 리스크
 
-1. 인증은 연결됐지만 도메인 데이터는 아직 demo-state 기반입니다.
+1. 프로젝트/업로드 작업 소유권 검증은 보강했지만, 일부 데모 seed/state는 발표 안정성을 위해 남아 있습니다.
 2. Wan adapter는 환경변수와 외부 workspace가 준비된 경우에만 실제 lane을 실행할 수 있습니다.
 3. freeze 전 Redis/RQ 비교 결과를 추가 기록해야 합니다.

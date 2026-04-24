@@ -8,8 +8,11 @@
   - 로그인 화면
 - `home-vm-samples-loaded.png`
   - 메인 화면 + 신유철 VM 샘플 반영 상태
+- `readme-overview.png`
+  - 루트 README용 요약 이미지
 - `generated-post.png`
   - 실제 생성 결과 post 이미지
+  - 홍보 문구 오버레이는 제거하고, 캡션 / 해시태그 / CTA는 별도 결과 데이터로 분리
 - `generated-video.mp4`
   - 실제 생성 결과 video
 
